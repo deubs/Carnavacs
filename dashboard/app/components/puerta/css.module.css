@@ -1,0 +1,36 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    padding: .6rem;
+    gap: .4rem;
+    background: rgba(255,255,255,0.1);
+    border-left: solid 1px rgba(255,255,255,0.3);
+    border-bottom: solid 1px rgba(255,255,255,0.3);
+}
+.invert {
+    font-family: var(--geistMono);
+    font-weight: bold;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: .5rem;
+    font-size: 50px;
+}
+.verde {
+    background: rgba(0,150,0, 0.8);
+    padding: .1rem .4rem .1rem .4rem;
+    border-radius: 4px;
+    transition: background 1s ease;
+}
+.rojo {
+    padding: .1rem .4rem .1rem .4rem;
+    border-radius: 4px;
+    background: rgba(255, 0, 40, 0.8);
+    transition: background 1s ease;
+}
+.tpuerta {
+    width: 100%;
+    padding-bottom: .2rem;
+    border-bottom: solid 1px rgba(255,255,255,0.2)
+}
