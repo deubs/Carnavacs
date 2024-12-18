@@ -1,5 +1,0 @@
-{
-  "/dashboard/page": "app/dashboard/page.js",
-  "/websocket/page": "app/websocket/page.js",
-  "/page": "app/page.js"
-}
