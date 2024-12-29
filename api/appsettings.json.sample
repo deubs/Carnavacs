@@ -1,0 +1,42 @@
+{
+  "Persist": false,
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "Carnaval": "[sql server connection string]"
+  },
+  "SecretKeys": {
+    "ApiKey": "[main api key]",
+    "ApiKeySecondary": "[comma separated api keys]",
+    "UseSecondaryKey": true
+  },
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Console", "Serilog.Sinks.File" ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      { "Name": "Console" },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "/logs/log-.txt",
+          "rollingInterval": "Day",
+          "rollOnFileSizeLimit": true,
+          "formatter": "Serilog.Formatting.Compact.CompactJsonFormatter, Serilog.Formatting.Compact"
+        }
+      }
+    ],
+    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ]
+  }
+
+}
