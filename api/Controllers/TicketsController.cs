@@ -2,6 +2,7 @@
 using Carnavacs.Api.Domain;
 using Carnavacs.Api.Domain.Entities;
 using Carnavacs.Api.Infrastructure.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
@@ -10,8 +11,6 @@ using System.Diagnostics;
 
 namespace Carnavacs.Api.Controllers
 {
-
-    [SwaggerControllerOrder(3)]
 
     public class TicketController : BaseApiController
     {
@@ -28,6 +27,7 @@ namespace Carnavacs.Api.Controllers
 
 
         [HttpPost("Validate")]
+        [Authorize(Policy = "RequireApiKey")]
         public async Task<ApiResponse<TicketValidationResult>> Validate(string code)
         {
             var apiResponse = new ApiResponse<TicketValidationResult> { Success=true };
@@ -54,14 +54,6 @@ namespace Carnavacs.Api.Controllers
 
             return apiResponse;
         }
-
-        private string? getClientIP()
-        {
-            return HttpContext.GetServerVariable("HTTP_X_FORWARDED_FOR") ??
-                            Request.Headers["HTTP_X_FORWARDED_FOR"].ToString()??
-                            HttpContext.Connection.RemoteIpAddress?.ToString();
-        }
-
 
     }
 }

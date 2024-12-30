@@ -5,6 +5,6 @@ namespace Carnavacs.Api.Infrastructure.Interfaces
     public interface IEventRepository : IRepository<Event>
     {
         Task<Event> GetCurrentAsync();
-
+        Task<EventStats?> GetStatsAsync();
     }
 }

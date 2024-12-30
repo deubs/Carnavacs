@@ -5,6 +5,7 @@ using Carnavacs.Api.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
 
 namespace Carnavacs.Api.Controllers
 {
@@ -22,14 +23,17 @@ namespace Carnavacs.Api.Controllers
         }
 
 
+        [EndpointName("GetGates")]
+        [EndpointSummary("Get All Gates")]
+        [EndpointDescription("Get All Enabled Gates for current edition")]
         [HttpGet]
-        public async Task<ApiResponse<List<Event>>> GetAll()
+        public async Task<ApiResponse<List<Gate>>> GetAll()
         {
-            var apiResponse = new ApiResponse<List<Event>>();
+            var apiResponse = new ApiResponse<List<Gate>>();
 
             try
             {
-                var data = await _unitOfWork.Events.GetAllAsync();
+                var data = await _unitOfWork.Gates.GetAllAsync();
                 apiResponse.Success = true;
                 apiResponse.Result = data.ToList();
             }
@@ -37,55 +41,28 @@ namespace Carnavacs.Api.Controllers
             {
                 apiResponse.Success = false;
                 apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "Error getting all events");
+                _logger.LogError(ex, "Error getting all gates");
             }
             catch (Exception ex)
             {
                 apiResponse.Success = false;
                 apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "Error getting all events");
+                _logger.LogError(ex, "Error getting all Gates");
             }
 
             return apiResponse;
         }
 
-        [HttpGet("Current")]
-        public async Task<ApiResponse<Event>> GetCurrent()
-        {
-            var apiResponse = new ApiResponse<Event>();
-
-            try
-            {
-                var data = await _unitOfWork.Events.GetCurrentAsync();
-                apiResponse.Success = true;
-                apiResponse.Result = data;
-            }
-            catch (SqlException ex)
-            {
-                apiResponse.Success = false;
-                apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "Error getting all events");
-            }
-            catch (Exception ex)
-            {
-                apiResponse.Success = false;
-                apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "Error getting all events");
-            }
-
-            return apiResponse;
-        }
-
-
+    
         [HttpGet("{id}")]
-        public async Task<ApiResponse<Event>> GetById(int id)
+        public async Task<ApiResponse<Gate>> GetById([Description("The gate id")] int id)
         {
 
-            var apiResponse = new ApiResponse<Event>();
+            var apiResponse = new ApiResponse<Gate>();
 
             try
             {
-                var data = await _unitOfWork.Events.GetByIdAsync(id);
+                var data = await _unitOfWork.Gates.GetByIdAsync(id);
                 apiResponse.Success = true;
                 apiResponse.Result = data;
             }
@@ -93,82 +70,13 @@ namespace Carnavacs.Api.Controllers
             {
                 apiResponse.Success = false;
                 apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "Error getting event by id");
+                _logger.LogError(ex, "Error getting Gate by id");
             }
             catch (Exception ex)
             {
                 apiResponse.Success = false;
                 apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "Error getting event by id");
-            }
-
-            return apiResponse;
-        }
-
-        [HttpPost]
-        public async Task<ApiResponse<string>> Add(Event Event)
-        {
-            var apiResponse = new ApiResponse<string>();
-
-            try
-            {
-                var data = await _unitOfWork.Events.AddAsync(Event);
-                apiResponse.Success = true;
-                apiResponse.Result = data;
-            }
-            catch (Exception ex)
-            {
-                apiResponse.Success = false;
-                apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "error adding event");
-            }
-
-            return apiResponse;
-        }
-
-        [HttpPut]
-        public async Task<ApiResponse<string>> Update(Event Event)
-        {
-            var apiResponse = new ApiResponse<string>();
-
-            try
-            {
-                var data = await _unitOfWork.Events.UpdateAsync(Event);
-                apiResponse.Success = true;
-                apiResponse.Result = data;
-            }
-            catch (Exception ex)
-            {
-                apiResponse.Success = false;
-                apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "error updating event");
-            }
-
-            return apiResponse;
-        }
-
-        [HttpDelete]
-        public async Task<ApiResponse<string>> Delete(int id)
-        {
-            var apiResponse = new ApiResponse<string>();
-
-            try
-            {
-                var data = await _unitOfWork.Events.DeleteAsync(id);
-                apiResponse.Success = true;
-                apiResponse.Result = data;
-            }
-            catch (SqlException ex)
-            {
-                apiResponse.Success = false;
-                apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "error deleting event");
-            }
-            catch (Exception ex)
-            {
-                apiResponse.Success = false;
-                apiResponse.Message = ex.Message;
-                _logger.LogError(ex, "error deleting event");
+                _logger.LogError(ex, "Error getting Gate by id");
             }
 
             return apiResponse;

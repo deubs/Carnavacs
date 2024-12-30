@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Carnavacs.Api.Controllers
 {
@@ -18,7 +19,7 @@ namespace Carnavacs.Api.Controllers
         public void OnAuthorization(AuthorizationFilterContext context)
         {
             var apiKeyHeader = context.HttpContext.Request.Headers["Authorization"].ToString();
-            var authController = new Controllers.AuthController();
+            var authController = new BaseApiController();
 
             if (apiKeyHeader.Any())
             {
@@ -31,12 +32,12 @@ namespace Carnavacs.Api.Controllers
 
                 if (keys.FindIndex(x => x.Equals(apiKeyHeader, StringComparison.OrdinalIgnoreCase)) == -1)
                 {
-                    context.Result = authController.NotAuthorized();
+                    context.Result = authController.Unauthorized();
                 }
             }
             else
             {
-                context.Result = authController.NotAuthorized();
+                context.Result = authController.Unauthorized();
             }
         }
     }
