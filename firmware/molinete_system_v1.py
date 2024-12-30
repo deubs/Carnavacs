@@ -14,7 +14,7 @@ import queue
 # import pdb
 # import platform
 import time
-# import wiringpi
+import wiringpi
 import checklan
 from requests import get
 
