@@ -2,6 +2,7 @@
 using Carnavacs.Api.Domain;
 using Carnavacs.Api.Domain.Entities;
 using Carnavacs.Api.Infrastructure.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
@@ -80,6 +81,40 @@ namespace Carnavacs.Api.Controllers
                 apiResponse.Success = false;
                 apiResponse.Message = ex.Message;
                 _logger.LogError(ex, "Error getting all events");
+            }
+
+            return apiResponse;
+        }
+
+
+        [Authorize(Policy = "RequireJwt")]
+        [HttpGet("Stats")]
+        [EndpointName("GetEventStats")]
+        [EndpointSummary("Get Stats for current Event")]
+        [EndpointDescription("Get information about the event.")]
+
+        [ProducesResponseType<ApiResponse<Event>>(StatusCodes.Status200OK, "application/json")]
+        public async Task<ApiResponse<EventStats>> GetStats()
+        {
+            var apiResponse = new ApiResponse<EventStats>();
+
+            try
+            {
+                var data = await _unitOfWork.Events.GetStatsAsync();
+                apiResponse.Success = true;
+                apiResponse.Result = data;
+            }
+            catch (SqlException ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                _logger.LogError(ex, "Error getting event stats");
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                _logger.LogError(ex, "Error getting event stats");
             }
 
             return apiResponse;
