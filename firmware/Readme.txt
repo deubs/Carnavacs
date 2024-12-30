@@ -19,3 +19,7 @@ python3 setup.py install
 
 # I2C3
 i2cdetect -y 3
+
+# Checklan
+Checklan needs target ip to be hardcoded.
+Current target ip (server) is 192.168.40.251

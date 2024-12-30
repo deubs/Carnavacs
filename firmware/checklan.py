@@ -1,5 +1,10 @@
+#!/usr/bin/python
+#--------------------------------------
+#  checklan.py 
+#  Author: Emiliano Melchiori
+#  Date: 12/12/2024
+
 import socket
-import os
 import uuid 
 # printing the value of unique MAC
 # address using uuid and getnode() function 
