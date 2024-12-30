@@ -1,4 +1,5 @@
-﻿using Carnavacs.Api.Domain;
+﻿using Carnavacs.Api.Controllers.Helpers;
+using Carnavacs.Api.Domain;
 using Carnavacs.Api.Domain.Entities;
 using Carnavacs.Api.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,9 @@ using System.Diagnostics;
 
 namespace Carnavacs.Api.Controllers
 {
+
+    [SwaggerControllerOrder(3)]
+
     public class TicketController : BaseApiController
     {
         private readonly IUnitOfWork _unitOfWork;
