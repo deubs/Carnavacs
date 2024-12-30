@@ -4,9 +4,10 @@ using Carnavacs.Api.Domain.Interfaces;
 using Carnavacs.Api.Infrastructure;
 using Carnavacs.Api.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Reflection;
+
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,52 +20,29 @@ builder.Services.AddSingleton<DapperContext>(new DapperContext(sqlConn));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
 SwaggerControllerOrder<ControllerBase> swaggerControllerOrder = new SwaggerControllerOrder<ControllerBase>(Assembly.GetEntryAssembly());
-builder.Services.AddSwaggerGen(
-  c =>
-  {
-      c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
-      {
-          Description = "api key.",
-          Name = "Authorization",
-          In = ParameterLocation.Header,
-          Type = SecuritySchemeType.ApiKey,
-          Scheme = "basic"
-      });
 
-      c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "basic"
-                },
-                In = ParameterLocation.Header
-            },
-            new List<string>()
-        }
-    });
-      c.OrderActionsBy((apiDesc) => $"{swaggerControllerOrder.SortKey(apiDesc.ActionDescriptor.RouteValues["controller"])}");
-      var filePath = Path.Combine(System.AppContext.BaseDirectory, "Carnavacs.Api.xml");
-      c.IncludeXmlComments(filePath);
-  });
+
+//builder.Services.AddAuthentication().AddJwtBearer();
+//builder.Services.AddAuthorization(o =>
+//{
+//    o.AddPolicy("ApiTesterPolicy", b => b.RequireRole("tester"));
+//});
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
 
 builder.Services.AddSingleton<INFCGenerator, NFCGenerator>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
+//if (app.Environment.IsDevelopment())
+//{
+    app.MapOpenApi()
+            //.RequireAuthorization("ApiTesterPolicy");
+    ;
+    app.MapScalarApiReference();
+//}
 
 
 app.UseAuthorization();

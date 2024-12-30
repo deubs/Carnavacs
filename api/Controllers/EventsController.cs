@@ -5,23 +5,27 @@ using Carnavacs.Api.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
 
 namespace Carnavacs.Api.Controllers
 {
     [SwaggerControllerOrder(2)]
 
-    public class EventController : BaseApiController
+    public class EventsController : BaseApiController
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ILogger<EventController> _logger;
+        private readonly ILogger<EventsController> _logger;
 
-        public EventController(IUnitOfWork unitOfWork, ILogger<EventController> logger)
+        public EventsController(IUnitOfWork unitOfWork, ILogger<EventsController> logger)
         {
             this._unitOfWork = unitOfWork;
             this._logger = logger;
         }
 
 
+        [EndpointName("GetEvents")]
+        [EndpointSummary("Get All Events")]
+        [EndpointDescription("Get All Enabled event for current edition")]
         [HttpGet]
         public async Task<ApiResponse<List<Event>>> GetAll()
         {
@@ -50,6 +54,11 @@ namespace Carnavacs.Api.Controllers
         }
 
         [HttpGet("Current")]
+        [EndpointName("GetCurrentEvent")]
+        [EndpointSummary("Get Current Event")]
+        [EndpointDescription("Get next available event")]
+
+        [ProducesResponseType<ApiResponse<Event>>(StatusCodes.Status200OK, "application/json")]
         public async Task<ApiResponse<Event>> GetCurrent()
         {
             var apiResponse = new ApiResponse<Event>();
@@ -78,7 +87,8 @@ namespace Carnavacs.Api.Controllers
 
 
         [HttpGet("{id}")]
-        public async Task<ApiResponse<Event>> GetById(int id)
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public async Task<ApiResponse<Event>> GetById([Description("Auto generated id")] int id)
         {
 
             var apiResponse = new ApiResponse<Event>();
@@ -106,6 +116,7 @@ namespace Carnavacs.Api.Controllers
         }
 
         [HttpPost]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<ApiResponse<string>> Add(Event Event)
         {
             var apiResponse = new ApiResponse<string>();
@@ -127,6 +138,7 @@ namespace Carnavacs.Api.Controllers
         }
 
         [HttpPut]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<ApiResponse<string>> Update(Event Event)
         {
             var apiResponse = new ApiResponse<string>();
@@ -148,6 +160,7 @@ namespace Carnavacs.Api.Controllers
         }
 
         [HttpDelete]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<ApiResponse<string>> Delete(int id)
         {
             var apiResponse = new ApiResponse<string>();
