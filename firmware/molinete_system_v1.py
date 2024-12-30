@@ -233,6 +233,7 @@ def main():
             """
             response = {'code':'', 'status':''}
             if code is not None:
+                print(code)
                 # response = apicall(code)
                 if type(response) is dict:
                     if response.status == "void":
