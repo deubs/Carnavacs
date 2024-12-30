@@ -14,22 +14,23 @@ import queue
 # import pdb
 # import platform
 import time
-import wiringpi
+# import wiringpi
+import checklan
+from requests import get
 
-# if platform.uname().node == 'orangepizero3':
-    #import wiringpi
-# else:
-#     print('')
-
-
+# STATUS VARS
+BLAN = False
+BGM65 = False
+BJET = False
 # ORANGE PI ZERO 3 WIRING
 I2CBUS = 3
-LCDI2CADDRESS = 0x27
-GPIO_RELAY_OUT1 = 9 #PC1
-GPIO_RELAY_OUT2 = 10 #PI16
-GPIO_INPUT_1 = 13   #PI6
+# GPIO_RELAY_OUT1 = 9 #PC15
+GPIO_RELAY_OUT2 = 10 #PC14
+GPIO_INPUT_1 = 13   #PC7
 
 invalid_code = '12345678901234'
+apiurl = ""
+
 
 def readPort(serialP, q:queue):
     """
@@ -84,7 +85,6 @@ def initLCD():
 
 bGATEOPEN = False
 
-
 def ISRSignal():
     """
         
@@ -92,12 +92,10 @@ def ISRSignal():
     print("Reading inductive...")
     bGATEOPEN = False
     bwait4Hole = True
+    print("State is HIGH...")
     while bwait4Hole:
-        print("State is HIGH...")
         state = None
-        time.sleep(1)
         bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
-        print(state)
     print("State is LOW")
     return bwait4Hole
 
@@ -109,9 +107,9 @@ def initGPIO():
     """
     print("INIT GPIO")
     wiringpi.wiringPiSetup()
-    wiringpi.pinMode(GPIO_RELAY_OUT1, wiringpi.GPIO.OUTPUT)
+    # wiringpi.pinMode(GPIO_RELAY_OUT1, wiringpi.GPIO.OUTPUT)
     wiringpi.pinMode(GPIO_RELAY_OUT2, wiringpi.GPIO.OUTPUT)
-    wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.LOW)
+    # wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.LOW)
     wiringpi.digitalWrite(GPIO_RELAY_OUT2, wiringpi.GPIO.LOW)
     wiringpi.pinMode(GPIO_INPUT_1, wiringpi.GPIO.INPUT)
     wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
@@ -134,15 +132,38 @@ def enableGate():
     Enable COIL releasing relays. Iluminate RED light
     """
     print("Realease RELAYS")
-    wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.HIGH)
+    # wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.HIGH)
     wiringpi.digitalWrite(GPIO_RELAY_OUT2, wiringpi.GPIO.HIGH)
     bHole = ISRSignal()
     if not bHole:
         print("Activate RELAYS")
-        wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.LOW)
+        # wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.LOW)
         wiringpi.digitalWrite(GPIO_RELAY_OUT2, wiringpi.GPIO.LOW)
         return True
     return False
+
+
+def printSTATUS():
+    lcd.lcd_string("LAN " + str(BLAN), LCDI2C.LCD_LINE_1)
+    lcd.lcd_string("GM65 " + str(BGM65) + " JET: " + str(BJET), LCDI2C.LCD_LINE_2)
+    time.sleep(5)
+    lcd.lcd_string("MAC: ", LCDI2C.LCD_LINE_1)
+    lcd.lcd_string(checklan.hexMAX, LCDI2C.LCD_LINE_2)
+    time.sleep(5)
+    lcd.lcd_string("IP: ", LCDI2C.LCD_LINE_1)
+    lcd.lcd_string(checklan.ipADDRESS, LCDI2C.LCD_LINE_2)
+
+
+def apicall(code):
+    payload = {'barcode': code}
+    try:
+        response = get(apiurl, params = payload)
+        if response.status_code == 200:
+            return response.content
+    except Exception as e:
+        print("saras")
+        return {'': ''}        
+     
 
 lcd = initLCD()
 
@@ -150,6 +171,13 @@ def main():
     """
         Main function
     """
+    chkLAN = checklan.checkLAN(checklan.target, checklan.timeout)
+    if checklan:
+        lcd.lcd_string("LAN is OK", LCDI2C.LCD_LINE_1)
+        BLAN = True
+    else:
+        lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
+
     gm65q = queue.Queue()
     jet111q = queue.Queue()    
     initGPIO()
@@ -159,12 +187,19 @@ def main():
         dev = connectDevice(idev)
         threading.Thread(target = readBarCodes, args = (dev, jet111q,), daemon = True).start()
         lcd.lcd_string("JET111 OK...", LCDI2C.LCD_LINE_1)
-    
+        BJET = True
+
     if sp != None:
         lcd.lcd_string('GM65 OK...', LCDI2C.LCD_LINE_2)
         threading.Thread(target = readPort, args = (sp, gm65q,), daemon = True).start()
+        BGM65 = True
         code = None
+        time.sleep(2)
         while True:
+            if ((BGM65 or BJET) and BLAN):
+                continue
+            else:
+                BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
             gm65data = None
             jet111data = None
             marked = False
@@ -185,18 +220,21 @@ def main():
                         lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
                         code = jet111data
             
-            if code is not None:    
-                if code == invalid_code:
-                    print("INVALID CODE")
-                    lcd.lcd_string('INVALIDO', LCDI2C.LCD_LINE_2)
-                    code = None
-                else:
-                    print("VALID CODE")
-                    lcd.lcd_string('VALIDO', LCDI2C.LCD_LINE_2)
-                    marked = enableGate()
-                    if marked:
-                        print("MARKED CODE")
+            if code is not None:
+                response = apicall(code)
+                if type(response) is dict:
+                    if response.code == "invalid_code":
+                        # print("INVALID CODE")
+                        lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
+                        lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
                         code = None
+                    else:
+                        lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
+                        lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
+                        marked = enableGate()
+                        if marked:
+                            print("MARKED CODE")
+                            code = None
                     
     else:
         lcd.lcd_string("Serial Port Fail", LCDI2C.LCD_LINE_1)
