@@ -57,6 +57,17 @@ def configure_hostname_and_git(ip, hostname, git_repo_url, public_key):
             print(stdout.read().decode())
     else:
         ssh.exec_command(f"cd /path/to/your/project && git pull origin main")
+
+    # Actualizar los paquetes de Debian y instalar dependencias de Python
+    update_commands = [
+        "sudo apt-get update",
+        "sudo apt-get upgrade -y",
+        "sudo apt-get install -y python3-pip",  # Instalar pip3 si no está instalado
+        "pip3 install -r /path/to/your/project/requirements.txt"  # Instalar dependencias desde requirements.txt
+    ]
+    for command in update_commands:
+        stdin, stdout, stderr = ssh.exec_command(command)
+        print(stdout.read().decode())
     
     ssh.exec_command("sudo reboot")
     ssh.close()
