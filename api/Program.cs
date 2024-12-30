@@ -29,7 +29,10 @@ SwaggerControllerOrder<ControllerBase> swaggerControllerOrder = new SwaggerContr
 //    o.AddPolicy("ApiTesterPolicy", b => b.RequireRole("tester"));
 //});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+});
 
 builder.Services.AddSingleton<INFCGenerator, NFCGenerator>();
 
@@ -41,7 +44,26 @@ var app = builder.Build();
     app.MapOpenApi()
             //.RequireAuthorization("ApiTesterPolicy");
     ;
-    app.MapScalarApiReference();
+app.MapScalarApiReference(options =>
+{
+    // Fluent API
+    options
+        .WithPreferredScheme("ApiKey") // Optional. Security scheme name from the OpenAPI document
+        .WithApiKeyAuthentication(apiKey =>
+        {
+            apiKey.Token = "your-api-key";
+        });
+
+    // Object initializer
+    options.Authentication = new ScalarAuthenticationOptions
+    {
+        PreferredSecurityScheme = "ApiKey", // Optional. Security scheme name from the OpenAPI document
+        ApiKey = new ApiKeyOptions
+        {
+            Token = "your-api-key"
+        }
+    };
+});
 //}
 
 
