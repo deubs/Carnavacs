@@ -44,6 +44,7 @@ def readPort(serialP, q:queue):
             data = ""
             while True:
                 cmdRet = serialP.read().decode()
+                print(cmdRet)
                 if (cmdRet == '\r' or cmdRet == '\n'):
                     q.put(data)
                     break
