@@ -1,4 +1,5 @@
-﻿using Carnavacs.Api.Domain;
+﻿using Carnavacs.Api.Controllers.Helpers;
+using Carnavacs.Api.Domain;
 using Carnavacs.Api.Domain.Entities;
 using Carnavacs.Api.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Carnavacs.Api.Controllers
 {
+    [SwaggerControllerOrder(2)]
+
     public class EventController : BaseApiController
     {
         private readonly IUnitOfWork _unitOfWork;

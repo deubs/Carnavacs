@@ -1,9 +1,12 @@
+using Carnavacs.Api.Controllers.Helpers;
 using Carnavacs.Api.Domain;
 using Carnavacs.Api.Domain.Interfaces;
 using Carnavacs.Api.Infrastructure;
 using Carnavacs.Api.Infrastructure.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +21,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+SwaggerControllerOrder<ControllerBase> swaggerControllerOrder = new SwaggerControllerOrder<ControllerBase>(Assembly.GetEntryAssembly());
 builder.Services.AddSwaggerGen(
   c =>
   {
@@ -45,6 +49,9 @@ builder.Services.AddSwaggerGen(
             new List<string>()
         }
     });
+      c.OrderActionsBy((apiDesc) => $"{swaggerControllerOrder.SortKey(apiDesc.ActionDescriptor.RouteValues["controller"])}");
+      var filePath = Path.Combine(System.AppContext.BaseDirectory, "Carnavacs.Api.xml");
+      c.IncludeXmlComments(filePath);
   });
 
 builder.Services.AddSingleton<INFCGenerator, NFCGenerator>();
