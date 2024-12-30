@@ -46,5 +46,9 @@ namespace Carnavacs.Api.Infrastructure
             throw new NotImplementedException();
         }
 
+        public Task<EventStats?> GetStatsAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
