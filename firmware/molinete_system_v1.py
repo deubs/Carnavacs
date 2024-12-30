@@ -11,12 +11,12 @@ import LCDI2C
 from JET111_Thread import detectDevice, connectDevice, readBarCodes
 import threading
 import queue
-# import pdb
-# import platform
 import time
 import wiringpi
 import checklan
 from requests import get
+from datetime import datetime
+
 
 # STATUS VARS
 BLAN = False
@@ -155,26 +155,34 @@ def printSTATUS():
 
 
 def apicall(code):
-    payload = {'barcode': code}
+    url = f'{apiurl}/{code}'
     try:
-        response = get(apiurl, params = payload)
+        response = get(url)
         if response.status_code == 200:
             return response.content
+        if response.status_code == 401:
+            return {'code':401, 'status':401}
     except Exception as e:
         print("saras")
         return {'': ''}        
      
-
 lcd = initLCD()
+
+def createFile():
+    dt = datetime.now().isoformat()
+    fname = f'tickets_{dt}.txt'
+    with open(fname, "a") as f:
+        return f
 
 def main():
     """
         Main function
     """
-    chkLAN = checklan.checkLAN(checklan.target, checklan.timeout)
-    if checklan:
+    fhandler =  createFile()
+
+    BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
+    if BLAN:
         lcd.lcd_string("LAN is OK", LCDI2C.LCD_LINE_1)
-        BLAN = True
     else:
         lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
 
@@ -219,21 +227,27 @@ def main():
                         print("Barcode: " + jet111data)
                         lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
                         code = jet111data
-            
+            """
+                public enum TicketStatuses { Emmited = 1, OK = 2, VoidPending = 3, Voided = 4, Used = 5, Retry = 6, NotFound = 7 }
+                public enum OrderStatuses { OK = 1, InProcess = 2, Refunded = 3 }
+            """
+            response = {'code':'', 'status':''}
             if code is not None:
-                response = apicall(code)
+                # response = apicall(code)
                 if type(response) is dict:
-                    if response.code == "invalid_code":
+                    if response.status == "void":
                         # print("INVALID CODE")
                         lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
                         lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
-                        code = None
                     else:
                         lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
                         lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
                         marked = enableGate()
                         if marked:
                             print("MARKED CODE")
+                            ticket_string = f'code: {code}, status:{response.status}, timestamp: {datetime.now()} '
+                            fhandler.write(ticket_string)
+                            fhandler.flush()
                             code = None
                     
     else:
