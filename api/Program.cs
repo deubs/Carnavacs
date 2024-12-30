@@ -8,6 +8,10 @@ using Serilog;
 using System.Reflection;
 
 using Scalar.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,22 +21,56 @@ builder.Host.UseSerilog((context, configuration) =>
 var sqlConn = builder.Configuration.GetConnectionString("Carnaval");
 // Add services to the container.
 builder.Services.AddSingleton<DapperContext>(new DapperContext(sqlConn));
+builder.Services.AddSingleton<Carnavacs.Api.Infrastructure.TokenHandler>();
+
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
+builder.Services.AddScoped<LoginManager>();
 builder.Services.AddControllers();
-SwaggerControllerOrder<ControllerBase> swaggerControllerOrder = new SwaggerControllerOrder<ControllerBase>(Assembly.GetEntryAssembly());
 
 
-//builder.Services.AddAuthentication().AddJwtBearer();
-//builder.Services.AddAuthorization(o =>
-//{
-//    o.AddPolicy("ApiTesterPolicy", b => b.RequireRole("tester"));
-//});
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    })
+    .AddApiKeyAuthentication();
+
+// Add authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireApiKey", policy =>
+    {
+        policy.AuthenticationSchemes.Add("ApiKey");
+        policy.RequireAuthenticatedUser(); // Adding a requirement
+    });
+    options.AddPolicy("RequireJwt", policy =>
+    {
+        policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+        policy.RequireAuthenticatedUser(); // Adding a requirement
+    });
+});
+
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
 });
+
 
 builder.Services.AddSingleton<INFCGenerator, NFCGenerator>();
 
@@ -41,9 +79,9 @@ var app = builder.Build();
 
 //if (app.Environment.IsDevelopment())
 //{
-    app.MapOpenApi()
-            //.RequireAuthorization("ApiTesterPolicy");
-    ;
+app.MapOpenApi()
+//.RequireAuthorization("ApiTesterPolicy");
+;
 app.MapScalarApiReference(options =>
 {
     // Fluent API
