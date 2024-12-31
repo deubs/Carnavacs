@@ -1,0 +1,18 @@
+[Unit]
+Description=Molinete Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/orangepi/src/Carnavacs
+ExecStartPre=/bin/sh -c 'until ping -c1 192.168.40.251; do sleep 1; done;'
+ExecStart=/bin/bash /home/orangepi/src/Carnavacs/run_molinete.sh
+
+
+StandardOutput=append:/home/orangepi/logs/molinete.log
+StandardError=append:/home/orangepi/logs/molinete.err.log
+
+[Install]
+WantedBy=multi-user.target
