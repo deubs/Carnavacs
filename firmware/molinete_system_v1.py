@@ -183,11 +183,11 @@ def main():
     """
     fhandler =  createFile()
 
-    # BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
-    # if BLAN:
-    #     lcd.lcd_string("LAN is OK", LCDI2C.LCD_LINE_1)
-    # else:
-    #     lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
+    BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
+    if BLAN:
+        lcd.lcd_string("LAN is OK", LCDI2C.LCD_LINE_1)
+    else:
+        lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
 
     gm65q = queue.Queue()
     jet111q = queue.Queue()    
@@ -239,7 +239,7 @@ def main():
                 print(code)
                 # response = apicall(code)
                 if type(response) is dict:
-                    if response.status == "void":
+                    if response['status'] == "void":
                         # print("INVALID CODE")
                         lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
                         lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
