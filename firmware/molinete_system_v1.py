@@ -241,11 +241,11 @@ def main():
                 if type(response) is dict:
                     if response['status'] == "void":
                         # print("INVALID CODE")
-                        lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
-                        lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
+                        lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                        lcd.lcd_string("VOID", LCDI2C.LCD_LINE_2)
                     else:
-                        lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
-                        lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
+                        lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                        lcd.lcd_string("OK", LCDI2C.LCD_LINE_2)
                         marked = enableGate()
                         if marked:
                             print("MARKED CODE")
