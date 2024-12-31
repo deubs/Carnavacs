@@ -44,15 +44,11 @@ def readPort(serialP, q:queue):
             data = ""
             while True:
                 cmdRet = serialP.read().decode()
-                print(cmdRet)
                 if (cmdRet == '\r' or cmdRet == '\n'):
                     q.put(data)
                     break
                 else:
                     data += str(cmdRet)
-                    if len(data) == 12:
-                        q.put(data)
-                        break
             # print("Raw1 = " + str(data))
     else:   
         print("Port is Closed")
@@ -175,8 +171,8 @@ lcd = initLCD()
 def createFile():
     dt = datetime.now().isoformat()
     fname = f'tickets_{dt}.txt'
-    with open(fname, "a") as f:
-        return f
+    f = open(fname, "a")
+    return f
 
 def main():
     """
@@ -208,10 +204,10 @@ def main():
         code = None
         time.sleep(2)
         while True:
-            if ((BGM65 or BJET) and BLAN):
-                continue
-            else:
-                BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
+            # if ((BGM65 or BJET) and BLAN):
+            #     continue
+            # else:
+            #     BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
             gm65data = None
             jet111data = None
             marked = False
@@ -240,17 +236,17 @@ def main():
                 print(code)
                 # response = apicall(code)
                 if type(response) is dict:
-                    if response.status == "void":
+                    if response['status'] == "void":
                         # print("INVALID CODE")
-                        lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
-                        lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
+                        lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                        lcd.lcd_string("VOID", LCDI2C.LCD_LINE_2)
                     else:
-                        lcd.lcd_string(response.line1, LCDI2C.LCD_LINE_1)
-                        lcd.lcd_string(response.line2, LCDI2C.LCD_LINE_2)
+                        lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                        lcd.lcd_string("OK", LCDI2C.LCD_LINE_2)
                         marked = enableGate()
                         if marked:
                             print("MARKED CODE")
-                            ticket_string = f'code: {code}, status:{response.status}, timestamp: {datetime.now()} '
+                            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()} \n'
                             fhandler.write(ticket_string)
                             fhandler.flush()
                             code = None
