@@ -249,7 +249,7 @@ def main():
                         marked = enableGate()
                         if marked:
                             print("MARKED CODE")
-                            ticket_string = f'code: {code}, status:{response.status}, timestamp: {datetime.now()} '
+                            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()} '
                             fhandler.write(ticket_string)
                             fhandler.flush()
                             code = None
