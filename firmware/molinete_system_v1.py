@@ -50,6 +50,9 @@ def readPort(serialP, q:queue):
                     break
                 else:
                     data += str(cmdRet)
+                    if len(data) == 12:
+                        q.put(data)
+                        break
             # print("Raw1 = " + str(data))
     else:   
         print("Port is Closed")
