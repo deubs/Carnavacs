@@ -44,7 +44,6 @@ def readPort(serialP, q:queue):
             data = ""
             while True:
                 cmdRet = serialP.read().decode()
-                print(cmdRet)
                 if (cmdRet == '\r' or cmdRet == '\n'):
                     q.put(data)
                     break
@@ -184,11 +183,11 @@ def main():
     """
     fhandler =  createFile()
 
-    BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
-    if BLAN:
-        lcd.lcd_string("LAN is OK", LCDI2C.LCD_LINE_1)
-    else:
-        lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
+    # BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
+    # if BLAN:
+    #     lcd.lcd_string("LAN is OK", LCDI2C.LCD_LINE_1)
+    # else:
+    #     lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
 
     gm65q = queue.Queue()
     jet111q = queue.Queue()    
@@ -208,10 +207,10 @@ def main():
         code = None
         time.sleep(2)
         while True:
-            if ((BGM65 or BJET) and BLAN):
-                continue
-            else:
-                BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
+            # if ((BGM65 or BJET) and BLAN):
+            #     continue
+            # else:
+            #     BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
             gm65data = None
             jet111data = None
             marked = False

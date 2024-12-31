@@ -10,6 +10,7 @@ python3-evdev
 python3-smbus
 python3-dev
 python3-setuptools
+python3-requests
 swig
 
 Ir a /usr/src/wiringOP-Python
