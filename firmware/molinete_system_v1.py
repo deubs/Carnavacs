@@ -174,8 +174,8 @@ lcd = initLCD()
 def createFile():
     dt = datetime.now().isoformat()
     fname = f'tickets_{dt}.txt'
-    with open(fname, "a") as f:
-        return f
+    f = open(fname, "a")
+    return f
 
 def main():
     """
