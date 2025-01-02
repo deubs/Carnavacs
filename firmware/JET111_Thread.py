@@ -35,7 +35,7 @@ def detectDevice():
     print(devices)
     for device in devices:
         print(device.name)
-        if "IMAGER 2D" in device.name:
+        if ("IMAGER 2D" in device.name) or ("BF SCAN SCAN KEYBOARD" in device.name) or ("NT USB Keyboard" in device.name):
             inputdev = device.path
             break
     return inputdev

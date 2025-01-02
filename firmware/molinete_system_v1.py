@@ -14,8 +14,9 @@ import queue
 import time
 import wiringpi
 import checklan
-from requests import get
+from requests import post
 from datetime import datetime
+from apikeys import keys
 
 
 # STATUS VARS
@@ -28,9 +29,8 @@ I2CBUS = 3
 GPIO_RELAY_OUT2 = 10 #PC14
 GPIO_INPUT_1 = 13   #PC7
 
-invalid_code = '12345678901234'
-apiurl = ""
-
+apiurl = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
+apiurlb = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
 
 def readPort(serialP, q:queue):
     """
@@ -118,6 +118,7 @@ def initGPIO():
     # except Exception as e:
     #     print(e)
 
+
 def wait_1sec():
     """
         WAIT 1 SEC
@@ -154,17 +155,36 @@ def printSTATUS():
     lcd.lcd_string(checklan.ipADDRESS, LCDI2C.LCD_LINE_2)
 
 
+def processResponse(response):
+    apistatus = response['success']
+    apimessage = response['message']
+    ticketstatus = response['result']['ticketStatus']
+    name = response['result']['ticketStatus']['name']
+    ticketId = response['result']['ticketId']
+    isValid = response['result']['isValid']
+    ticketExists = response['result']['exists']
+    return {isValid or ticketExists, name}
+
+
 def apicall(code):
-    url = f'{apiurl}/{code}'
+    apikey = keys['key1']
+    header = {
+        'X-API-Key': f'{apikey}',
+        'Content-Type': "application/json"
+    }
+    payload = {'code': code}
     try:
-        response = get(url)
+        response = post(apiurlb, params=payload, headers=header)
         if response.status_code == 200:
+            result = processResponse(response.json())
+            print(result)
             return response.content
         if response.status_code == 401:
+            print(response.content)
             return {'code':401, 'status':401}
     except Exception as e:
-        print("saras")
-        return {'': ''}        
+        print(e)
+        return {'': ''}
      
 lcd = initLCD()
 
@@ -204,10 +224,6 @@ def main():
         code = None
         time.sleep(2)
         while True:
-            # if ((BGM65 or BJET) and BLAN):
-            #     continue
-            # else:
-            #     BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
             gm65data = None
             jet111data = None
             marked = False
@@ -227,29 +243,23 @@ def main():
                         print("Barcode: " + jet111data)
                         lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
                         code = jet111data
-            """
-                public enum TicketStatuses { Emmited = 1, OK = 2, VoidPending = 3, Voided = 4, Used = 5, Retry = 6, NotFound = 7 }
-                public enum OrderStatuses { OK = 1, InProcess = 2, Refunded = 3 }
-            """
-            response = {'code':'', 'status':''}
             if code is not None:
                 print(code)
-                # response = apicall(code)
-                if type(response) is dict:
-                    if response['status'] == "void":
-                        # print("INVALID CODE")
-                        lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                        lcd.lcd_string("VOID", LCDI2C.LCD_LINE_2)
-                    else:
-                        lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                        lcd.lcd_string("OK", LCDI2C.LCD_LINE_2)
-                        marked = enableGate()
-                        if marked:
-                            print("MARKED CODE")
-                            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()} \n'
-                            fhandler.write(ticket_string)
-                            fhandler.flush()
-                            code = None
+                response = apicall(code)
+                if response[0] == False:
+                    # print("INVALID CODE")
+                    lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string(response[1], LCDI2C.LCD_LINE_2)
+                else:
+                    lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string("OK", LCDI2C.LCD_LINE_2)
+                    marked = enableGate()
+                    if marked:
+                        print("MARKED CODE")
+                        ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()} \n'
+                        fhandler.write(ticket_string)
+                        fhandler.flush()
+                        code = None
                     
     else:
         lcd.lcd_string("Serial Port Fail", LCDI2C.LCD_LINE_1)
