@@ -69,15 +69,18 @@ namespace Carnavacs.Api.Infrastructure
 
             string query = @"SELECT e.Id, QRCodigo as Code, EstadoQrFk StatusId 
                              FROM AccesosEntradasQR e INNER JOIN Ventas v ON e.VentaFk = v.Id 
-                             WHEREe.QrCodigo=@code";
+                             WHERE e.QrCodigo=@code";
 
             var ticket = await Connection.QueryFirstOrDefaultAsync<Ticket>(query, new {code}, Transaction);
 
-            if (ticket==null)
+            if (ticket == null)
             {
                 result.TicketStatus = TicketStatus.NotFound;
             }
-            result.TicketStatus = new TicketStatus((TicketStatuses)ticket.StatusId);
+            else
+            {
+                result.TicketStatus = new TicketStatus((TicketStatuses)ticket.StatusId);
+            }
             return result;
         }
     }

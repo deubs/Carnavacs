@@ -10,7 +10,6 @@ using System.ComponentModel;
 
 namespace Carnavacs.Api.Controllers
 {
-    [SwaggerControllerOrder(2)]
 
     public class EventsController : BaseApiController
     {
