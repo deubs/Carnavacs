@@ -26,7 +26,7 @@ namespace Carnavacs.Api.Controllers.Helpers
             }
             document.Info = new()
             {
-                Title = "Carnavacs.API Bearer scheme",
+                Title = "Carnavacs.API",
                 Version = "v1",
                 Description = "API for Carnaval del Pais"
             };
