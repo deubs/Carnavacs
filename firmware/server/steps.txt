@@ -1,0 +1,28 @@
+#create a ssh key to add to github repo (ssh-keygen -t ed25519)
+
+copy to orangepi
+scp id_ed25519* orangepi@192.168.40.214:/home/orangepi/.ssh/
+
+
+
+fix ip
+change hostname
+
+
+>apt update
+>apt full-upgrade
+
+>git clone git@github.com:deubs/Carnavacs.git
+
+#install deps
+>cd ~/src/Carnavacs/server/
+>apt install $(cat pkglist)
+
+
+>mkdir -p /home/orangepi/logs/
+
+#setup crontab to run on boot
+
+(crontab -l 2>/dev/null; echo "@reboot /bin/bash /home/orangepi/src/Carnavacs/run_molinete.sh >> /home/orangepi/logs/run_molinete.log 2>&1") | crontab -
+
+or copy/install molinete.service to run as a daemon
