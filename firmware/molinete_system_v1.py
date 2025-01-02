@@ -163,7 +163,7 @@ def processResponse(response):
     ticketId = response['result']['ticketId']
     isValid = response['result']['isValid']
     ticketExists = response['result']['exists']
-    return {isValid or ticketExists, name}
+    return {'code': isValid or ticketExists,'text': name}
 
 
 def apicall(code):
@@ -177,8 +177,7 @@ def apicall(code):
         response = post(apiurlb, params=payload, headers=header)
         if response.status_code == 200:
             result = processResponse(response.json())
-            print(result)
-            return response.content
+            return result
         if response.status_code == 401:
             print(response.content)
             return {'code':401, 'status':401}
@@ -245,14 +244,14 @@ def main():
                         code = jet111data
             if code is not None:
                 print(code)
-                response = apicall(code)
-                if response[0] == False:
+                result = apicall(code)
+                if result['code'] == False:
                     # print("INVALID CODE")
                     lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string(response[1], LCDI2C.LCD_LINE_2)
+                    lcd.lcd_string(result['text'], LCDI2C.LCD_LINE_2)
                 else:
                     lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string("OK", LCDI2C.LCD_LINE_2)
+                    lcd.lcd_string("BIENVENIDO", LCDI2C.LCD_LINE_2)
                     marked = enableGate()
                     if marked:
                         print("MARKED CODE")
