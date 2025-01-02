@@ -15,7 +15,7 @@ def processResponse(response):
     ticketId = response['result']['ticketId']
     isValid = response['result']['isValid']
     ticketExists = response['result']['exists']
-    return {'code': isValid or ticketExists,'text': name}
+    return {'code': isValid and ticketExists,'text': name}
 
 
 def apicall(code):
@@ -30,6 +30,7 @@ def apicall(code):
         if response.status_code == 200:
             result = processResponse(response.json())
             print(result['code'])
+            print(result['text'])
             return response.content
         if response.status_code == 401:
             print(response.content)
@@ -40,7 +41,7 @@ def apicall(code):
 
 
 if __name__ == "__main__":
-    code =  "12345678901234"
+    code =  "103225458952"
     apicall(code)
 
 

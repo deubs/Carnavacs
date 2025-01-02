@@ -163,7 +163,7 @@ def processResponse(response):
     ticketId = response['result']['ticketId']
     isValid = response['result']['isValid']
     ticketExists = response['result']['exists']
-    return {'code': isValid or ticketExists,'text': name}
+    return {'code': isValid and ticketExists,'text': name}
 
 
 def apicall(code):
