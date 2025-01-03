@@ -220,45 +220,46 @@ def main():
         lcd.lcd_string('GM65 OK...', LCDI2C.LCD_LINE_2)
         threading.Thread(target = readPort, args = (sp, gm65q,), daemon = True).start()
         BGM65 = True
-        code = None
         time.sleep(2)
-        while True:
-            gm65data = None
-            jet111data = None
-            marked = False
-            if code is None:
-                if not gm65q.empty():
-                    print("reading queue...gm65")
-                    gm65data = gm65q.get()
-                    if gm65data is not None:     
-                        print("Barcode: " + gm65data)
-                        lcd.lcd_string(gm65data, LCDI2C.LCD_LINE_1)
-                        code = gm65data            
-            if code is None:
-                if not jet111q.empty():
-                    print("reading queue...jet111")
-                    jet111data = jet111q.get()
-                    if jet111data is not None:           
-                        print("Barcode: " + jet111data)
-                        lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
-                        code = jet111data
-            if code is not None:
-                print(code)
-                result = apicall(code)
-                if result['code'] == False:
-                    # print("INVALID CODE")
-                    lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string(result['text'], LCDI2C.LCD_LINE_2)
-                else:
-                    lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string("BIENVENIDO", LCDI2C.LCD_LINE_2)
-                    marked = enableGate()
-                    if marked:
-                        print("MARKED CODE")
-                ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()} \n'
-                fhandler.write(ticket_string)
-                fhandler.flush()
-                code = None
+        
+    code = None
+    while True:
+        gm65data = None
+        jet111data = None
+        marked = False
+        if code is None:
+            if not gm65q.empty():
+                print("reading queue...gm65")
+                gm65data = gm65q.get()
+                if gm65data is not None:     
+                    print("Barcode: " + gm65data)
+                    lcd.lcd_string(gm65data, LCDI2C.LCD_LINE_1)
+                    code = gm65data            
+        if code is None:
+            if not jet111q.empty():
+                print("reading queue...jet111")
+                jet111data = jet111q.get()
+                if jet111data is not None:           
+                    print("Barcode: " + jet111data)
+                    lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
+                    code = jet111data
+        if code is not None:
+            print(code)
+            result = apicall(code)
+            if result['code'] == False:
+                # print("INVALID CODE")
+                lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                lcd.lcd_string(result['text'], LCDI2C.LCD_LINE_2)
+            else:
+                lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                lcd.lcd_string("BIENVENIDO", LCDI2C.LCD_LINE_2)
+                marked = enableGate()
+                if marked:
+                    print("MARKED CODE")
+            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()} \n'
+            fhandler.write(ticket_string)
+            fhandler.flush()
+            code = None
                     
     else:
         lcd.lcd_string("Serial Port Fail", LCDI2C.LCD_LINE_1)
