@@ -249,6 +249,7 @@ def main():
         if code is not None:
             print(code)
             result = apicall(code)
+            print(result)
             if result['apistatus'] == True:
                 if result['code'] == False:
                     # print("INVALID CODE")
