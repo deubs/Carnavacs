@@ -174,7 +174,7 @@ def apicall(code):
     }
     payload = {'code': code}
     try:
-        response = post(apiurlb, params=payload, headers=header)
+        response = post(apiurl, params=payload, headers=header)
         if response.status_code == 200:
             result = processResponse(response.json())
             return result
