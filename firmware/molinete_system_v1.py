@@ -183,7 +183,7 @@ def apicall(code):
             return {'code':401, 'status':401}
     except Exception as e:
         print(e)
-        return {'': ''}
+        return {'code': False,'text': 'lan issue'}
      
 lcd = initLCD()
 
@@ -221,7 +221,7 @@ def main():
         threading.Thread(target = readPort, args = (sp, gm65q,), daemon = True).start()
         BGM65 = True
         time.sleep(2)
-        
+
     code = None
     while True:
         gm65data = None
