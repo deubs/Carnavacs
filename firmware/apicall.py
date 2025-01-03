@@ -7,7 +7,9 @@ keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 apiurl = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurlb = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
 
+
 def processResponse(response):
+    print(response)
     apistatus = response['success']
     apimessage = response['message']
     ticketstatus = response['result']['ticketStatus']
