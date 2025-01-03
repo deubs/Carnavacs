@@ -55,15 +55,20 @@ void setup() {
   ss.begin(9600);
   lcd.init();
   lcd.backlight();
-
+  Serial.println("init");
   pinMode(RELE, OUTPUT);
   digitalWrite(RELE, HIGH);
 
   pinMode(SW, INPUT);
   digitalWrite(SW, !SW_ACTIVE);
   
-
-  Ethernet.begin(mac, ip);
+  show("INIT");
+  int eth = Ethernet.begin(mac);
+  if (eth == 1)
+    Serial.println("DHCP OK");
+  else
+    Serial.println("DHCP NOT OK");
+  Serial.println(eth);
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
     show("NO ETH!!");
     while (true)
@@ -84,7 +89,7 @@ void setup() {
     show("Error de red", "Reconectando...");
     delay(1000);
   }
-
+  Serial.println("Terminal");
   welcome("Terminal: " + (String)ID);
 }
 
@@ -146,18 +151,24 @@ void loop() {
     qr += c;
   }
 
+  if (qr != "")
+    Serial.println(qr);
 
   if (qr.length() && qr != last) {
     err = client.get(url + qr);
     if (err == 0) {
 
       int statusCode = client.responseStatusCode();
+      Serial.println(statusCode);
       String result = client.responseBody();
       String status = getValue(result, '#', 0);
       String l1 = getValue(result, '#', 1);
       String l2 = getValue(result, '#', 2);
-
+      Serial.println(result);
+      Serial.println(status);
       show(l1, l2);
+      Serial.println(l1);
+      Serial.println(l2);
       if (status == "OK") {
         openTurn();
       }

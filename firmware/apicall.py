@@ -17,7 +17,7 @@ def processResponse(response):
     ticketId = response['result']['ticketId']
     isValid = response['result']['isValid']
     ticketExists = response['result']['exists']
-    return {'code': isValid and ticketExists,'text': name}
+    return {'code': isValid and ticketExists,'text': apimessage}
 
 
 def apicall(code):
@@ -28,7 +28,7 @@ def apicall(code):
     }
     payload = {'code': code}
     try:
-        response = post(apiurlb, params=payload, headers=header)
+        response = post(apiurl, params=payload, headers=header)
         if response.status_code == 200:
             result = processResponse(response.json())
             print(result['code'])

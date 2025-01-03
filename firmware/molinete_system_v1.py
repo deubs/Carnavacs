@@ -163,7 +163,7 @@ def processResponse(response):
     ticketId = response['result']['ticketId']
     isValid = response['result']['isValid']
     ticketExists = response['result']['exists']
-    return {'code': isValid and ticketExists,'text': name}
+    return {'code': isValid and ticketExists,'text': name, 'apistatus': apistatus}
 
 
 def apicall(code):
@@ -180,10 +180,12 @@ def apicall(code):
             return result
         if response.status_code == 401:
             print(response.content)
-            return {'code':401, 'status':401}
+            return {'code': 401, 'text': 401, 'apistatus': False}
+        if response.status_code == 404:
+            return {'code': 404, 'text': 404, 'apistatus': False}
     except Exception as e:
         print(e)
-        return {'code': False,'text': 'lan issue'}
+        return {'code': False, 'text': 'lan issue', 'apistatus': False}
      
 lcd = initLCD()
 
@@ -192,6 +194,7 @@ def createFile():
     fname = f'tickets_{dt}.txt'
     f = open(fname, "a")
     return f
+
 
 def main():
     """
@@ -206,7 +209,7 @@ def main():
         lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
 
     gm65q = queue.Queue()
-    jet111q = queue.Queue()    
+    jet111q = queue.Queue()
     initGPIO()
     sp = initSerialPort()
     idev = detectDevice()
@@ -246,24 +249,30 @@ def main():
         if code is not None:
             print(code)
             result = apicall(code)
-            if result['code'] == False:
-                # print("INVALID CODE")
-                lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                lcd.lcd_string(result['text'], LCDI2C.LCD_LINE_2)
+            if result['apistatus'] == True:
+                if result['code'] == False:
+                    # print("INVALID CODE")
+                    lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string(result['text'], LCDI2C.LCD_LINE_2)
+                else:
+                    lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string("BIENVENIDO", LCDI2C.LCD_LINE_2)
+                    marked = enableGate()
+                    if marked:
+                        print("MARKED CODE")
             else:
+                enableGate()
                 lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
                 lcd.lcd_string("BIENVENIDO", LCDI2C.LCD_LINE_2)
-                marked = enableGate()
-                if marked:
-                    print("MARKED CODE")
-            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()} \n'
+
+            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()}, burned: {result['apistatus']} \n'
             fhandler.write(ticket_string)
             fhandler.flush()
             code = None
                     
-    else:
-        lcd.lcd_string("Serial Port Fail", LCDI2C.LCD_LINE_1)
-        lcd.lcd_string("Input Fail", LCDI2C.LCD_LINE_2)
+    # else:
+    #     lcd.lcd_string("Serial Port Fail", LCDI2C.LCD_LINE_1)
+    #     lcd.lcd_string("Input Fail", LCDI2C.LCD_LINE_2)
 
 if __name__ == '__main__':
     main()
