@@ -271,6 +271,10 @@ def main():
             fhandler.write(ticket_string)
             fhandler.flush()
             code = None
+        else:
+            lcd.lcd_string("CARNAVAL 2025", LCDI2C.LCD_LINE_1)
+            lcd.lcd_string("NUEVO INGRESO", LCDI2C.LCD_LINE_2)
+
                     
     # else:
     #     lcd.lcd_string("Serial Port Fail", LCDI2C.LCD_LINE_1)
