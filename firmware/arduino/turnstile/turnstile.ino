@@ -178,6 +178,8 @@ void loop() {
       Serial.println(err);
     }
   } else {
+    if (qr != "")
+      Serial.println("Last Burned");
     delay(100);
   }
 
