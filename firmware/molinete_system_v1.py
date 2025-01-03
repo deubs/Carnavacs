@@ -250,6 +250,7 @@ def main():
             print(code)
             result = apicall(code)
             print(result)
+            apires = result['apistatus']
             if result['apistatus'] == True:
                 if result['code'] == False:
                     # print("INVALID CODE")
@@ -266,7 +267,7 @@ def main():
                 lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
                 lcd.lcd_string("BIENVENIDO", LCDI2C.LCD_LINE_2)
 
-            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()}, burned: {result['apistatus']} \n'
+            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()}, burned: {apires} \n'
             fhandler.write(ticket_string)
             fhandler.flush()
             code = None
