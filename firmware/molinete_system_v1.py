@@ -264,7 +264,7 @@ def main():
                 enableGate()
                 lcd.lcd_string('BIENVENIDO', LCDI2C.LCD_LINE_1)
                 lcd.lcd_string("ADELANTE", LCDI2C.LCD_LINE_2)
-                time.sleep(5)
+                time.sleep(2)
 
             ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
             fhandler.write(ticket_string)
