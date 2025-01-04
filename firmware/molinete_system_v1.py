@@ -14,7 +14,7 @@ import queue
 import time
 import wiringpi
 import checklan
-from requests import post, exceptions
+from requests import post, exceptions, Session
 from datetime import datetime
 from apikeys import keys
 
@@ -163,6 +163,31 @@ def processResponse(response):
     m2 = response['result']['m2']
     return {'apistatus': apistatus, 'code': isValid, 'm1': m1, 'm2': m2}
 
+def apicallSession(code):
+    apikey = keys['key1']
+    header = {
+        'X-API-Key': f'{apikey}',
+        'Content-Type': "application/json"
+    }
+    payload = {'code': code}
+    s = Session()
+    try:
+        response = s.post(apiurl, params=payload, headers=header, timeout=3)
+        if response.status_code == 200:
+            return processResponse(response.json())
+        if response.status_code == 401:
+            print(response.status_code)
+        if response.status_code == 404:
+            print(response.status_code)
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'} 
+    except exceptions.Timeout:
+        print("The request timed out!")
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
+    except Exception as e:
+        print(e)
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
+
+
 
 def apicall(code):
     apikey = keys['key1']
@@ -247,27 +272,28 @@ def main():
                     lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
                     code = jet111data
         if code is not None:
-            result = apicall(code)
-            print(result)
-            if result['apistatus'] == True:
-                if result['code'] == False:
-                    # print("INVALID CODE")
-                    lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
-                    time.sleep(3)
-                else:
-                    lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
-                    marked = enableGate()
-                    if marked:
-                        print("MARKED CODE")
-            else:
-                enableGate()
-                lcd.lcd_string('BIENVENIDO', LCDI2C.LCD_LINE_1)
-                lcd.lcd_string("ADELANTE", LCDI2C.LCD_LINE_2)
-                time.sleep(2)
+            # result = apicallSession(code)
+            # print(result)
+            # if result['apistatus'] == True:
+            #     if result['code'] == False:
+            #         # print("INVALID CODE")
+            #         lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
+            #         lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
+            #         time.sleep(3)
+            #     else:
+            #         lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
+            #         lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
+            #         marked = enableGate()
+            #         if marked:
+            #             print("MARKED CODE")
+            # else:
+            enableGate()
+            lcd.lcd_string('BIENVENIDO', LCDI2C.LCD_LINE_1)
+            lcd.lcd_string("ADELANTE", LCDI2C.LCD_LINE_2)
+            time.sleep(2)
 
-            ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
+            # ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
+            ticket_string = f'code: {code}, timestamp: {datetime.now()} \n'
             fhandler.write(ticket_string)
             fhandler.flush()
             code = None
