@@ -30,7 +30,7 @@ GPIO_RELAY_OUT2 = 10 #PC14
 GPIO_INPUT_1 = 13   #PC7
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
-apiurl = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
+apiurl = "http://192.168.40.100/Ticket/Validate"
 
 def readPort(serialP, q:queue):
     """
@@ -272,25 +272,25 @@ def main():
                     lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
                     code = jet111data
         if code is not None:
-            # result = apicallSession(code)
-            # print(result)
-            # if result['apistatus'] == True:
-            #     if result['code'] == False:
-            #         # print("INVALID CODE")
-            #         lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
-            #         lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
-            #         time.sleep(3)
-            #     else:
-            #         lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
-            #         lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
-            #         marked = enableGate()
-            #         if marked:
-            #             print("MARKED CODE")
-            # else:
-            enableGate()
-            lcd.lcd_string('BIENVENIDO', LCDI2C.LCD_LINE_1)
-            lcd.lcd_string("ADELANTE", LCDI2C.LCD_LINE_2)
-            time.sleep(2)
+            result = apicall(code)
+            print(result)
+            if result['apistatus'] == True:
+                if result['code'] == False:
+                    # print("INVALID CODE")
+                    lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
+                    time.sleep(3)
+                else:
+                    lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
+                    marked = enableGate()
+                    if marked:
+                        print("MARKED CODE")
+            else:
+                enableGate()
+                lcd.lcd_string('BIENVENIDO', LCDI2C.LCD_LINE_1)
+                lcd.lcd_string("ADELANTE", LCDI2C.LCD_LINE_2)
+                time.sleep(2)
 
             # ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
             ticket_string = f'code: {code}, timestamp: {datetime.now()} \n'

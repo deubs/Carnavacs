@@ -5,7 +5,8 @@ keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 'key3': '2329db1e-95e8-4265-986e-d02114dbf5dc'}
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
-apiurl = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
+# apiurl = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
+apiurl = "http://192.168.40.100/Ticket/Validate"
 
 
 def processResponse(response):
@@ -25,6 +26,7 @@ def apicallSession(code):
     payload = {'code': code}
     s = Session()
     try:
+        print(apiurl)
         response = s.post(apiurl, params= payload, headers= header, timeout=1)
         if response.status_code == 200:
             result = processResponse(response.json())
@@ -52,7 +54,7 @@ def apicall(code):
     }
     payload = {'code': code}
     try:
-        response = post(apiurl, params= payload, headers= header, timeout=1)
+        response = post(apiurl, params= payload, headers= header, timeout=3)
         if response.status_code == 200:
             result = processResponse(response.json())
             return result
@@ -73,7 +75,7 @@ def apicall(code):
 
 if __name__ == "__main__":
     code =  "103225458952"
-    result = apicallSession(code)
+    result = apicall(code)
     print(result)
     ticket_string = f'code: {code}, status: {result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
     print(ticket_string)
