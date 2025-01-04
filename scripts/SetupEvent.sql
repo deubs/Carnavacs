@@ -41,3 +41,4 @@ SELECT * FROM PUERTAINGRESO
 UPDATE PuertaIngreso SET Enabled = 1 WHERE Nombre IN ('Puerta 2', 'Puerta 3', 'Puerta 4', 'Puerta 8')
 
 
+update Eventos_TipoEntradas set Vigencia='2026-01-01' where vigencia is null

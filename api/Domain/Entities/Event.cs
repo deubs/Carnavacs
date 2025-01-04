@@ -6,5 +6,7 @@
         public DateTime Fecha { get; set; }
         public string Nombre { get; set; }
         public  bool Habilitado { get; set; }
+
+        public string ShowName { get; set; }
     }
 }

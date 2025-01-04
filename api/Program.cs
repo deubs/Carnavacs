@@ -11,6 +11,7 @@ using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Carnavacs.Api.Infrastructure.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,6 +74,9 @@ builder.Services.AddOpenApi(options =>
 
 
 builder.Services.AddSingleton<INFCGenerator, NFCGenerator>();
+builder.Services.AddHttpClient();
+builder.Services.AddHostedService<TicketekMiddleware>();
+
 
 var app = builder.Build();
 

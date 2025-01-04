@@ -1,7 +1,9 @@
 ﻿using Carnavacs.Api.Domain.Entities;
 using Carnavacs.Api.Infrastructure.Interfaces;
 using Dapper;
+using Microsoft.Extensions.Logging;
 using System.Data;
+using System.Text.RegularExpressions;
 
 namespace Carnavacs.Api.Infrastructure
 {
@@ -15,7 +17,7 @@ namespace Carnavacs.Api.Infrastructure
         public async Task<IReadOnlyList<Event>> GetAllAsync()
         {
             var query = "SELECT * FROM Eventos WHERE habilitado=@Enabled order by fecha";
-            var events = await Connection.QueryAsync<Event>(query, new {Enabled = 1}, Transaction);
+            var events = await Connection.QueryAsync<Event>(query, new { Enabled = 1 }, Transaction);
             return events.ToList();
         }
 
@@ -46,9 +48,31 @@ namespace Carnavacs.Api.Infrastructure
             throw new NotImplementedException();
         }
 
-        public Task<EventStats?> GetStatsAsync()
+     
+        public async Task<EventStats> GetStatsAsync()
         {
-            throw new NotImplementedException();
+            EventStats stats = new EventStats();
+            var ev = await this.GetCurrentAsync();
+            string query = @"SELECT count(*) as Total, EstadoQrFk StatusId, s.Nombre as StatusName 
+                                 FROM AccesosEntradasQR e INNER JOIN Ventas v ON e.VentaFk = v.Id
+                                    INNER JOIN EstadosQR s ON e.EstadoQrFk = s.Id
+                                 WHERE V.EstadoVentaFk = @Enabled AND v.eventofk = @EventFk
+                                 GROUP BY EstadoQrFk, s.Nombre";
+            var r = await Connection.QueryAsync<TicketStat>(query, new { Enabled = 1, EventFk = ev.Id }, Transaction);
+
+            stats.TicketStats = r.ToList();
+
+            //gates
+            string gateQuery = @"select ad.NroSerie,sobrenombre, count(*) from QREntradasLecturas qre
+                                 inner join AccesosDispositivos ad on qre.AccesoDispositivoFk = ad.Id
+                                 inner join puertaingreso pi on pi.id = ad.puertaingresoid 
+                                 where fecha > '2023-02-25 12:00'
+                                 group by ad.NroSerie, sobrenombre order by ad.NroSerie";
+
+            var r2 = await Connection.QueryAsync<TicketStat>(query, new { Enabled = 1, EventFk = ev.Id }, Transaction);
+
+
+            return stats;
         }
     }
 }
