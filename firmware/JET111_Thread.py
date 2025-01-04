@@ -39,6 +39,7 @@ def detectDevice():
             ("BF SCAN SCAN KEYBOARD" in device.name) or \
                 ("NT USB Keyboard" in device.name) or \
                     ("ZKRFID R400" in device.name):
+
             inputdev = device.path
             break
     return inputdev

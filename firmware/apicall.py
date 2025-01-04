@@ -1,5 +1,5 @@
-from requests import post
-
+from requests import post, exceptions
+from datetime import datetime
 keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 'key2': '840c53ea-0467-4b52-b083-2de869d939a8',
 'key3': '2329db1e-95e8-4265-986e-d02114dbf5dc'}
@@ -11,13 +11,10 @@ apiurlb = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
 def processResponse(response):
     print(response)
     apistatus = response['success']
-    apimessage = response['message']
-    ticketstatus = response['result']['ticketStatus']
-    name = response['result']['ticketStatus']['name']
-    ticketId = response['result']['ticketId']
+    m1 = response["result"]['m1']
+    m2 = response['result']['m2']
     isValid = response['result']['isValid']
-    ticketExists = response['result']['exists']
-    return {'code': isValid and ticketExists,'text': apimessage}
+    return {'apistatus': apistatus, 'code': isValid, 'm1': m1, 'm2': m2}
 
 
 def apicall(code):
@@ -28,23 +25,32 @@ def apicall(code):
     }
     payload = {'code': code}
     try:
-        response = post(apiurl, params=payload, headers=header)
+        response = post(apiurl, params= payload, headers= header, timeout=1)
         if response.status_code == 200:
             result = processResponse(response.json())
-            print(result['code'])
-            print(result['text'])
-            return response.content
-        if response.status_code == 401:
-            print(response.content)
-            return {'code':401, 'status':401}
+            return result
+        elif response.status_code == 401:
+            print(response.status_code)
+        elif response.status_code == 404:
+            print(response.status_code)
+        else:
+            print('no response')
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
+    except exceptions.Timeout:
+        print("The request timed out!")
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
     except Exception as e:
         print(e)
-        return {'': ''}
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
 
 
 if __name__ == "__main__":
     code =  "103225458952"
-    apicall(code)
+    result = apicall(code)
+    print(result)
+    ticket_string = f'code: {code}, status: {result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
+    print(ticket_string)
+
 
 
 """

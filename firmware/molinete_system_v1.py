@@ -14,7 +14,7 @@ import queue
 import time
 import wiringpi
 import checklan
-from requests import post
+from requests import post, exceptions
 from datetime import datetime
 from apikeys import keys
 
@@ -157,13 +157,10 @@ def printSTATUS():
 
 def processResponse(response):
     apistatus = response['success']
-    apimessage = response['message']
-    ticketstatus = response['result']['ticketStatus']
-    name = response['result']['ticketStatus']['name']
-    ticketId = response['result']['ticketId']
     isValid = response['result']['isValid']
-    ticketExists = response['result']['exists']
-    return {'code': isValid and ticketExists,'text': name, 'apistatus': apistatus}
+    m1 = response['result']['m1']
+    m2 = response['result']['m2']
+    return {'apistatus': apistatus, 'code': isValid, 'm1': m1, 'm2': m2}
 
 
 def apicall(code):
@@ -176,16 +173,18 @@ def apicall(code):
     try:
         response = post(apiurl, params=payload, headers=header, timeout=3)
         if response.status_code == 200:
-            result = processResponse(response.json())
-            return result
+            return processResponse(response.json())
         if response.status_code == 401:
-            print(response.content)
-            return {'code': 401, 'text': 401, 'apistatus': False}
+            print(response.status_code)
         if response.status_code == 404:
-            return {'code': 404, 'text': 404, 'apistatus': False}
+            print(response.status_code)
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'} 
+    except exceptions.Timeout:
+        print("The request timed out!")
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
     except Exception as e:
         print(e)
-        return {'code': False, 'text': 'lan issue', 'apistatus': False}
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
      
 lcd = initLCD()
 
@@ -247,18 +246,17 @@ def main():
                     lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
                     code = jet111data
         if code is not None:
-            print(code)
             result = apicall(code)
             print(result)
-            apires = result['apistatus']
             if result['apistatus'] == True:
                 if result['code'] == False:
                     # print("INVALID CODE")
-                    lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string(result['text'], LCDI2C.LCD_LINE_2)
+                    lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
+                    time.sleep(3)
                 else:
-                    lcd.lcd_string(code, LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string("BIENVENIDO", LCDI2C.LCD_LINE_2)
+                    lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
                     marked = enableGate()
                     if marked:
                         print("MARKED CODE")
@@ -268,7 +266,7 @@ def main():
                 lcd.lcd_string("BIENVENIDO", LCDI2C.LCD_LINE_2)
                 time.sleep(5)
 
-            ticket_string = f'code: {code}, status:{code}, timestamp: {datetime.now()}, burned: {apires} \n'
+            ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
             fhandler.write(ticket_string)
             fhandler.flush()
             code = None
