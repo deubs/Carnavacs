@@ -207,8 +207,8 @@ def main():
     else:
         lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
 
-    gm65q = queue.Queue()
-    jet111q = queue.Queue()
+    gm65q = queue.Queue(maxsize = 1)
+    jet111q = queue.Queue(maxsize = 1)
     initGPIO()
     sp = initSerialPort()
     idev = detectDevice()
