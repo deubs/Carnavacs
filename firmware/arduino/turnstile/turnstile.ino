@@ -12,9 +12,9 @@
     100    101    102    103    104    105    106    107    108    109    110    111    112    113    114    115    116    117    118    119 -    120
    0x64 - 0x65 - 0x66 - 0x67 - 0x68 - 0x69 - 0x6A - 0x6B - 0x6C - 0x6D - 0x6E - 0x6F - 0x70 - 0x71 - 0x72 - 0x73 - 0x74 - 0x75 - 0x76 - 0x77 -  0x78
 */
-int ID = 0x10;
+int ID = 0x11;
 /*estandar 0x3F, molinetes 0x27*/
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
 SoftwareSerial ss(2, 3);
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, ID };
@@ -63,12 +63,13 @@ void setup() {
   digitalWrite(SW, !SW_ACTIVE);
   
   show("INIT");
-  int eth = Ethernet.begin(mac);
-  if (eth == 1)
-    Serial.println("DHCP OK");
-  else
-    Serial.println("DHCP NOT OK");
-  Serial.println(eth);
+  Ethernet.begin(mac, ip);
+  // int eth = Ethernet.begin(mac, ip);
+  // if (eth == 1)
+  //   Serial.println("DHCP OK");
+  // else
+  //   Serial.println("DHCP NOT OK");
+  // Serial.println(eth);
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
     show("NO ETH!!");
     while (true)

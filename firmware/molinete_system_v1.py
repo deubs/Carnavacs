@@ -29,8 +29,8 @@ I2CBUS = 3
 GPIO_RELAY_OUT2 = 10 #PC14
 GPIO_INPUT_1 = 13   #PC7
 
-apiurl = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
-apiurlb = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
+apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
+apiurl = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
 
 def readPort(serialP, q:queue):
     """
@@ -237,12 +237,12 @@ def main():
                 if gm65data is not None:     
                     print("Barcode: " + gm65data)
                     lcd.lcd_string(gm65data, LCDI2C.LCD_LINE_1)
-                    code = gm65data            
+                    code = gm65data
         if code is None:
             if not jet111q.empty():
                 print("reading queue...jet111")
                 jet111data = jet111q.get()
-                if jet111data is not None:           
+                if jet111data is not None:
                     print("Barcode: " + jet111data)
                     lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
                     code = jet111data
