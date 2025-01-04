@@ -43,14 +43,15 @@ def readPort(serialP, q:queue):
             print("Reading Serial Port")
             data = ""
             while True:
-                cmdRet = serialP.read().decode()
-                if (cmdRet == '\r' or cmdRet == '\n'):
-                    q.put(data)
-                    break
-                else:
-                    data += str(cmdRet)
+                if q.empty():
+                    cmdRet = serialP.read().decode()
+                    if (cmdRet == '\r' or cmdRet == '\n'):
+                        q.put(data)
+                        break
+                    else:
+                        data += str(cmdRet)
             # print("Raw1 = " + str(data))
-    else:   
+    else:
         print("Port is Closed")
 
     
