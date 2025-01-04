@@ -31,7 +31,7 @@ namespace Carnavacs.Api.Infrastructure
 
         public async Task<Gate> GetByIdAsync(long id)
         {
-            string query = "SELECT e.Id, QRCodigo as Code, EstadoQrFk StatusId FROM AccesosEntradasQR WHERE Id=@Id";
+            string query = "SELECT * FROM [PuertaIngreso] WHERE Id=@Id";
             return await Connection.QuerySingleAsync<Gate>(query, new { Id = id }, Transaction);
         }
 
@@ -54,6 +54,46 @@ namespace Carnavacs.Api.Infrastructure
         public Task UseAsync(int gateId, string? device)
         {
             throw new NotImplementedException();
+        }
+
+        internal async Task<AccessDevice> GetDeviceAsync(string deviceId)
+        {
+            string query = "SELECT * FROM [AccesosDispositivos] WHERE NroSerie=@deviceId";
+            AccessDevice device = await Connection.QuerySingleOrDefaultAsync<AccessDevice>(query, new { deviceId }, Transaction);
+            
+            if (device == null)
+            {
+                device = new AccessDevice
+                {
+                    AccesoSectorFk = 1,
+                    NroSerie = deviceId
+                };
+                device.Id = await this.AddDeviceAsync(device);
+            }
+            return device;
+
+        }
+
+        private async Task<int> AddDeviceAsync(AccessDevice device)
+        {
+            string insertQuery = @"INSERT INTO dbo.[AccesosDispositivos](NroSerie, AccesoSectorFk)
+                        OUTPUT INSERTED.[Id]
+                        VALUES(@deviceId, @accesoSectorFk);";
+            return await Connection.QuerySingleAsync<int>(insertQuery, new {deviceId=device.NroSerie, accesoSectorFk= device.AccesoSectorFk}, Transaction);
+        }
+
+        internal async Task<int> LogEntryAsync(TicketLog log)
+        {
+
+            string insertQuery = @"INSERT INTO dbo.[QREntradasLecturas] (QrEntradaFk, Fecha, EstadoQrFk, AccesoDispositivoFk)
+                        OUTPUT INSERTED.[Id]
+                        VALUES(@qrId, @dt, @ticketStatusId, @deviceId);";
+            return await Connection.QuerySingleAsync<int>(insertQuery, new { 
+                qrId = log.QrEntradaFk,
+                dt = log.Fecha,
+                ticketStatusId = log.EstadoQrFk,
+                deviceId = log.AccesoDispositivoFk}, Transaction);
+
         }
     }
 }

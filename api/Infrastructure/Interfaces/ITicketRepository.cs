@@ -4,6 +4,8 @@ namespace Carnavacs.Api.Infrastructure.Interfaces
 {
     public interface ITicketRepository : IRepository<Ticket>
     {
+        DateTime GetLastSync(string evt);
+
         /// <summary>
         /// Mark ticket as used, or count retry if already used
         /// </summary>

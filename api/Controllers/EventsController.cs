@@ -86,7 +86,6 @@ namespace Carnavacs.Api.Controllers
         }
 
 
-        [Authorize(Policy = "RequireJwt")]
         [HttpGet("Stats")]
         [EndpointName("GetEventStats")]
         [EndpointSummary("Get Stats for current Event")]

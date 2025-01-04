@@ -27,7 +27,7 @@ namespace Carnavacs.Api.Controllers
 
 
         [HttpPost("Validate")]
-        [Authorize(Policy = "RequireApiKey")]
+        //[Authorize(Policy = "RequireApiKey")]
         public async Task<ApiResponse<TicketValidationResult>> Validate(string code)
         {
             var apiResponse = new ApiResponse<TicketValidationResult> { Success=true };

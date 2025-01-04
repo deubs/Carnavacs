@@ -1,7 +1,8 @@
-@Carnavacs.Api_HostAddress = http://localhost:5119
+@Carnavacs.Api_HostAddress = https://localhost:51119
 
-GET {{Carnavacs.Api_HostAddress}}/Event/Current
+POST {{Carnavacs.Api_HostAddress}}/Ticket/Validate/
 Accept: application/json
 Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
 
 ###
