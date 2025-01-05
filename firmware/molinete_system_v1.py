@@ -214,6 +214,7 @@ def apicall(code):
      
 lcd = initLCD()
 
+
 def createFile():
     dt = datetime.now().isoformat()
     fname = f'tickets_{dt}.txt'

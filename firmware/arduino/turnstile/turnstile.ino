@@ -22,8 +22,8 @@ IPAddress ip(192, 168, 40, ID);
 
 EthernetClient ethClient;
 
-char server[] = "192.168.40.250";
-String url = "/QR/Read?qr=";
+char server[] = "192.168.40.244";
+String url = "/QR/MolReadQR.asp?qrCode=";
 
 HttpClient client = HttpClient(ethClient, server, 80);
 
@@ -170,9 +170,9 @@ void loop() {
       show(l1, l2);
       Serial.println(l1);
       Serial.println(l2);
-      // if (status == "OK") {
+      if (status == "OK") {
         openTurn();
-      // }
+      }
       // last = qr;
     } else {
       Serial.print("Getting response failed: ");
