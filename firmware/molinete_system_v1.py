@@ -224,7 +224,7 @@ def initInputDevice(queue):
     if idev is not None:
         dev = connectDevice(idev)
         threading.Thread(target = readBarCodes, args = (dev, queue,), daemon = True).start()
-        printMessage(lcd, "JET111 OK...", LCDI2C.LCD_LINE_1)
+        # printMessage(lcd, "JET111 OK...", LCDI2C.LCD_LINE_1)
         # lcd.lcd_string("JET111 OK...", LCDI2C.LCD_LINE_1)
         BJET = True
     return idev
@@ -233,7 +233,7 @@ def initSerialDevice(queue):
     sp = initSerialPort()
     if sp != None:
         # lcd.lcd_string('GM65 OK...', LCDI2C.LCD_LINE_2)
-        printMessage(lcd, 'GM65 OK...', LCDI2C.LCD_LINE_2)
+        # printMessage(lcd, 'GM65 OK...', LCDI2C.LCD_LINE_2)
         threading.Thread(target = readPort, args = (sp, queue,), daemon = True).start()
         BGM65 = True
         time.sleep(2)
