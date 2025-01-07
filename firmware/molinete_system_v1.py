@@ -317,7 +317,7 @@ def initSerialDevice(queue):
         time.sleep(2)
     return sp
 
-
+import pdb
 def main():
     """
         Main function
@@ -370,6 +370,7 @@ def main():
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
             else:
+                pdb.set_trace()
                 # input device is OFF try reconnect
                 printMessage(lcd, "INPUT DEVICE OFF", LCDI2C.LCD_LINE_1, True)
                 try:
