@@ -49,6 +49,9 @@ scancodes = {
 	10:	u'9'
 }
 
+idev = None
+sp = None
+
 print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
 
@@ -94,22 +97,25 @@ def saveBarcode(bc):
 def readBarCodes(device, q: queue):
     print('begin reading...')
     barcode = ''
-    for event in device.read_loop():
-        if event.type == ecodes.EV_KEY:
-            eventdata = categorize(event)
-            if eventdata.keystate == 1: # Keydown
-                scancode = eventdata.scancode
-                if scancode == 28: # Enter
-                    if BCODEREAD_ENABLED:
-                        saveBarcode(barcode)
-                        q.put(barcode)
-                        barcode = ''
-                else:
-                    key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
-                    barcode = barcode + key
-                    if key == NOT_RECOGNIZED_KEY:
-                        print('unknown key, scancode=' + str(scancode))
-
+    try:
+        for event in device.read_loop():
+            if event.type == ecodes.EV_KEY:
+                eventdata = categorize(event)
+                if eventdata.keystate == 1: # Keydown
+                    scancode = eventdata.scancode
+                    if scancode == 28: # Enter
+                        if BCODEREAD_ENABLED:
+                            saveBarcode(barcode)
+                            q.put(barcode)
+                            barcode = ''
+                    else:
+                        key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
+                        barcode = barcode + key
+                        if key == NOT_RECOGNIZED_KEY:
+                            print('unknown key, scancode=' + str(scancode))
+    except Exception as e:
+        print(e)
+        idev = None
 
 def readPort(serialP, q:queue):
     """
