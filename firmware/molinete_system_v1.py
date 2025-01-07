@@ -376,14 +376,14 @@ def main():
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
             else:
-                pdb.set_trace()
+                # pdb.set_trace()
                 # input device is OFF try reconnect
                 printMessage(lcd, "INPUT DEVICE OFF", LCDI2C.LCD_LINE_1, True)
                 try:
                     idev = initInputDevice(jet111q)
                     printMessage(lcd, 'INIT INPUT DEV', LCDI2C.LCD_LINE_1, True)
                 except Exception as e:
-                    printMessage(lcd, e, LCDI2C.LCD_LINE_1)
+                    printMessage(lcd, e, LCDI2C.LCD_LINE_1, True)
 
         if code is not None:
             result = apicall(code)
