@@ -9,7 +9,7 @@
 import serial
 import LCDI2C
 import JET111_Thread
-from JET111_Thread import detectDevice, connectDevice, readBarCodes
+# from JET111_Thread import detectDevice, connectDevice, readBarCodes
 import threading
 import queue
 import time
@@ -18,7 +18,8 @@ import checklan
 from requests import post, exceptions, Session
 from datetime import datetime
 from apikeys import keys
-
+from evdev import InputDevice, categorize, ecodes, list_devices
+import calendar
 
 # STATUS VARS
 BLAN = False
@@ -33,7 +34,81 @@ GPIO_INPUT_1 = 13   #PC7
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
 
-# BCODEREAD_ENABLED = True
+BCODEREAD_ENABLED = True
+
+scancodes = {
+	11:	u'0',
+	2:	u'1',
+	3:	u'2',
+	4:	u'3',
+	5:	u'4',
+	6:	u'5',
+	7:	u'6',
+	8:	u'7',
+	9:	u'8',
+	10:	u'9'
+}
+
+print(scancodes)
+NOT_RECOGNIZED_KEY = u'X'
+
+def detectDevice():
+    devices = [InputDevice(path) for path in list_devices()]
+    inputdev = None
+    print(devices)
+    for device in devices:
+        print(device.name)
+        if ("IMAGER 2D" in device.name) or \
+            ("BF SCAN SCAN KEYBOARD" in device.name) or \
+                ("NT USB Keyboard" in device.name) or \
+                    ("TMS HIDKeyBoard" in device.name) or \
+                        ("ZKRFID R400" in device.name):
+
+            inputdev = device.path
+            break
+    return inputdev
+    
+def connectDevice(inputdev):
+    try:           
+        device = InputDevice(inputdev) # Replace with your device
+    except Exception as e:
+        print(e)
+        return None
+    else:
+        print(device)
+        print(device.capabilities())
+        return device
+
+def saveBarcode(bc):
+    d = datetime.now()
+    unixtime = calendar.timegm(d.utctimetuple())	
+    entry = str(unixtime) + ' ' + bc +  '\n'
+    try:
+        with open('barcodes.txt', 'a') as bc_file:
+            bc_file.write(entry)
+    except Exception as e:
+        print(e)
+
+
+def readBarCodes(device, q: queue):
+    print('begin reading...')
+    barcode = ''
+    for event in device.read_loop():
+        if event.type == ecodes.EV_KEY:
+            eventdata = categorize(event)
+            if eventdata.keystate == 1: # Keydown
+                scancode = eventdata.scancode
+                if scancode == 28: # Enter
+                    if BCODEREAD_ENABLED:
+                        saveBarcode(barcode)
+                        q.put(barcode)
+                        barcode = ''
+                else:
+                    key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
+                    barcode = barcode + key
+                    if key == NOT_RECOGNIZED_KEY:
+                        print('unknown key, scancode=' + str(scancode))
+
 def readPort(serialP, q:queue):
     """
         Serial port communication with GM65 barcode reader
@@ -45,7 +120,7 @@ def readPort(serialP, q:queue):
             print("Reading Serial Port")
             data = ""
             while True:
-                if JET111_Thread.BINPUT_CODE_READ_ENABLED:
+                if BCODEREAD_ENABLED:
                     if q.empty():
                         cmdRet = serialP.read().decode()
                         if (cmdRet == '\r' or cmdRet == '\n'):
@@ -213,8 +288,10 @@ def createFile():
         print(e)
     return f
 
+
 def printMessage(lcd_object, message, line):
-    print(message)
+    if message is not "CARNAVAL 2025" or message is not "NUEVO INGRESO":
+        print(message)
     if BINITLCD:
         lcd_object.lcd_string(message, l)
 
