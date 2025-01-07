@@ -79,6 +79,7 @@ def connectDevice(inputdev):
         print(device.capabilities())
         return device
 
+
 def saveBarcode(bc):
     d = datetime.now()
     unixtime = calendar.timegm(d.utctimetuple())	
@@ -108,6 +109,7 @@ def readBarCodes(device, q: queue):
                     barcode = barcode + key
                     if key == NOT_RECOGNIZED_KEY:
                         print('unknown key, scancode=' + str(scancode))
+
 
 def readPort(serialP, q:queue):
     """
@@ -263,7 +265,6 @@ def apicall(code):
         print(e)
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
 
-
 BINITLCD = False
 def initLCD():
     lcd = None
@@ -274,7 +275,6 @@ def initLCD():
         print(e)
         BINITLCD = False
     return lcd
-
 
 bFILECREATED =  False
 def createFile():
@@ -316,7 +316,6 @@ def initSerialDevice(queue):
         BGM65 = True
         time.sleep(2)
     return sp
-
 
 
 def main():
@@ -387,8 +386,8 @@ def main():
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
                     time.sleep(3)
-                    BCODEREAD_ENABLED =  True
-                    code = None
+                    # BCODEREAD_ENABLED =  True
+                    # code = None
                 else:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
@@ -396,9 +395,8 @@ def main():
                     if marked:
                         printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1, True)
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
-                        BCODEREAD_ENABLED =  True
-                        code = None
-                        JET111_Thread.BINPUT_CODE_READ_ENABLED =  True
+                BCODEREAD_ENABLED =  True
+                code = None
             else:
                 printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
                 printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
