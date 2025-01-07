@@ -293,7 +293,7 @@ def printMessage(lcd_object, message, line):
     if message != "CARNAVAL 2025" or message != "NUEVO INGRESO":
         print(message)
     if BINITLCD:
-        lcd_object.lcd_string(message, l)
+        lcd_object.lcd_string(message, line)
 
 
 def initInputDevice(queue):
