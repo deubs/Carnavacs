@@ -412,7 +412,7 @@ def main():
                 fhandler.flush()
         else:
             printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
-            printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_1, False)
+            printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_2, False)
 
                     
     # else:
