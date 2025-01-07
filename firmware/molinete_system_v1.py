@@ -8,7 +8,8 @@
 
 import serial
 import LCDI2C
-from JET111_Thread import detectDevice, connectDevice, readBarCodes, BINPUT_CODE_READ_ENABLED
+import JET111_Thread
+from JET111_Thread import detectDevice, connectDevice, readBarCodes
 import threading
 import queue
 import time
@@ -44,7 +45,7 @@ def readPort(serialP, q:queue):
             print("Reading Serial Port")
             data = ""
             while True:
-                if BINPUT_CODE_READ_ENABLED:
+                if JET111_Thread.BINPUT_CODE_READ_ENABLED:
                     if q.empty():
                         cmdRet = serialP.read().decode()
                         if (cmdRet == '\r' or cmdRet == '\n'):
@@ -268,7 +269,7 @@ def main():
             FAILURE_COUNT = 5
             if sp is not None:
                 if not gm65q.empty():
-                    BINPUT_CODE_READ_ENABLED = False
+                    JET111_Thread.BINPUT_CODE_READ_ENABLED = False
                     print("reading queue...gm65")
                     gm65data = gm65q.get()
                     if gm65data is not None:     
@@ -283,7 +284,7 @@ def main():
 
             if idev is not None:
                 if not jet111q.empty():
-                    BINPUT_CODE_READ_ENABLED = False
+                    JET111_Thread.BINPUT_CODE_READ_ENABLED = False
                     print("reading queue...jet111")
                     jet111data = jet111q.get()
                     if jet111data is not None:
@@ -313,7 +314,7 @@ def main():
                         printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1)
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2)
                         code = None
-                        BINPUT_CODE_READ_ENABLED =  True
+                        JET111_Thread.BINPUT_CODE_READ_ENABLED =  True
             else:
                 # enableGate()
                 lcd.lcd_string('FALLA DE SISTEMA', LCDI2C.LCD_LINE_1)
