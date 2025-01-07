@@ -156,13 +156,13 @@ def initSerialPort():
     return serial_port
 
 
-def initLCD():
-    """
-        Initiates LCD
-    """
-    lcd = LCDI2C.LCD()
-    lcd.lcd_init()
-    return lcd
+# def initLCD():
+#     """
+#         Initiates LCD
+#     """
+#     lcd = LCDI2C.LCD()
+#     lcd.lcd_init()
+#     return lcd
 
 bGATEOPEN = False
 
@@ -269,7 +269,8 @@ BINITLCD = False
 def initLCD():
     lcd = None
     try:
-        lcd = initLCD()
+        lcd = LCDI2C.LCD()
+        lcd.lcd_init()
         BINITLCD = True
     except Exception as e:
         print(e)
