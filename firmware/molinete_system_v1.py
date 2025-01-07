@@ -8,7 +8,7 @@
 
 import serial
 import LCDI2C
-from JET111_Thread import detectDevice, connectDevice, readBarCodes
+from JET111_Thread import detectDevice, connectDevice, readBarCodes, BINPUT_CODE_READ_ENABLED
 import threading
 import queue
 import time
@@ -32,6 +32,7 @@ GPIO_INPUT_1 = 13   #PC7
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
 
+# BCODEREAD_ENABLED = True
 def readPort(serialP, q:queue):
     """
         Serial port communication with GM65 barcode reader
@@ -43,13 +44,14 @@ def readPort(serialP, q:queue):
             print("Reading Serial Port")
             data = ""
             while True:
-                if q.empty():
-                    cmdRet = serialP.read().decode()
-                    if (cmdRet == '\r' or cmdRet == '\n'):
-                        q.put(data)
-                        break
-                    else:
-                        data += str(cmdRet)
+                if BINPUT_CODE_READ_ENABLED:
+                    if q.empty():
+                        cmdRet = serialP.read().decode()
+                        if (cmdRet == '\r' or cmdRet == '\n'):
+                            q.put(data)
+                            break
+                        else:
+                            data += str(cmdRet)
             # print("Raw1 = " + str(data))
     else:
         print("Port is Closed")
@@ -134,18 +136,16 @@ def enableGate():
     Enable COIL releasing relays. Iluminate RED light
     """
     print("Realease RELAYS")
-    # wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.HIGH)
     wiringpi.digitalWrite(GPIO_RELAY_OUT2, wiringpi.GPIO.HIGH)
     bHole = ISRSignal()
     if not bHole:
         print("Activate RELAYS")
-        # wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.LOW)
         wiringpi.digitalWrite(GPIO_RELAY_OUT2, wiringpi.GPIO.LOW)
         return True
     return False
 
 
-def printSTATUS():
+def printSTATUS(lcd):
     lcd.lcd_string("LAN " + str(BLAN), LCDI2C.LCD_LINE_1)
     lcd.lcd_string("GM65 " + str(BGM65) + " JET: " + str(BJET), LCDI2C.LCD_LINE_2)
     time.sleep(5)
@@ -162,31 +162,6 @@ def processResponse(response):
     m1 = response['result']['m1']
     m2 = response['result']['m2']
     return {'apistatus': apistatus, 'code': isValid, 'm1': m1, 'm2': m2}
-
-def apicallSession(code):
-    apikey = keys['key1']
-    header = {
-        'X-API-Key': f'{apikey}',
-        'Content-Type': "application/json"
-    }
-    payload = {'code': code}
-    s = Session()
-    try:
-        response = s.post(apiurl, params=payload, headers=header, timeout=3)
-        if response.status_code == 200:
-            return processResponse(response.json())
-        if response.status_code == 401:
-            print(response.status_code)
-        if response.status_code == 404:
-            print(response.status_code)
-        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'} 
-    except exceptions.Timeout:
-        print("The request timed out!")
-        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
-    except Exception as e:
-        print(e)
-        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
-
 
 
 def apicall(code):
@@ -211,45 +186,78 @@ def apicall(code):
     except Exception as e:
         print(e)
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
-     
-lcd = initLCD()
 
 
+BINITLCD = False
+def initLCD():
+    lcd = None
+    try:
+        lcd = initLCD()
+        BINITLCD = True
+    except Exception as e:
+        print(e)
+        BINITLCD = False
+    return lcd
+
+
+bFILECREATED =  False
 def createFile():
+    f = None
     dt = datetime.now().isoformat()
-    fname = f'tickets_{dt}.txt'
-    f = open(fname, "a")
+    try:
+        fname = f'tickets_{dt}.txt'
+        f = open(fname, "a")
+        bFILECREATED = True
+    except Exception as e:
+        print(e)
     return f
+
+def printMessage(lcd_object, message, line):
+    print(message)
+    if BINITLCD:
+        lcd_object.lcd_string(message, l)
+
+
+def initInputDevice(queue):
+    idev = detectDevice()
+    if idev is not None:
+        dev = connectDevice(idev)
+        threading.Thread(target = readBarCodes, args = (dev, queue,), daemon = True).start()
+        printMessage(lcd, "JET111 OK...", LCDI2C.LCD_LINE_1)
+        # lcd.lcd_string("JET111 OK...", LCDI2C.LCD_LINE_1)
+        BJET = True
+    return idev
+
+def initSerialDevice(queue):
+    sp = initSerialPort()
+    if sp != None:
+        # lcd.lcd_string('GM65 OK...', LCDI2C.LCD_LINE_2)
+        printMessage(lcd, 'GM65 OK...', LCDI2C.LCD_LINE_2)
+        threading.Thread(target = readPort, args = (sp, queue,), daemon = True).start()
+        BGM65 = True
+        time.sleep(2)
+    return sp
+
 
 
 def main():
     """
         Main function
     """
-    fhandler =  createFile()
+    lcd = initLCD()
+    fhandler = createFile()
 
     BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
     if BLAN:
-        lcd.lcd_string("LAN is OK", LCDI2C.LCD_LINE_1)
+        printMessage(lcd, "LAN IS OK", LCDI2C.LCD_LINE_1)
     else:
-        lcd.lcd_string("LAN is OFF", LCDI2C.LCD_LINE_1)
+        printMessage(lcd, "LAN IS OFF", LCDI2C.LCD_LINE_1)
 
     gm65q = queue.Queue(maxsize = 1)
     jet111q = queue.Queue(maxsize = 1)
     initGPIO()
-    sp = initSerialPort()
-    idev = detectDevice()
-    if idev is not None:
-        dev = connectDevice(idev)
-        threading.Thread(target = readBarCodes, args = (dev, jet111q,), daemon = True).start()
-        lcd.lcd_string("JET111 OK...", LCDI2C.LCD_LINE_1)
-        BJET = True
-
-    if sp != None:
-        lcd.lcd_string('GM65 OK...', LCDI2C.LCD_LINE_2)
-        threading.Thread(target = readPort, args = (sp, gm65q,), daemon = True).start()
-        BGM65 = True
-        time.sleep(2)
+    idev = initInputDevice(jet111q)
+    sp = initSerialDevice(gm65q)
 
     code = None
     while True:
@@ -257,50 +265,75 @@ def main():
         jet111data = None
         marked = False
         if code is None:
-            if not gm65q.empty():
-                print("reading queue...gm65")
-                gm65data = gm65q.get()
-                if gm65data is not None:     
-                    print("Barcode: " + gm65data)
-                    lcd.lcd_string(gm65data, LCDI2C.LCD_LINE_1)
-                    code = gm65data
-        if code is None:
-            if not jet111q.empty():
-                print("reading queue...jet111")
-                jet111data = jet111q.get()
-                if jet111data is not None:
-                    print("Barcode: " + jet111data)
-                    lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)
-                    code = jet111data
+            FAILURE_COUNT = 5
+            if sp is not None:
+                if not gm65q.empty():
+                    BINPUT_CODE_READ_ENABLED = False
+                    print("reading queue...gm65")
+                    gm65data = gm65q.get()
+                    if gm65data is not None:     
+                        printMessage(lcd, gm65data, LCDI2C.LCD_LINE_1)
+                        code = gm65data
+            else:
+                # serial device is OFF, try reconnect
+                try:
+                    sp = initSerialDevice(gm65q)
+                except Exception as e:
+                    printMessage(lcd, e, LCDI2C.LCD_LINE_1)
+
+            if idev is not None:
+                if not jet111q.empty():
+                    BINPUT_CODE_READ_ENABLED = False
+                    print("reading queue...jet111")
+                    jet111data = jet111q.get()
+                    if jet111data is not None:
+                        printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1)
+                        code = jet111data
+            else:
+                # input device is OFF try reconnect
+                printMessage(lcd, "INPUT DEVICE OFF", LCDI2C.LCD_LINE_1)
+                try:
+                    idev = initInputDevice(jet111q)
+                except Exception as e:
+                    printMessage(lcd, e, LCDI2C.LCD_LINE_1)
+
         if code is not None:
             result = apicall(code)
             print(result)
             if result['apistatus'] == True:
                 if result['code'] == False:
-                    # print("INVALID CODE")
-                    lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
+                    printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1)
+                    printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2)
                     time.sleep(3)
                 else:
-                    lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
+                    printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1)
+                    printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2)
                     marked = enableGate()
                     if marked:
-                        print("MARKED CODE")
+                        printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1)
+                        printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2)
+                        code = None
+                        BINPUT_CODE_READ_ENABLED =  True
             else:
-                enableGate()
-                lcd.lcd_string('BIENVENIDO', LCDI2C.LCD_LINE_1)
-                lcd.lcd_string("ADELANTE", LCDI2C.LCD_LINE_2)
-                time.sleep(2)
+                # enableGate()
+                lcd.lcd_string('FALLA DE SISTEMA', LCDI2C.LCD_LINE_1)
+                lcd.lcd_string("REINTENTANDO", LCDI2C.LCD_LINE_2)
+                # time.sleep(2)
+                FAILURE_COUNT -= 1
+                if FAILURE_COUNT == 0:
+                    lcd.lcd_string("FALLA PERMANENTE", LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string("INFORME PROBLEMA", LCDI2C.LCD_LINE_2)
+                    BINPUT_CODE_READ_ENABLED =  True
+                    code = None
 
-            # ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
-            ticket_string = f'code: {code}, timestamp: {datetime.now()} \n'
-            fhandler.write(ticket_string)
-            fhandler.flush()
-            code = None
+            ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
+            # ticket_string = f'code: {code}, timestamp: {datetime.now()} \n'
+            if fhandler is not None:
+                fhandler.write(ticket_string)
+                fhandler.flush()
         else:
-            lcd.lcd_string("CARNAVAL 2025", LCDI2C.LCD_LINE_1)
-            lcd.lcd_string("NUEVO INGRESO", LCDI2C.LCD_LINE_2)
+            printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1)
+            printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_1)
 
                     
     # else:

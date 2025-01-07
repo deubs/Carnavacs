@@ -28,7 +28,7 @@ scancodes = {
 
 print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
-
+BCODEREAD_ENABLED =  True
 def detectDevice():
     devices = [InputDevice(path) for path in list_devices()]
     inputdev = None
@@ -76,9 +76,10 @@ def readBarCodes(device, q: queue):
             if eventdata.keystate == 1: # Keydown
                 scancode = eventdata.scancode
                 if scancode == 28: # Enter
-                    saveBarcode(barcode)
-                    q.put(barcode)
-                    barcode = ''
+                    if BCODEREAD_ENABLED:
+                        saveBarcode(barcode)
+                        q.put(barcode)
+                        barcode = ''
                 else:
                     key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
                     barcode = barcode + key
