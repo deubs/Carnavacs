@@ -400,8 +400,8 @@ def main():
                 printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
                 FAILURE_COUNT -= 1
                 if FAILURE_COUNT == 0:
-                    lcd.lcd_string("FALLA PERMANENTE", LCDI2C.LCD_LINE_1, True)
-                    lcd.lcd_string("INFORME PROBLEMA", LCDI2C.LCD_LINE_2, True)
+                    printMessage(lcd, "FALLA PERMANENTE", LCDI2C.LCD_LINE_1, True)
+                    printMessage(lcd, "INFORME PROBLEMA", LCDI2C.LCD_LINE_2, True)
                     BCODEREAD_ENABLED =  True
                     code = None
 
