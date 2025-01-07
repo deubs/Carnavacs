@@ -246,6 +246,7 @@ def main():
         Main function
     """
     lcd = initLCD()
+    print(lcd)
     fhandler = createFile()
 
     BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
