@@ -294,8 +294,8 @@ def createFile():
 def printMessage(lcd_object, message, line, log):
     if log:
         print(message)
-    if BINITLCD:
-        lcd_object.lcd_string(message, line)
+    # if BINITLCD:
+    lcd_object.lcd_string(message, line)
 
 
 def initInputDevice(queue):
