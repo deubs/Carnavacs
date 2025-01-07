@@ -289,8 +289,8 @@ def createFile():
     return f
 
 
-def printMessage(lcd_object, message, line):
-    if message != "CARNAVAL 2025" or message != "NUEVO INGRESO":
+def printMessage(lcd_object, message, line, log):
+    if log:
         print(message)
     if BINITLCD:
         lcd_object.lcd_string(message, line)
@@ -305,6 +305,7 @@ def initInputDevice(queue):
         # lcd.lcd_string("JET111 OK...", LCDI2C.LCD_LINE_1)
         BJET = True
     return idev
+
 
 def initSerialDevice(queue):
     sp = initSerialPort()
@@ -328,9 +329,9 @@ def main():
 
     BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
     if BLAN:
-        printMessage(lcd, "LAN IS OK", LCDI2C.LCD_LINE_1)
+        printMessage(lcd, "LAN IS OK", LCDI2C.LCD_LINE_1, True)
     else:
-        printMessage(lcd, "LAN IS OFF", LCDI2C.LCD_LINE_1)
+        printMessage(lcd, "LAN IS OFF", LCDI2C.LCD_LINE_1, True)
 
     gm65q = queue.Queue(maxsize = 1)
     jet111q = queue.Queue(maxsize = 1)
@@ -347,32 +348,34 @@ def main():
             FAILURE_COUNT = 5
             if sp is not None:
                 if not gm65q.empty():
-                    JET111_Thread.BINPUT_CODE_READ_ENABLED = False
+                    BCODEREAD_ENABLED = False
                     print("reading queue...gm65")
                     gm65data = gm65q.get()
                     if gm65data is not None:     
-                        printMessage(lcd, gm65data, LCDI2C.LCD_LINE_1)
+                        printMessage(lcd, gm65data, LCDI2C.LCD_LINE_1, True)
                         code = gm65data
             else:
                 # serial device is OFF, try reconnect
                 try:
                     sp = initSerialDevice(gm65q)
+                    printMessage(lcd, 'INIT SERIAL DEV', LCDI2C.LCD_LINE_1, True)
                 except Exception as e:
-                    printMessage(lcd, e, LCDI2C.LCD_LINE_1)
+                    printMessage(lcd, e, LCDI2C.LCD_LINE_1, True)
 
             if idev is not None:
                 if not jet111q.empty():
-                    JET111_Thread.BINPUT_CODE_READ_ENABLED = False
+                    BCODEREAD_ENABLED = False
                     print("reading queue...jet111")
                     jet111data = jet111q.get()
                     if jet111data is not None:
-                        printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1)
+                        printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
             else:
                 # input device is OFF try reconnect
-                printMessage(lcd, "INPUT DEVICE OFF", LCDI2C.LCD_LINE_1)
+                printMessage(lcd, "INPUT DEVICE OFF", LCDI2C.LCD_LINE_1, True)
                 try:
                     idev = initInputDevice(jet111q)
+                    printMessage(lcd, 'INIT INPUT DEV', LCDI2C.LCD_LINE_1, True)
                 except Exception as e:
                     printMessage(lcd, e, LCDI2C.LCD_LINE_1)
 
@@ -381,31 +384,29 @@ def main():
             print(result)
             if result['apistatus'] == True:
                 if result['code'] == False:
-                    printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1)
-                    printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2)
+                    printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
+                    printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
                     time.sleep(3)
-                    BINPUT_CODE_READ_ENABLED =  True
+                    BCODEREAD_ENABLED =  True
                     code = None
                 else:
-                    printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1)
-                    printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2)
+                    printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
+                    printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
                     marked = enableGate()
                     if marked:
-                        printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1)
-                        printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2)
-                        BINPUT_CODE_READ_ENABLED =  True
+                        printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1, True)
+                        printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
+                        BCODEREAD_ENABLED =  True
                         code = None
                         JET111_Thread.BINPUT_CODE_READ_ENABLED =  True
             else:
-                # enableGate()
-                lcd.lcd_string('FALLA DE SISTEMA', LCDI2C.LCD_LINE_1)
-                lcd.lcd_string("REINTENTANDO", LCDI2C.LCD_LINE_2)
-                # time.sleep(2)
+                printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
+                printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
                 FAILURE_COUNT -= 1
                 if FAILURE_COUNT == 0:
-                    lcd.lcd_string("FALLA PERMANENTE", LCDI2C.LCD_LINE_1)
-                    lcd.lcd_string("INFORME PROBLEMA", LCDI2C.LCD_LINE_2)
-                    BINPUT_CODE_READ_ENABLED =  True
+                    lcd.lcd_string("FALLA PERMANENTE", LCDI2C.LCD_LINE_1, True)
+                    lcd.lcd_string("INFORME PROBLEMA", LCDI2C.LCD_LINE_2, True)
+                    BCODEREAD_ENABLED =  True
                     code = None
 
             ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
@@ -414,8 +415,8 @@ def main():
                 fhandler.write(ticket_string)
                 fhandler.flush()
         else:
-            printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1)
-            printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_1)
+            printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
+            printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_1, False)
 
                     
     # else:
