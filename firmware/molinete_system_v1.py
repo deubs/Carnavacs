@@ -384,6 +384,7 @@ def main():
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2)
                     time.sleep(3)
+                    code = None
                 else:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2)
