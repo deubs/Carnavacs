@@ -271,6 +271,7 @@ def initLCD():
     try:
         lcd = LCDI2C.LCD()
         lcd.lcd_init()
+        printMessage(lcd, "LCD INIT", LCDI2C.LCD_LINE_1, True)
         BINITLCD = True
     except Exception as e:
         print(e)
