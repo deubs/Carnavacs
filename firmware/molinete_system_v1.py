@@ -386,8 +386,6 @@ def main():
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
                     time.sleep(3)
-                    # BCODEREAD_ENABLED =  True
-                    # code = None
                 else:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
