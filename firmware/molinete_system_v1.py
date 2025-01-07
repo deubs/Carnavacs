@@ -384,6 +384,7 @@ def main():
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2)
                     time.sleep(3)
+                    BINPUT_CODE_READ_ENABLED =  True
                     code = None
                 else:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1)
@@ -392,6 +393,7 @@ def main():
                     if marked:
                         printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1)
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2)
+                        BINPUT_CODE_READ_ENABLED =  True
                         code = None
                         JET111_Thread.BINPUT_CODE_READ_ENABLED =  True
             else:
