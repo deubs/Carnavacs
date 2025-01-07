@@ -301,8 +301,6 @@ def initInputDevice(queue):
     if idev is not None:
         dev = connectDevice(idev)
         threading.Thread(target = readBarCodes, args = (dev, queue,), daemon = True).start()
-        # printMessage(lcd, "JET111 OK...", LCDI2C.LCD_LINE_1)
-        # lcd.lcd_string("JET111 OK...", LCDI2C.LCD_LINE_1)
         BJET = True
     return idev
 
@@ -323,7 +321,7 @@ def main():
         Main function
     """
     lcd = initLCD()
-    print(lcd)
+    # print(lcd)
     fhandler = createFile()
 
     BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
