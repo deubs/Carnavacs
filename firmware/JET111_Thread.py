@@ -28,7 +28,7 @@ scancodes = {
 
 print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
-BCODEREAD_ENABLED =  True
+
 def detectDevice():
     devices = [InputDevice(path) for path in list_devices()]
     inputdev = None

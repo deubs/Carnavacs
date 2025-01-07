@@ -290,7 +290,7 @@ def createFile():
 
 
 def printMessage(lcd_object, message, line):
-    if message is not "CARNAVAL 2025" or message is not "NUEVO INGRESO":
+    if message != "CARNAVAL 2025" or message != "NUEVO INGRESO":
         print(message)
     if BINITLCD:
         lcd_object.lcd_string(message, l)
