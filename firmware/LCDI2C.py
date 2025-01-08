@@ -59,7 +59,7 @@ E_PULSE = 0.0005
 E_DELAY = 0.0005
 
 #Open I2C interface
-print(platform.node()
+print(platform.node())
 if platform.node() == "raspberrypi":
     bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
 else:
