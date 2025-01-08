@@ -27,8 +27,8 @@ BGM65 = False
 BJET = False
 # ORANGE PI ZERO 3 WIRING
 I2CBUS = 3
-# GPIO_RELAY_OUT1 = 9 #PC15
-GPIO_RELAY_OUT2 = 10 #PC14
+GPIO_RESTART = 9 #PC15
+GPIO_RELAY_OUT = 10 #PC14
 GPIO_INPUT_1 = 13   #PC7
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
@@ -55,6 +55,7 @@ sp = None
 print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
 
+
 def detectDevice():
     devices = [InputDevice(path) for path in list_devices()]
     inputdev = None
@@ -71,6 +72,7 @@ def detectDevice():
             break
     return inputdev
     
+
 def connectDevice(inputdev):
     try:           
         device = InputDevice(inputdev) # Replace with your device
@@ -117,6 +119,7 @@ def readBarCodes(device, q: queue):
         print(e)
         idev = None
 
+
 def readPort(serialP, q:queue):
     """
         Serial port communication with GM65 barcode reader
@@ -161,15 +164,6 @@ def initSerialPort():
         print(e)
     return serial_port
 
-
-# def initLCD():
-#     """
-#         Initiates LCD
-#     """
-#     lcd = LCDI2C.LCD()
-#     lcd.lcd_init()
-#     return lcd
-
 bGATEOPEN = False
 
 def ISRSignal():
@@ -193,17 +187,22 @@ def initGPIO():
         OPIz3 using GPIO 17 and 18 for relays and 19 for inductive sensors.
     """
     print("INIT GPIO")
-    wiringpi.wiringPiSetup()
-    # wiringpi.pinMode(GPIO_RELAY_OUT1, wiringpi.GPIO.OUTPUT)
-    wiringpi.pinMode(GPIO_RELAY_OUT2, wiringpi.GPIO.OUTPUT)
-    # wiringpi.digitalWrite(GPIO_RELAY_OUT1, wiringpi.GPIO.LOW)
-    wiringpi.digitalWrite(GPIO_RELAY_OUT2, wiringpi.GPIO.LOW)
-    wiringpi.pinMode(GPIO_INPUT_1, wiringpi.GPIO.INPUT)
-    wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
-    # try:
-    #     wiringpi.wiringPiISR(GPIO_INPUT_1, wiringpi.GPIO.INT_EDGE_FALLING, ISRSignal)
-    # except Exception as e:
-    #     print(e)
+    try:
+        wiringpi.wiringPiSetup()
+        wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
+        wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
+        wiringpi.pinMode(GPIO_INPUT_1, wiringpi.GPIO.INPUT)
+        wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
+        wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
+        wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
+    except Exception as e:
+        print(e)
+
+
+def restart():
+    brestart = wiringpi.digitalRead(GPIO_RESTART)
+    if brestart:
+        exit(1)    
 
 
 def wait_1sec():
@@ -220,11 +219,11 @@ def enableGate():
     Enable COIL releasing relays. Iluminate RED light
     """
     print("Realease RELAYS")
-    wiringpi.digitalWrite(GPIO_RELAY_OUT2, wiringpi.GPIO.HIGH)
+    wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
     bHole = ISRSignal()
     if not bHole:
         print("Activate RELAYS")
-        wiringpi.digitalWrite(GPIO_RELAY_OUT2, wiringpi.GPIO.LOW)
+        wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
         return True
     return False
 
@@ -376,8 +375,6 @@ def main():
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
             else:
-                # pdb.set_trace()
-                # input device is OFF try reconnect
                 printMessage(lcd, "INPUT DEVICE OFF", LCDI2C.LCD_LINE_1, True)
                 try:
                     idev = initInputDevice(jet111q)
