@@ -22,6 +22,7 @@ import pdb
 
 if "tango" in platform.node():
     import wiringpi
+    print("importing wiringpi")
     GPIO_RESTART = 9 #PC15
     GPIO_RELAY_OUT = 10 #PC14
     GPIO_INPUT_1 = 13   #PC7
@@ -222,10 +223,11 @@ def enableGate():
     Wait until signal from inductive sensor
     Enable COIL releasing relays. Iluminate RED light
     """
-    pdb.set_trace()
+    # pdb.set_trace()
     print("Release RELAYS")
     # print(platform.node())
     if "tango" in platform.node():
+        print("pgio high")
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
         bHole = ISRSignal(1)
         if not bHole:
