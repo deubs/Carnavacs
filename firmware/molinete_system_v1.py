@@ -362,8 +362,8 @@ def main():
     initGPIO()
     idev = initInputDevice(jet111q)
     sp = initSerialDevice(gm65q)
-    qrestart = queue.Queue()
-    threading.Thread(target = restart, args = (qrestart, ), daemon = True).start()
+    # qrestart = queue.Queue()
+    # threading.Thread(target = restart, args = (qrestart, ), daemon = True).start()
 
     code = None
 
