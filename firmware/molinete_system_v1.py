@@ -403,6 +403,7 @@ def main():
 
         if code is not None:
             result = apicall(code)
+            print(code)
             print(result)
             if result['apistatus'] == True:
                 if result['code'] == False:
