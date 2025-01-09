@@ -369,9 +369,11 @@ def main():
 
     while True:
         if not qrestart.empty():
-            printMessage(lcd, "RESTART", LCDI2C.LCD_LINE_1, 1)
-            printMessage(lcd, "RESTART", LCDI2C.LCD_LINE_2, 1)
-            exit()
+            res = qrestart.get()
+            print(res)
+            # printMessage(lcd, "RESTART", LCDI2C.LCD_LINE_1, 1)
+            # printMessage(lcd, "RESTART", LCDI2C.LCD_LINE_2, 1)
+            # exit()
         #     continue
         # else:
         gm65data = None
