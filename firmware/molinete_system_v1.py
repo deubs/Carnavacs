@@ -18,7 +18,6 @@ from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
 import platform
-import pdb
 
 if "tango" in platform.node():
     import wiringpi
@@ -224,10 +223,9 @@ def enableGate():
     Enable COIL releasing relays. Iluminate RED light
     """
     # pdb.set_trace()
-    print("Release RELAYS")
     # print(platform.node())
     if "tango" in platform.node():
-        print("pgio high")
+        print("Release RELAYS")
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
         bHole = ISRSignal(1)
         if not bHole:
