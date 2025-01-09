@@ -362,20 +362,9 @@ def main():
     initGPIO()
     idev = initInputDevice(jet111q)
     sp = initSerialDevice(gm65q)
-    # qrestart = queue.Queue()
-    # threading.Thread(target = restart, args = (qrestart, ), daemon = True).start()
-
     code = None
 
     while True:
-        # if not qrestart.empty():
-        #     res = qrestart.get()
-        #     print(res)
-        #     printMessage(lcd, "RESTART", LCDI2C.LCD_LINE_1, 1)
-        #     printMessage(lcd, res, LCDI2C.LCD_LINE_2, 1)
-            # exit()
-        #     continue
-        # else:
         gm65data = None
         jet111data = None
         marked = False
