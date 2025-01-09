@@ -116,8 +116,6 @@ def readBarCodes(device, q: queue):
                                 barcode = barcode + key
                                 if key == NOT_RECOGNIZED_KEY:
                                     print('unknown key, scancode=' + str(scancode))
-                    else:
-                        q.get()
         except Exception as e:
             print(e)
             idev = None
