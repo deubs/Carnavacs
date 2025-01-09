@@ -368,6 +368,9 @@ def main():
         gm65data = None
         jet111data = None
         marked = False
+        brestart = wiringpi.digitalRead(GPIO_RESTART)
+        if brestart == 0:
+            exit()
         if code is None:
             FAILURE_COUNT = 5
             if sp is not None:
@@ -390,7 +393,7 @@ def main():
         if code is not None:
             result = apicall(code)
             print(code)
-            print(result)
+            print(result)   
             if result['apistatus'] == True:
                 if result['code'] == False:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
