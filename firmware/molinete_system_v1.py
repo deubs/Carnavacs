@@ -202,6 +202,7 @@ def initGPIO():
     print("INIT GPIO")
     try:
         if "tango" in platform.node():
+            print("init wiringpi")
             wiringpi.wiringPiSetup()
             wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
             wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
