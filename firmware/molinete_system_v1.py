@@ -200,6 +200,7 @@ def restart():
             print("restart button")
             BRESTART = True
             break
+    
             
 
 
@@ -370,6 +371,7 @@ def main():
 
     code = None
     while True:
+        print(BRESTART)
         if BRESTART:
             print("RESTART")
             exit()
