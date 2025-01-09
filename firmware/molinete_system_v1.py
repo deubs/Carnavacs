@@ -19,12 +19,12 @@ from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
 import platform
 
-if platform.node() == "orangepizero3":
+if "tango" in platform.node():
     import wiringpi
     GPIO_RESTART = 9 #PC15
     GPIO_RELAY_OUT = 10 #PC14
     GPIO_INPUT_1 = 13   #PC7
-elif platform.node() == "raspberrypi":
+else:
     from gpiozero import Button, DigitalInputDevice, OutputDevice
     rasp_button_restart = Button(4) # PIN 7
     rasp_relay_out = OutputDevice(17) # PIN 11
@@ -186,9 +186,9 @@ def restart():
         Exits program. Linux Service will restart another instance
     """
     brestart = False
-    if platform.node() == "orangepizero3":
+    if "tango" in platform.node():
         brestart = wiringpi.digitalRead(GPIO_RESTART)
-    elif platform.node() == "raspberrypi":
+    else:
         brestart = rasp_button_restart.value
     if brestart:
         exit(1)
@@ -201,7 +201,7 @@ def initGPIO():
     """
     print("INIT GPIO")
     try:
-        if platform.node() == "orangepizero3":
+        if "tango" in platform.node():
             wiringpi.wiringPiSetup()
             wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
             wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
@@ -222,7 +222,7 @@ def enableGate():
     """
     print("Realease RELAYS")
     print(platform.node())
-    if platform.node() == "orangepizero3":
+    if "tango" in platform.node():
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
         bHole = ISRSignal(1)
         if not bHole:
@@ -230,7 +230,7 @@ def enableGate():
             wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
             return True
         return False
-    elif platform.node() == "raspberrypi":
+    else:
         rasp_relay_out.on()
         bHole = ISRSignal(0)
         if not bHole:
