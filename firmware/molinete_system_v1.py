@@ -187,12 +187,12 @@ def restart():
     """
         Exits program. Linux Service will restart another instance
     """
-    brestart = False
+    brestart = True
     if "tango" in platform.node():
         brestart = wiringpi.digitalRead(GPIO_RESTART)
     else:
         brestart = rasp_button_restart.value
-    if brestart:
+    if not brestart:
         exit(1)
 
 
