@@ -186,7 +186,7 @@ def ISRSignal(iplatform):
     return bwait4Hole
 
 BRESTART = False
-def restart():
+def restart(restart):
     """
         Exits program. Linux Service will restart another instance
     """
@@ -198,12 +198,9 @@ def restart():
             brestart = rasp_button_restart.value    
         if not brestart:
             print("restart button")
-            BRESTART = True
+            restart = True
             break
     
-            
-
-
 def initGPIO():
     """
         Initiates GPIO. Only for OrangePI Zero 3
@@ -220,7 +217,7 @@ def initGPIO():
             wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
             wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
             wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
-        threading.Thread(target = restart, args = (), daemon = True).start()
+        threading.Thread(target = restart, args = (BRESTART, ), daemon = True).start()
     except Exception as e:
         print(e)
 
