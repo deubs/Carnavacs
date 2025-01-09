@@ -369,6 +369,8 @@ def main():
 
     code = None
     while True:
+        if BRESTART:
+            break
         gm65data = None
         jet111data = None
         marked = False
