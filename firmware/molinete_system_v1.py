@@ -199,6 +199,7 @@ def restart():
         else:
             brestart = rasp_button_restart.value
         if not brestart:
+            print("restart button")
             exit(1)
 
 
