@@ -409,6 +409,7 @@ def main():
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
                 BCODEREAD_ENABLED =  True
                 code = None
+                ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
             else:
                 printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
                 printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
@@ -419,8 +420,7 @@ def main():
                     BCODEREAD_ENABLED =  True
                     code = None
 
-            ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
-            # ticket_string = f'code: {code}, timestamp: {datetime.now()} \n'
+                ticket_string = f'code: {code}, timestamp: {datetime.now()} \n'
             if fhandler is not None:
                 fhandler.write(ticket_string)
                 fhandler.flush()
