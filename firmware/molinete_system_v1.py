@@ -108,7 +108,7 @@ def readBarCodes(device, q: queue):
                             if scancode == 28: # Enter
                                     # saveBarcode(barcode)
                                     print("putting in queue")
-                                    print(q.size())
+                                    print(q.qsize())
                                     q.put(barcode)
                                     barcode = ''
                             else:
