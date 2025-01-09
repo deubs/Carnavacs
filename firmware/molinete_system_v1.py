@@ -172,6 +172,7 @@ def ISRSignal(iplatform):
     bGATEOPEN = False
     bwait4Hole = True
     print("State is HIGH...")
+    print(iplatform)
     if iplatform == 1:
         while bwait4Hole:
             bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
