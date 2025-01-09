@@ -172,7 +172,6 @@ def ISRSignal(iplatform):
     bGATEOPEN = False
     bwait4Hole = True
     print("State is HIGH...")
-    print(iplatform)
     if iplatform == 1:
         print("waiting hole")
         while bwait4Hole:
@@ -393,13 +392,13 @@ def main():
                     if jet111data is not None:
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
-            else:
-                printMessage(lcd, "INPUT DEVICE OFF", LCDI2C.LCD_LINE_1, True)
-                try:
-                    idev = initInputDevice(jet111q)
-                    printMessage(lcd, 'INIT INPUT DEV', LCDI2C.LCD_LINE_1, True)
-                except Exception as e:
-                    printMessage(lcd, e, LCDI2C.LCD_LINE_1, True)
+            # else:
+            #     printMessage(lcd, "INPUT DEVICE OFF", LCDI2C.LCD_LINE_1, True)
+            #     try:
+            #         idev = initInputDevice(jet111q)
+            #         printMessage(lcd, 'INIT INPUT DEV', LCDI2C.LCD_LINE_1, True)
+            #     except Exception as e:
+            #         printMessage(lcd, e, LCDI2C.LCD_LINE_1, True)
 
         if code is not None:
             result = apicall(code)
