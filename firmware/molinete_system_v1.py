@@ -177,7 +177,6 @@ def ISRSignal(iplatform):
         print("waiting hole")
         while bwait4Hole:
             bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
-            print(bwait4Hole)
     else:
         while bwait4Hole:
             bwait4Hole = rasp_gpio_input.value
