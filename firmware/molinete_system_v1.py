@@ -221,6 +221,7 @@ def enableGate():
     Enable COIL releasing relays. Iluminate RED light
     """
     print("Realease RELAYS")
+    print(platform.node())
     if platform.node() == "orangepizero3":
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
         bHole = ISRSignal(1)
