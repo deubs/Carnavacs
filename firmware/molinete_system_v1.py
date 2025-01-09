@@ -99,10 +99,9 @@ def readBarCodes(device, q: queue):
     barcode = ''
     while True:
         try:
-            if BCODEREAD_ENABLED:
-                print("can read....")
-                for event in device.read_loop():
-                    if event.type == ecodes.EV_KEY:
+            for event in device.read_loop():
+                if event.type == ecodes.EV_KEY:
+                    if BCODEREAD_ENABLED:
                         eventdata = categorize(event)
                         if eventdata.keystate == 1: # Keydown
                             scancode = eventdata.scancode
