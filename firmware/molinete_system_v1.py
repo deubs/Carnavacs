@@ -223,8 +223,8 @@ def enableGate():
     Enable COIL releasing relays. Iluminate RED light
     """
     pdb.set_trace()
-    print("Realease RELAYS")
-    print(platform.node())
+    print("Release RELAYS")
+    # print(platform.node())
     if "tango" in platform.node():
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
         bHole = ISRSignal(1)
