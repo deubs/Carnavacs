@@ -100,6 +100,7 @@ def readBarCodes(device, q: queue):
     while True:
         try:
             if BCODEREAD_ENABLED:
+                print("can read....")
                 for event in device.read_loop():
                     if event.type == ecodes.EV_KEY:
                         eventdata = categorize(event)
@@ -378,13 +379,13 @@ def main():
                     if gm65data is not None:     
                         printMessage(lcd, gm65data, LCDI2C.LCD_LINE_1, True)
                         code = gm65data
-            else:
-                # serial device is OFF, try reconnect
-                try:
-                    sp = initSerialDevice(gm65q)
-                    printMessage(lcd, 'INIT SERIAL DEV', LCDI2C.LCD_LINE_1, True)
-                except Exception as e:
-                    printMessage(lcd, e, LCDI2C.LCD_LINE_1, True)
+            # else:
+            #     # serial device is OFF, try reconnect
+            #     try:
+            #         sp = initSerialDevice(gm65q)
+            #         printMessage(lcd, 'INIT SERIAL DEV', LCDI2C.LCD_LINE_1, True)
+            #     except Exception as e:
+            #         printMessage(lcd, e, LCDI2C.LCD_LINE_1, True)
 
             if idev is not None:
                 if not jet111q.empty():
