@@ -198,8 +198,6 @@ def restart(qrestart):
         if not brestart:
             print("restart button")
             qrestart.put(1)
-            # break
-    # return brestart
 
 def initGPIO():
     """
@@ -370,10 +368,10 @@ def main():
     code = None
 
     while True:
-        if qrestart.empty():
-            continue
-        else:
-            exit()
+        # if qrestart.empty():
+        #     continue
+        # else:
+        #     exit()
         gm65data = None
         jet111data = None
         marked = False
