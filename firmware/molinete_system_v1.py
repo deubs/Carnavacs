@@ -185,6 +185,7 @@ def restart():
     """
         Exits program. Linux Service will restart another instance
     """
+    brestart = False
     if platform.node() == "orangepizero3":
         brestart = wiringpi.digitalRead(GPIO_RESTART)
     elif platform.node() == "raspberrypi":
