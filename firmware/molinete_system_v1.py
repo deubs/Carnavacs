@@ -185,7 +185,6 @@ def ISRSignal(iplatform):
     print("State is LOW")
     return bwait4Hole
 
-BRESTART = False
 def restart(restart):
     """
         Exits program. Linux Service will restart another instance
@@ -200,7 +199,8 @@ def restart(restart):
             print("restart button")
             restart = True
             break
-    
+    # return brestart
+
 def initGPIO():
     """
         Initiates GPIO. Only for OrangePI Zero 3
@@ -217,7 +217,6 @@ def initGPIO():
             wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
             wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
             wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
-        threading.Thread(target = restart, args = (BRESTART, ), daemon = True).start()
     except Exception as e:
         print(e)
 
@@ -365,11 +364,13 @@ def main():
     initGPIO()
     idev = initInputDevice(jet111q)
     sp = initSerialDevice(gm65q)
+    brestart = False
+    threading.Thread(target = restart, args = (brestart, ), daemon = True).start()
 
     code = None
     while True:
-        print(BRESTART)
-        if BRESTART:
+        print(brestart)
+        if brestart:
             print("RESTART")
             exit()
         gm65data = None
