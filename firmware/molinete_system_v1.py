@@ -368,10 +368,12 @@ def main():
     code = None
 
     while True:
-        # if qrestart.empty():
+        if not qrestart.empty():
+            printMessage(lcd, "RESTART", LCDI2C.LCD_LINE_1, 1)
+            printMessage(lcd, "RESTART", LCDI2C.LCD_LINE_2, 1)
+            exit()
         #     continue
         # else:
-        #     exit()
         gm65data = None
         jet111data = None
         marked = False
