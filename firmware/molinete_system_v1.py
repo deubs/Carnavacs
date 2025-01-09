@@ -8,28 +8,33 @@
 
 import serial
 import LCDI2C
-import JET111_Thread
-# from JET111_Thread import detectDevice, connectDevice, readBarCodes
 import threading
 import queue
 import time
-import wiringpi
 import checklan
 from requests import post, exceptions, Session
 from datetime import datetime
 from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
+import platform
+
+if platform.node() == "orangepizero3":
+    import wiringpi
+    GPIO_RESTART = 9 #PC15
+    GPIO_RELAY_OUT = 10 #PC14
+    GPIO_INPUT_1 = 13   #PC7
+elif platform.node() == "raspberrypi":
+    from gpiozero import Button, DigitalInputDevice, OutputDevice
+    rasp_button_restart = Button(4) # PIN 7
+    rasp_relay_out = OutputDevice(17) # PIN 11
+    rasp_gpio_input = DigitalInputDevice(27) # PIN 13
 
 # STATUS VARS
 BLAN = False
 BGM65 = False
 BJET = False
 # ORANGE PI ZERO 3 WIRING
-I2CBUS = 3
-GPIO_RESTART = 9 #PC15
-GPIO_RELAY_OUT = 10 #PC14
-GPIO_INPUT_1 = 13   #PC7
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
@@ -56,7 +61,10 @@ print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
 
 
-def detectDevice():
+def detectInputDevice():
+    """
+        From a list of input devices, select the one that matches the filter
+    """
     devices = [InputDevice(path) for path in list_devices()]
     inputdev = None
     print(devices)
@@ -73,7 +81,7 @@ def detectDevice():
     return inputdev
     
 
-def connectDevice(inputdev):
+def connectInputDevice(inputdev):
     try:           
         device = InputDevice(inputdev) # Replace with your device
     except Exception as e:
@@ -83,17 +91,6 @@ def connectDevice(inputdev):
         print(device)
         print(device.capabilities())
         return device
-
-
-def saveBarcode(bc):
-    d = datetime.now()
-    unixtime = calendar.timegm(d.utctimetuple())	
-    entry = str(unixtime) + ' ' + bc +  '\n'
-    try:
-        with open('barcodes.txt', 'a') as bc_file:
-            bc_file.write(entry)
-    except Exception as e:
-        print(e)
 
 
 def readBarCodes(device, q: queue):
@@ -107,7 +104,7 @@ def readBarCodes(device, q: queue):
                     scancode = eventdata.scancode
                     if scancode == 28: # Enter
                         if BCODEREAD_ENABLED:
-                            saveBarcode(barcode)
+                            # saveBarcode(barcode)
                             q.put(barcode)
                             barcode = ''
                     else:
@@ -166,7 +163,7 @@ def initSerialPort():
 
 bGATEOPEN = False
 
-def ISRSignal():
+def ISRSignal(iplatform):
     """
         
     """
@@ -174,42 +171,46 @@ def ISRSignal():
     bGATEOPEN = False
     bwait4Hole = True
     print("State is HIGH...")
-    while bwait4Hole:
-        state = None
-        bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
+    if iplatform == 1:
+        while bwait4Hole:
+            bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
+    else:
+        while bwait4Hole:
+            bwait4Hole = rasp_gpio_input.value
     print("State is LOW")
     return bwait4Hole
 
 
+def restart():
+    """
+        Exits program. Linux Service will restart another instance
+    """
+    if platform.node() == "orangepizero3":
+        brestart = wiringpi.digitalRead(GPIO_RESTART)
+    elif platform.node() == "raspberrypi":
+        brestart = rasp_button_restart.value
+    if brestart:
+        exit(1)
+
+
 def initGPIO():
     """
-        Initiates GPIO.
+        Initiates GPIO. Only for OrangePI Zero 3
         OPIz3 using GPIO 17 and 18 for relays and 19 for inductive sensors.
     """
     print("INIT GPIO")
     try:
-        wiringpi.wiringPiSetup()
-        wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
-        wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
-        wiringpi.pinMode(GPIO_INPUT_1, wiringpi.GPIO.INPUT)
-        wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
-        wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
-        wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
+        if platform.node() == "orangepizero3":
+            wiringpi.wiringPiSetup()
+            wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
+            wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
+            wiringpi.pinMode(GPIO_INPUT_1, wiringpi.GPIO.INPUT)
+            wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
+            wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
+            wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
+        threading.Thread(target = restart, args = (), daemon = True).start()
     except Exception as e:
         print(e)
-
-
-def restart():
-    brestart = wiringpi.digitalRead(GPIO_RESTART)
-    if brestart:
-        exit(1)    
-
-
-def wait_1sec():
-    """
-        WAIT 1 SEC
-    """
-    time.sleep(1)
 
 
 def enableGate():
@@ -219,14 +220,23 @@ def enableGate():
     Enable COIL releasing relays. Iluminate RED light
     """
     print("Realease RELAYS")
-    wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
-    bHole = ISRSignal()
-    if not bHole:
-        print("Activate RELAYS")
-        wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
-        return True
-    return False
-
+    if platform.node() == "orangepizero3":
+        wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
+        bHole = ISRSignal(1)
+        if not bHole:
+            print("Activate RELAYS")
+            wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
+            return True
+        return False
+    elif platform.node() == "raspberrypi":
+        rasp_relay_out.on()
+        bHole = ISRSignal(0)
+        if not bHole:
+            print("Activate RELAYS")
+            rasp_relay_out.off()
+            return True
+        return False
+        
 
 def printSTATUS(lcd):
     lcd.lcd_string("LAN " + str(BLAN), LCDI2C.LCD_LINE_1)
@@ -304,9 +314,9 @@ def printMessage(lcd_object, message, line, log):
 
 
 def initInputDevice(queue):
-    idev = detectDevice()
+    idev = detectInputDevice()
     if idev is not None:
-        dev = connectDevice(idev)
+        dev = connectInputDevice(idev)
         threading.Thread(target = readBarCodes, args = (dev, queue,), daemon = True).start()
         BJET = True
     return idev
