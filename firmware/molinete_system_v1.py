@@ -185,7 +185,7 @@ def ISRSignal(iplatform):
     print("State is LOW")
     return bwait4Hole
 
-def restart(restart):
+def restart(qrestart):
     """
         Exits program. Linux Service will restart another instance
     """
@@ -197,8 +197,8 @@ def restart(restart):
             brestart = rasp_button_restart.value    
         if not brestart:
             print("restart button")
-            restart = True
-            break
+            qrestart.put(1)
+            # break
     # return brestart
 
 def initGPIO():
@@ -364,14 +364,15 @@ def main():
     initGPIO()
     idev = initInputDevice(jet111q)
     sp = initSerialDevice(gm65q)
-    brestart = False
-    threading.Thread(target = restart, args = (brestart, ), daemon = True).start()
+    qrestart = queue.Queue()
+    threading.Thread(target = restart, args = (qrestart, ), daemon = True).start()
 
     code = None
+
     while True:
-        print(brestart)
-        if brestart:
-            print("RESTART")
+        if qrestart.empty():
+            continue
+        else:
             exit()
         gm65data = None
         jet111data = None
