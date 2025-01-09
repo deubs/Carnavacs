@@ -307,8 +307,10 @@ def createFile():
 
 
 def printMessage(lcd_object, message, line, log):
+    now = datetime.now()
+    date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
     if log:
-        print(message)
+        print(f'{message} -  {date_time_str}')
     # if BINITLCD:
     lcd_object.lcd_string(message, line)
 
@@ -414,11 +416,13 @@ def main():
                 printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
                 printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
                 FAILURE_COUNT -= 1
+                time.sleep(1)
                 if FAILURE_COUNT == 0:
                     printMessage(lcd, "FALLA PERMANENTE", LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, "INFORME PROBLEMA", LCDI2C.LCD_LINE_2, True)
                     BCODEREAD_ENABLED =  True
                     code = None
+                    time.sleep(3)
 
                 ticket_string = f'code: {code}, timestamp: {datetime.now()} \n'
             if fhandler is not None:
