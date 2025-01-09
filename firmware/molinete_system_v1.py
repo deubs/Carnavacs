@@ -174,6 +174,7 @@ def ISRSignal(iplatform):
     print("State is HIGH...")
     print(iplatform)
     if iplatform == 1:
+        print("waiting hole")
         while bwait4Hole:
             bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
     else:
