@@ -108,7 +108,7 @@ def readBarCodes(device, q: queue):
                             if scancode == 28: # Enter
                                     # saveBarcode(barcode)
                                     print("putting in queue")
-                                    print(q.qsize())
+                                    # print(q.qsize())
                                     q.put(barcode)
                                     barcode = ''
                             else:
@@ -185,7 +185,7 @@ def ISRSignal(iplatform):
     print("State is LOW")
     return bwait4Hole
 
-
+BRESTART = False
 def restart():
     """
         Exits program. Linux Service will restart another instance
@@ -198,7 +198,8 @@ def restart():
             brestart = rasp_button_restart.value
         if not brestart:
             print("restart button")
-            exit(1)
+            BRESTART = True
+            
 
 
 def initGPIO():
