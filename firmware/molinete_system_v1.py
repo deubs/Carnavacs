@@ -18,6 +18,7 @@ from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
 import platform
+import pdb
 
 if "tango" in platform.node():
     import wiringpi
@@ -221,6 +222,7 @@ def enableGate():
     Wait until signal from inductive sensor
     Enable COIL releasing relays. Iluminate RED light
     """
+    pdb.set_trace()
     print("Realease RELAYS")
     print(platform.node())
     if "tango" in platform.node():
