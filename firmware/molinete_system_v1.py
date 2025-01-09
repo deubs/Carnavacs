@@ -370,7 +370,8 @@ def main():
     code = None
     while True:
         if BRESTART:
-            break
+            print("RESTART")
+            exit()
         gm65data = None
         jet111data = None
         marked = False
