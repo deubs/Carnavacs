@@ -347,18 +347,21 @@ def main():
     jet111q = queue.Queue(maxsize = 1)
     initGPIO()
     idev = initInputDevice(jet111q)
-    sp = initSerialDevice(gm65q)
     if idev is not None:
         printMessage(lcd, "INPUT DEV ON", LCDI2C.LCD_LINE_2, True)
     else:
         printMessage(lcd, "INPUT DEV OFF", LCDI2C.LCD_LINE_2, True)
     time.sleep(1)
-
-    if sp is not None:
-        printMessage(lcd, "GM65 ON", LCDI2C.LCD_LINE_2, True)
+    
+    if "raspi" in platform.node():
+        sp = None
     else:
-        printMessage(lcd, "GM65 OFF", LCDI2C.LCD_LINE_2, True)
-    time.sleep(2)
+        sp = initSerialDevice(gm65q)
+        if sp is not None:
+            printMessage(lcd, "GM65 ON", LCDI2C.LCD_LINE_2, True)
+        else:
+            printMessage(lcd, "GM65 OFF", LCDI2C.LCD_LINE_2, True)
+        time.sleep(2)
 
     code = None
     while True:
