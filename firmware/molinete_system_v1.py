@@ -119,6 +119,7 @@ def readBarCodes(device, q: queue):
         except Exception as e:
             print(e)
             idev = None
+            exit()
 
 
 def readPort(serialP, q:queue):
