@@ -363,7 +363,7 @@ def main():
     idev = initInputDevice(jet111q)
     sp = initSerialDevice(gm65q)
     code = None
-
+    lastcode = None
     while True:
         gm65data = None
         jet111data = None
@@ -392,7 +392,8 @@ def main():
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
 
-        if code is not None:
+        if (code is not None) and (lastcode != code):
+
             result = apicall(code)
             print(code)
             print(result)   
@@ -408,6 +409,7 @@ def main():
                     if marked:
                         printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1, True)
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
+                        lastcode = code
                 BCODEREAD_ENABLED =  True
                 code = None
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
@@ -428,6 +430,7 @@ def main():
                 fhandler.write(ticket_string)
                 fhandler.flush()
         else:
+            code = None
             printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
             printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_2, False)
 
