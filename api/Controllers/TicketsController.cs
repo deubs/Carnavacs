@@ -38,7 +38,7 @@ namespace Carnavacs.Api.Controllers
             try
             {
                 apiResponse.Result = await _unitOfWork.Tickets.ValidateAsync(code);
-                if (apiResponse.Result.Exists && persist)
+                if (apiResponse.Result.Persist && persist)
                 {
                     await _unitOfWork.Tickets.UseAsync(apiResponse.Result.TicketId, getClientIP());
                     _unitOfWork.Commit();
