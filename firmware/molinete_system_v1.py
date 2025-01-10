@@ -371,6 +371,7 @@ def main():
         brestart = wiringpi.digitalRead(GPIO_RESTART)
         if brestart == 0:
             printMessage(lcd, "REINICIANDO", LCDI2C.LCD_LINE_1, True)
+            printMessage(lcd, "YA VOLVEMOS...", LCDI2C.LCD_LINE_2, True)
             exit()
         if code is None:
             FAILURE_COUNT = 5
