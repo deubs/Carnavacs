@@ -9,9 +9,11 @@ namespace Carnavacs.Api.Controllers
     {
         protected string? getClientIP()
         {
-            return HttpContext.GetServerVariable("HTTP_X_FORWARDED_FOR") ??
-                            Request.Headers["HTTP_X_FORWARDED_FOR"].ToString() ??
-                            HttpContext.Connection.RemoteIpAddress?.ToString();
+            if (!String.IsNullOrEmpty(HttpContext.GetServerVariable("HTTP_X_FORWARDED_FOR")))
+                return HttpContext.GetServerVariable("HTTP_X_FORWARDED_FOR");
+            if (!String.IsNullOrEmpty(Request.Headers["HTTP_X_FORWARDED_FOR"]))
+                return Request.Headers["HTTP_X_FORWARDED_FOR"].ToString();
+            return HttpContext.Connection.RemoteIpAddress?.ToString();
         }
     }
 }
