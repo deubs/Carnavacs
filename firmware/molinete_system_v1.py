@@ -27,7 +27,7 @@ if "tango" in platform.node():
     GPIO_INPUT_1 = 13   #PC7
 else:
     from gpiozero import Button, DigitalInputDevice, OutputDevice
-    rasp_button_restart = Button(4) # PIN 7
+    rasp_button_restart = Button(4, pull_up=True) # PIN 7
     rasp_relay_out = OutputDevice(17) # PIN 11
     # rasp_gpio_input = DigitalInputDevice(27) # PIN 13
 
