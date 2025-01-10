@@ -52,25 +52,28 @@ namespace Carnavacs.Api.Infrastructure.Services
             int processedPages = 0;
             int totalTicketsProcessed = 0;
             int remainingPages = 1;
+            bool hasMorePages = true;
+
             using (var scope = _scopeFactory.CreateScope())
             {
                 var _unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                 Event evt = await _unitOfWork.Events.GetCurrentAsync();
                 DateTime lastUpdate = _unitOfWork.Tickets.GetLastSync(evt.ShowName);
 
-                do
-                {
+                while (hasMorePages) { 
                     var response = await FetchTicketsPageAsync(evt.ShowName, lastUpdate, nextId);
                     if (response == null || !response.Tickets.Any())
                     {
+                        hasMorePages = false;
                         break;
-                    }
+                    } 
 
                     await ProcessTicketBatchAsync(response.Tickets);
 
                     totalTicketsProcessed += response.Tickets.Count;
                     processedPages++;
                     remainingPages = response.RemainingPages - processedPages;
+                    hasMorePages = response.RemainingTickets > 0;
 
                     _logger.LogInformation(
                         "Processed page {Page} with {TicketCount} tickets. Total processed: {TotalTickets}. Remaining pages: {RemainingPages}",
@@ -93,13 +96,15 @@ namespace Carnavacs.Api.Infrastructure.Services
         private async Task<ApiResponse> FetchTicketsPageAsync(string showName, DateTime lastUpdate, string nextId)
         {
             using var client = _httpClientFactory.CreateClient("TicketApi");
-            var url = $"?showname={showName}&updatedAt_gte={lastUpdate.ToShortDateString()}";
-            url += nextId == null ? "" : $"&next_id={nextId}";
+            var apiKey = _configuration["TicketApi:ApiKey"];
+            var baseUrl = _configuration["TicketApi:BaseUrl"];
+            var url = $"{baseUrl}?showname={showName}&updatedAt_gte={lastUpdate.ToString("yyyy/MM/dd HH:mm")}";
+            url += nextId == null ? "" : $"&_id_next={nextId}";
 
             try
             {
-                var response = await client.GetFromJsonAsync<ApiResponse>(url);
-                return response;
+                client.DefaultRequestHeaders.Add("x-api-key", apiKey);
+                return await client.GetFromJsonAsync<ApiResponse>(url);
             }
             catch (Exception ex)
             {
@@ -118,7 +123,7 @@ namespace Carnavacs.Api.Infrastructure.Services
                 try
                 {
                     var sql = @"
-                    MERGE INTO Tickets AS target
+                    MERGE INTO TicketekTickets AS target
                     USING (SELECT @Id AS Id) AS source
                     ON target.Id = source.Id
                     WHEN NOT MATCHED THEN
