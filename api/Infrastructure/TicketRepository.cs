@@ -68,8 +68,8 @@ namespace Carnavacs.Api.Infrastructure
 
         public async Task UseAsync(int ticketId, string deviceId)
         {
-
             Ticket qr = await this.GetByIdAsync(ticketId);
+            bool enabled = qr.Enabled;
             if (qr.Enabled)
                 await this.UpdateAsync(qr);
 
@@ -79,7 +79,7 @@ namespace Carnavacs.Api.Infrastructure
             TicketLog log = new TicketLog
             {
                 AccesoDispositivoFk = device.Id,
-                EstadoQrFk = qr.Enabled ? TicketStatus.Used.Id : TicketStatus.Retry.Id,
+                EstadoQrFk = enabled ? TicketStatus.Used.Id : TicketStatus.Retry.Id,
                 QrEntradaFk = qr.Id
             };
             await gateRepo.LogEntryAsync(log);
