@@ -4,5 +4,6 @@ namespace Carnavacs.Api.Infrastructure.Interfaces
 {
     public interface IGateRepository : IRepository<Gate>
     {
+        Task<IReadOnlyList<AccessDevice>> GetAllDevicesAsync();
     }
 }
