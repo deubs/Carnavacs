@@ -353,17 +353,27 @@ def main():
 
     BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
     if BLAN:
-        printMessage(lcd, "LAN IS OK", LCDI2C.LCD_LINE_1, True)
+        printMessage(lcd, "LAN DETECTED", LCDI2C.LCD_LINE_1, True)
     else:
-        printMessage(lcd, "LAN IS OFF", LCDI2C.LCD_LINE_1, True)
+        printMessage(lcd, "LAN NOT DETECTED", LCDI2C.LCD_LINE_1, True)
 
     gm65q = queue.Queue(maxsize = 1)
     jet111q = queue.Queue(maxsize = 1)
     initGPIO()
     idev = initInputDevice(jet111q)
     sp = initSerialDevice(gm65q)
+    if idev is not None:
+        printMessage(lcd, "INPUT DEV ON", LCDI2C.LCD_LINE_2, True)
+    else:
+        printMessage(lcd, "INPUT DEV OFF", LCDI2C.LCD_LINE_2, True)
+
+    if sp is not None:
+        printMessage(lcd, "GM65 ON", LCDI2C.LCD_LINE_2, True)
+    else:
+        printMessage(lcd, "GM65 OFF", LCDI2C.LCD_LINE_2, True)
+    time.sleep(2)
+
     code = None
-    lastcode = None
     while True:
         gm65data = None
         jet111data = None
@@ -392,7 +402,7 @@ def main():
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
 
-        if (code is not None) and (lastcode != code):
+        if (code is not None):
 
             result = apicall(code)
             print(code)
@@ -409,7 +419,6 @@ def main():
                     if marked:
                         printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1, True)
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
-                        lastcode = code
                 BCODEREAD_ENABLED =  True
                 code = None
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
