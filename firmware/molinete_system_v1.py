@@ -29,7 +29,7 @@ else:
     from gpiozero import Button, DigitalInputDevice, OutputDevice
     rasp_button_restart = Button(4) # PIN 7
     rasp_relay_out = OutputDevice(17) # PIN 11
-    rasp_gpio_input = DigitalInputDevice(27) # PIN 13
+    # rasp_gpio_input = DigitalInputDevice(27) # PIN 13
 
 # STATUS VARS
 BLAN = False
@@ -180,25 +180,12 @@ def ISRSignal(iplatform):
         print("waiting hole")
         while bwait4Hole:
             bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
-    else:
-        while bwait4Hole:
-            bwait4Hole = rasp_gpio_input.value
+    # else:
+    #     while bwait4Hole:
+    #         bwait4Hole = rasp_gpio_input.value
     print("State is LOW")
     return bwait4Hole
 
-def restart(qrestart):
-    """
-        Exits program. Linux Service will restart another instance
-    """
-    brestart = True
-    while True:
-        if "tango" in platform.node():
-            brestart = wiringpi.digitalRead(GPIO_RESTART)
-        else:
-            brestart = rasp_button_restart.value    
-        if not brestart:
-            print("restart button")
-            qrestart.put(1)
 
 def initGPIO():
     """
@@ -238,13 +225,11 @@ def enableGate():
             return True
         return False
     else:
+        # raspberry box delay for commute from ON to OFF
         rasp_relay_out.on()
-        bHole = ISRSignal(0)
-        if not bHole:
-            print("Activate RELAYS")
-            rasp_relay_out.off()
-            return True
-        return False
+        time.sleep(5)
+        rasp_relay_out.off()
+        return True
         
 
 def printSTATUS(lcd):
@@ -368,6 +353,7 @@ def main():
     else:
         printMessage(lcd, "INPUT DEV OFF", LCDI2C.LCD_LINE_2, True)
     time.sleep(1)
+
     if sp is not None:
         printMessage(lcd, "GM65 ON", LCDI2C.LCD_LINE_2, True)
     else:
@@ -379,11 +365,17 @@ def main():
         gm65data = None
         jet111data = None
         marked = False
-        brestart = wiringpi.digitalRead(GPIO_RESTART)
+        
+        if "tango" in platform.node():
+            brestart = wiringpi.digitalRead(GPIO_RESTART)
+        else:
+            brestart = rasp_button_restart.value
+        
         if brestart == 0:
             printMessage(lcd, "REINICIANDO", LCDI2C.LCD_LINE_1, True)
             printMessage(lcd, "YA VOLVEMOS...", LCDI2C.LCD_LINE_2, True)
             exit()
+
         if code is None:
             FAILURE_COUNT = 5
             if sp is not None:

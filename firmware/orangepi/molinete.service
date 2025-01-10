@@ -9,7 +9,8 @@ User=root
 WorkingDirectory=/home/orangepi/src/Carnavacs
 ExecStartPre=/bin/sh -c 'until ping -c1 192.168.40.251; do sleep 1; done;'
 ExecStart=/bin/bash /home/orangepi/src/Carnavacs/run_molinete.sh
-
+Restart=always
+RestartSec=3
 
 StandardOutput=append:/home/orangepi/logs/molinete.log
 StandardError=append:/home/orangepi/logs/molinete.err.log
