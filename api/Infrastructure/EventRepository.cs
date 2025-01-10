@@ -49,7 +49,7 @@ namespace Carnavacs.Api.Infrastructure
         }
 
      
-        public async Task<EventStats> GetStatsAsync()
+        public async Task<EventStats> GetStatsAsync(int? eventId)
         {
             EventStats stats = new EventStats();
             var ev = await this.GetCurrentAsync();
@@ -63,15 +63,23 @@ namespace Carnavacs.Api.Infrastructure
             stats.TicketStats = r.ToList();
 
             //gates
-            string gateQuery = @"select ad.NroSerie,sobrenombre, count(*) from QREntradasLecturas qre
+            string gateQuery = @"select  ad.id DeviceId, ad.NroSerie DeviceName, count(*) PeopleCount, pi.Id GateId, sobrenombre GateNickName
+                                from QREntradasLecturas qre
                                  inner join AccesosDispositivos ad on qre.AccesoDispositivoFk = ad.Id
                                  inner join puertaingreso pi on pi.id = ad.puertaingresoid 
-                                 where fecha > '2023-02-25 12:00'
-                                 group by ad.NroSerie, sobrenombre order by ad.NroSerie";
+                                 where qre.QREntradaFk > 414646
+                                 group by  pi.Id, ad.id, ad.NroSerie, sobrenombre order by ad.NroSerie";
 
-            var r2 = await Connection.QueryAsync<TicketStat>(query, new { Enabled = 1, EventFk = ev.Id }, Transaction);
-
-
+           var r2 = await Connection.QueryAsync<AccessDeviceInfo>(gateQuery, new { Enabled = 1, EventFk = ev.Id }, Transaction);
+            foreach(var res in r2)
+            {
+                var g = stats.Gates.FirstOrDefault(x => x.GateId == res.GateId);
+                if (g==null) {
+                    g = new GateInfo { GateId = res.GateId, GateName = res.GateNickName };
+                    stats.Gates.Add(g);
+                }
+                g.AccessDevices.Add(res);
+            }
             return stats;
         }
     }
