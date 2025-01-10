@@ -18,6 +18,7 @@ from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
 import platform
+import pdb
 
 if "tango" in platform.node():
     import wiringpi
@@ -373,7 +374,7 @@ def main():
             brestart = wiringpi.digitalRead(GPIO_RESTART)
         else:
             brestart = rasp_button_restart.value
-        
+
         if brestart == 0:
             printMessage(lcd, "REINICIANDO", LCDI2C.LCD_LINE_1, True)
             printMessage(lcd, "YA VOLVEMOS...", LCDI2C.LCD_LINE_2, True)
