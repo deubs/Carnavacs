@@ -37,7 +37,7 @@ except ImportError:
 import time
 
 # Define some device parameters
-if platform.node() == "tango18":
+if (platform.node() == "tango18") or ("raspi" in platform.node()):
     I2C_ADDR = 0x3F
 else:
     I2C_ADDR = 0x27 # I2C device address
