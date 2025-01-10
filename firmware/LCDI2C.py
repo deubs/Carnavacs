@@ -29,6 +29,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #--------------------------------------
+import platform
 try:
     import smbus2 as smbus
 except ImportError:
@@ -58,8 +59,13 @@ E_PULSE = 0.0005
 E_DELAY = 0.0005
 
 #Open I2C interface
-#bus = smbus.SMBus(0)  # Rev 1 Pi uses 0
-bus = smbus.SMBus(3) # OrangePI Zero3 uses i2c_3
+print(platform.node())
+if platform.node() == "raspberrypi":
+    bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
+else:
+    bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
+
+# bus = smbus.SMBus(3) # OrangePI Zero3 uses i2c_3
 
 class LCD(object):
   

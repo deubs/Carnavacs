@@ -38,7 +38,9 @@ def detectDevice():
         if ("IMAGER 2D" in device.name) or \
             ("BF SCAN SCAN KEYBOARD" in device.name) or \
                 ("NT USB Keyboard" in device.name) or \
-                    ("ZKRFID R400" in device.name):
+                    ("TMS HIDKeyBoard" in device.name) or \
+                        ("ZKRFID R400" in device.name):
+
             inputdev = device.path
             break
     return inputdev
@@ -74,9 +76,10 @@ def readBarCodes(device, q: queue):
             if eventdata.keystate == 1: # Keydown
                 scancode = eventdata.scancode
                 if scancode == 28: # Enter
-                    saveBarcode(barcode)
-                    q.put(barcode)
-                    barcode = ''
+                    if BCODEREAD_ENABLED:
+                        saveBarcode(barcode)
+                        q.put(barcode)
+                        barcode = ''
                 else:
                     key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
                     barcode = barcode + key

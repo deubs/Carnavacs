@@ -14,7 +14,7 @@
 */
 int ID = 0x10;
 /*estandar 0x3F, molinetes 0x27*/
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
 SoftwareSerial ss(2, 3);
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, ID };
@@ -22,8 +22,8 @@ IPAddress ip(192, 168, 40, ID);
 
 EthernetClient ethClient;
 
-char server[] = "192.168.40.250";
-String url = "/QR/Read?qr=";
+char server[] = "192.168.40.244";
+String url = "/QR/MolReadQR.asp?qrCode=";
 
 HttpClient client = HttpClient(ethClient, server, 80);
 
@@ -63,12 +63,13 @@ void setup() {
   digitalWrite(SW, !SW_ACTIVE);
   
   show("INIT");
-  int eth = Ethernet.begin(mac);
-  if (eth == 1)
-    Serial.println("DHCP OK");
-  else
-    Serial.println("DHCP NOT OK");
-  Serial.println(eth);
+  Ethernet.begin(mac, ip);
+  // int eth = Ethernet.begin(mac, ip);
+  // if (eth == 1)
+  //   Serial.println("DHCP OK");
+  // else
+  //   Serial.println("DHCP NOT OK");
+  // Serial.println(eth);
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
     show("NO ETH!!");
     while (true)
@@ -172,7 +173,7 @@ void loop() {
       if (status == "OK") {
         openTurn();
       }
-      last = qr;
+      // last = qr;
     } else {
       Serial.print("Getting response failed: ");
       Serial.println(err);
