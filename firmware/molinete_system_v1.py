@@ -426,7 +426,7 @@ def main():
                     code = None
                     time.sleep(3)
 
-                ticket_string = f'code: {code}, status: {'api failed'},timestamp: {datetime.now()} \n'
+                ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
             if fhandler is not None:
                 fhandler.write(ticket_string)
                 fhandler.flush()
