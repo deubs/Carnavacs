@@ -370,6 +370,7 @@ def main():
         jet111data = None
         marked = False
         brestart = 1
+        pdb.set_trace()
         if "tango" in platform.node():
             brestart = wiringpi.digitalRead(GPIO_RESTART)
         else:
