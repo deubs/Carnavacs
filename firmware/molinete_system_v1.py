@@ -366,7 +366,7 @@ def main():
         printMessage(lcd, "INPUT DEV ON", LCDI2C.LCD_LINE_2, True)
     else:
         printMessage(lcd, "INPUT DEV OFF", LCDI2C.LCD_LINE_2, True)
-
+    time.sleep(1)
     if sp is not None:
         printMessage(lcd, "GM65 ON", LCDI2C.LCD_LINE_2, True)
     else:
