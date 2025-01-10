@@ -374,7 +374,7 @@ def main():
         if "tango" in platform.node():
             brestart = wiringpi.digitalRead(GPIO_RESTART)
         else:
-            brestart = rasp_button_restart.value
+            brestart = rasp_button_restart.pin.state
 
         if brestart == 0:
             printMessage(lcd, "REINICIANDO", LCDI2C.LCD_LINE_1, True)
