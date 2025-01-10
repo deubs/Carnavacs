@@ -404,7 +404,6 @@ def main():
                         code = jet111data
 
         if (code is not None):
-
             result = apicall(code)
             print(code)
             print(result)   
@@ -435,7 +434,7 @@ def main():
                     code = None
                     time.sleep(3)
 
-                ticket_string = f'code: {code}, timestamp: {datetime.now()} \n'
+                ticket_string = f'code: {code}, status: {'api failed'},timestamp: {datetime.now()} \n'
             if fhandler is not None:
                 fhandler.write(ticket_string)
                 fhandler.flush()
