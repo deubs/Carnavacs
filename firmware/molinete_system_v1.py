@@ -368,7 +368,7 @@ def main():
         gm65data = None
         jet111data = None
         marked = False
-        
+        brestart = 1
         if "tango" in platform.node():
             brestart = wiringpi.digitalRead(GPIO_RESTART)
         else:
