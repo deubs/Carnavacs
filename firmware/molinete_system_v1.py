@@ -18,7 +18,7 @@ from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
 import platform
-import pdb
+# import pdb
 
 if "tango" in platform.node():
     import wiringpi
@@ -370,7 +370,6 @@ def main():
         jet111data = None
         marked = False
         brestart = 1
-        pdb.set_trace()
         if "tango" in platform.node():
             brestart = wiringpi.digitalRead(GPIO_RESTART)
         else:
