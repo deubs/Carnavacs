@@ -8,6 +8,17 @@
     align-items: center;
     justify-content: flex-end;
 }
+.main button {
+    border: solid 1px rgba(255,255,255,.1);
+    background: rgba(255,255,255,0.1);
+    padding: .3rem 0;
+    transition: all .5s ease-in-out;
+    cursor: pointer;
+}
+.main button:hover {
+    color:#243B55;
+    background: white;
+}
 .sidebar {
     display: flex;
     flex-direction: column;

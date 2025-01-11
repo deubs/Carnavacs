@@ -20,21 +20,10 @@ export default function Access_points () {
         get()
     },[])
     
-    return <div>
-        { gates && gates.map((item, index) => <Access_point data={ item } key={index + 999} />)}
+    return <div className={css.main}>
+        { 
+        gates && 
+        gates.map((item, index) => <Access_point data={ item } key={index + 999} />)
+        }
     </div>
 }
- /*       
-    useEffect(()=>{
-        const m = async () => {
-            const r = await fetch("/api", {
-                method: "post",
-                body: JSON.stringify({ event: 4, data: { evento: "events_stats" }})
-            })
-            const rr = await r.json()
-            console.log(rr.result.gates)
-            set_gates(rr.result.gates)
-        }
-        m()
-    }, [])
-*/
