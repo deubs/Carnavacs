@@ -3,10 +3,10 @@ import { useEffect, useState } from "react"
 import css from "./css.module.css"
 
 const Turnstile = ({ data }) => {
-    const ip_array = data.deviceName.split(".")
-    const last_number = ip_array[ip_array.length - 1]
+    const tango_number = data.deviceName.slice(-2)
+
     return <div className={css.turnstile}>
-        <p>Tango {last_number}</p>
+        <p>Tango {tango_number}</p>
         <p>Ingresos: {data.peopleCount}</p>
     </div>
 }
