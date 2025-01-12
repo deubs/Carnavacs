@@ -1,8 +1,9 @@
+/* 
 "use client"
 import io from 'socket.io-client';
 import css from "./css.module.css"
 
-import { storeTurnstiles } from '../state/state';
+// import { storeTurnstiles } from '../state/state';
 import { useEffect, useState } from 'react';
 
 import { event_entry_failed, event_entry_passed, event_status, event_error } from './test_t_events';
@@ -113,7 +114,7 @@ export default function Websocket () {
 }
 
 
-
+*/
 /* 
 const simularTickets = () => {
 
@@ -140,3 +141,5 @@ const simularTickets = () => {
         }
     }
 */
+
+
