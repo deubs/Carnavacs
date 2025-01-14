@@ -416,24 +416,24 @@ def main():
                         printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1, True)
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
                 BCODEREAD_ENABLED =  True
-                code = None
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
+                code = None
             else:
                 printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
                 printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
                 FAILURE_COUNT -= 1
                 time.sleep(1)
+                ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
                 if FAILURE_COUNT == 0:
                     printMessage(lcd, "FALLA PERMANENTE", LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, "INFORME PROBLEMA", LCDI2C.LCD_LINE_2, True)
                     BCODEREAD_ENABLED =  True
-                    code = None
                     time.sleep(3)
-
-                ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
+                    ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
+                    code = None
             if fhandler is not None:
                 fhandler.write(ticket_string)
-                fhandler.flush()
+                fhandler.flush()    
         else:
             code = None
             printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
