@@ -28,10 +28,14 @@ if "tango" in platform.node():
     GPIO_RESTART = 9 #PC15
     GPIO_RELAY_OUT = 10 #PC14
     GPIO_INPUT_1 = 13   #PC7
+    workingdir = "/home/orangepi/"
 else:
     from gpiozero import Button, DigitalInputDevice, OutputDevice
     rasp_button_restart = Button(4, pull_up=True) # PIN 7
     rasp_relay_out = OutputDevice(17) # PIN 11
+    workingdir = "/home/pi/"
+
+print(workingdir)
     # rasp_gpio_input = DigitalInputDevice(27) # PIN 13
 
 # STATUS VARS
@@ -66,8 +70,6 @@ NOT_RECOGNIZED_KEY = u'X'
 
 from os.path import expanduser
 
-workingdir = expanduser("~")
-print(workingdir)
 
 
 def detectInputDevice():
@@ -388,6 +390,8 @@ def main():
         if brestart == 0:
             printMessage(lcd, "REINICIANDO", LCDI2C.LCD_LINE_1, True)
             printMessage(lcd, "YA VOLVEMOS...", LCDI2C.LCD_LINE_2, True)
+            if fhandler is not None:
+                fhandler.close()
             exit()
 
         if code is None:
