@@ -15,7 +15,7 @@ export default function Event_stats () {
     useEffect(()=>{
         const get = async () => {
             const { error, data } = await update_data("http://api.carnavaldelpais.com.ar/events/stats")
-            if (error)  set_message(`Error obteniendo datos en el componente event_stats`)
+            if (error)  set_message(`Error: compruebe el estado de la conexion a la red`)
             if (data)   set_data(data)
             console.log(data.gates)
             console.log(data.ticketStats)

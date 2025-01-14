@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from 'react';
-import jsQR from 'jsqr';
 
 export default function QRReader() {
   const videoRef = useRef(null);
