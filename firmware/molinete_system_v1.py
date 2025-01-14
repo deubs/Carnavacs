@@ -13,12 +13,13 @@ import queue
 import time
 import checklan
 from requests import post, exceptions, Session
-from datetime import datetime
+from datetime import datetime, date
 from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
 import platform
 # import pdb
+from os.path import exists, makedirs
 
 if "tango" in platform.node():
     import wiringpi
@@ -61,6 +62,11 @@ sp = None
 
 print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
+
+from os.path import expanduser
+
+workingdir = expanduser("~")
+print(workingdir)
 
 
 def detectInputDevice():
@@ -290,10 +296,13 @@ def initLCD():
 
 bFILECREATED =  False
 def createFile():
+    fdir = f'{workingdir}/tickets'
+    if not exists(fdir):
+        makedirs(fdir)
     f = None
-    dt = datetime.now().isoformat()
+    dt = date.today().isoformat()
     try:
-        fname = f'tickets_{dt}.txt'
+        fname = f'{fdir}/tickets_{dt}.txt'
         f = open(fname, "a")
         bFILECREATED = True
     except Exception as e:
