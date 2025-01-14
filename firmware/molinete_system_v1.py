@@ -19,7 +19,8 @@ from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
 import platform
 # import pdb
-from os.path import exists, makedirs
+from os import makedirs
+from os.path import exists 
 
 if "tango" in platform.node():
     import wiringpi
