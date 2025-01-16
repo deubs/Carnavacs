@@ -47,7 +47,7 @@ BJET = False
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
 
-BCODEREAD_ENABLED = True
+global BCODEREAD_ENABLED
 
 scancodes = {
 	11:	u'0',
@@ -380,6 +380,7 @@ def main():
         time.sleep(2)
 
     code = None
+    BCODEREAD_ENABLED = True
     while True:
         gm65data = None
         jet111data = None
