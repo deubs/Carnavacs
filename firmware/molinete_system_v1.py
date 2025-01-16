@@ -451,7 +451,7 @@ def main():
             if bfinalize_job:
                 code = None
                 jet111q.task_done()
-                gm65q.task_done()
+                # gm65q.task_done()
             
             if fhandler is not None:
                 fhandler.write(ticket_string)
