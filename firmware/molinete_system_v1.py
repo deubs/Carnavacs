@@ -448,7 +448,6 @@ def main():
                     bfinalize_job = True
                     
             if bfinalize_job:
-                input("FInalize")
                 BCODEREAD_ENABLED =  True
                 code = None            
             if fhandler is not None:
