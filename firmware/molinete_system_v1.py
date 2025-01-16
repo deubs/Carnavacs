@@ -262,7 +262,7 @@ def processResponse(response):
 
 
 def apicall(code):
-    return {'apistatus': True, 'code': True, 'm1': 'adelante', 'm2': 'maestro'}
+    return {'apistatus': True, 'code': code, 'm1': 'adelante', 'm2': 'maestro'}
 
     apikey = keys['key1']
     header = {
@@ -414,11 +414,11 @@ def main():
                     if jet111data is not None:
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
-
+        bfinalize_job = False
         if (code is not None):
             result = apicall(code)
             print(code)
-            print(result)   
+            print(result) 
             if result['apistatus'] == True:
                 if result['code'] == False:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
@@ -433,7 +433,7 @@ def main():
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
                 BCODEREAD_ENABLED =  True
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
-                code = None
+                bfinalize_job = True
             else:
                 printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
                 printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
@@ -446,7 +446,13 @@ def main():
                     BCODEREAD_ENABLED =  True
                     time.sleep(3)
                     ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
-                    code = None
+                    bfinalize_job = True
+                    
+            if bfinalize_job:
+                code = None
+                jet111q.task_done()
+                gm65q.task_done()
+            
             if fhandler is not None:
                 fhandler.write(ticket_string)
                 fhandler.flush()    
