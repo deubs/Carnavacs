@@ -119,7 +119,7 @@ def readBarCodes(device, q: queue):
                             if scancode == 28: # Enter
                                 # saveBarcode(barcode)
                                 print("putting in queue")
-                                # print(q.qsize())
+                                print(q.qsize())
                                 q.put(barcode)
                                 barcode = ''
                             else:
@@ -432,26 +432,24 @@ def main():
                     if marked:
                         printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1, True)
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
-                BCODEREAD_ENABLED =  True
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
                 bfinalize_job = True
             else:
                 printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
                 printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
                 FAILURE_COUNT -= 1
-                time.sleep(1)
                 ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
                 if FAILURE_COUNT == 0:
                     printMessage(lcd, "FALLA PERMANENTE", LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, "INFORME PROBLEMA", LCDI2C.LCD_LINE_2, True)
-                    BCODEREAD_ENABLED =  True
                     time.sleep(3)
                     ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
                     bfinalize_job = True
                     
             if bfinalize_job:
+                BCODEREAD_ENABLED =  True
                 code = None
-                jet111q.task_done()
+                # jet111q.task_done()
                 # gm65q.task_done()
             
             if fhandler is not None:
