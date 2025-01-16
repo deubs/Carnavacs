@@ -47,8 +47,7 @@ BJET = False
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
 
-BCODEREAD_ENABLED = True
-threading_event = threading.Event()
+# threading_event = threading.Event()
 scancodes = {
 	11:	u'0',
 	2:	u'1',
@@ -111,20 +110,18 @@ def readBarCodes(device, q: queue):
         try:
             for event in device.read_loop():
                 if event.type == ecodes.EV_KEY:
-                    # if BCODEREAD_ENABLED:
-                    while not threading_event.is_set():
-                        eventdata = categorize(event)
-                        if eventdata.keystate == 1: # Keydown
-                            scancode = eventdata.scancode
-                            if scancode == 28: # Enter
-                                print("putting in queue")
-                                q.put(barcode)
-                                barcode = ''
-                            else:
-                                key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
-                                barcode = barcode + key
-                                if key == NOT_RECOGNIZED_KEY:
-                                    print('unknown key, scancode=' + str(scancode))
+                    eventdata = categorize(event)
+                    if eventdata.keystate == 1: # Keydown
+                        scancode = eventdata.scancode
+                        if scancode == 28: # Enter
+                            print("putting in queue")
+                            q.put(barcode)
+                            barcode = ''
+                        else:
+                            key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
+                            barcode = barcode + key
+                            if key == NOT_RECOGNIZED_KEY:
+                                print('unknown key, scancode=' + str(scancode))
         except Exception as e:
             print(e)
             idev = None
@@ -137,21 +134,20 @@ def readPort(serialP, q:queue):
     """
     print("Serial Port Opened")
     breading = True
+    bcode = True
     if serialP.isOpen():
         while breading:
             print("Reading Serial Port")
             data = ""
-            while True:
-                # if BCODEREAD_ENABLED:
-                while not threading_event.is_set():
-                    if q.empty():
-                        cmdRet = serialP.read().decode()
-                        if (cmdRet == '\r' or cmdRet == '\n'):
-                            q.put(data)
-                            break
-                        else:
-                            data += str(cmdRet)
-            # print("Raw1 = " + str(data))
+            bcode = True
+            while bcode:
+                if q.empty():
+                    cmdRet = serialP.read().decode()
+                    if (cmdRet == '\r' or cmdRet == '\n'):
+                        q.put(data)
+                        bcode = False
+                    else:
+                        data += str(cmdRet)
     else:
         print("Port is Closed")
 
@@ -378,7 +374,6 @@ def main():
         time.sleep(2)
 
     code = None
-    BCODEREAD_ENABLED = True
     while True:
         gm65data = None
         jet111data = None
@@ -400,8 +395,6 @@ def main():
             FAILURE_COUNT = 5
             if sp is not None:
                 if not gm65q.empty():
-                    # BCODEREAD_ENABLED = False
-                    threading_event.set()
                     print("reading queue...gm65")
                     gm65data = gm65q.get()
                     if gm65data is not None:     
@@ -409,8 +402,6 @@ def main():
                         code = gm65data
             if idev is not None:
                 if not jet111q.empty():
-                    # BCODEREAD_ENABLED = False
-                    threading_event.set()
                     print("reading queue...jet111")
                     jet111data = jet111q.get()
                     if jet111data is not None:
@@ -449,8 +440,6 @@ def main():
                     bfinalize_job = True
                     
             if bfinalize_job:
-                BCODEREAD_ENABLED =  True
-                threading_event.clear()
                 code = None            
             if fhandler is not None:
                 fhandler.write(ticket_string)
