@@ -47,7 +47,7 @@ BJET = False
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
 
-global BCODEREAD_ENABLED
+BCODEREAD_ENABLED = True
 
 scancodes = {
 	11:	u'0',
@@ -156,7 +156,6 @@ def readPort(serialP, q:queue):
     else:
         print("Port is Closed")
 
-    
 def initSerialPort():
     """
         Initiates serial port in OPIz3
@@ -416,6 +415,7 @@ def main():
                     if jet111data is not None:
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
+                            
         bfinalize_job = False
         if (code is not None):
             result = apicall(code)
@@ -448,11 +448,9 @@ def main():
                     bfinalize_job = True
                     
             if bfinalize_job:
+                input("FInalize")
                 BCODEREAD_ENABLED =  True
-                code = None
-                # jet111q.task_done()
-                # gm65q.task_done()
-            
+                code = None            
             if fhandler is not None:
                 fhandler.write(ticket_string)
                 fhandler.flush()    
@@ -462,9 +460,6 @@ def main():
             printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_2, False)
 
                     
-    # else:
-    #     lcd.lcd_string("Serial Port Fail", LCDI2C.LCD_LINE_1)
-    #     lcd.lcd_string("Input Fail", LCDI2C.LCD_LINE_2)
 
 if __name__ == '__main__':
     main()
