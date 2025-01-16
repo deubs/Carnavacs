@@ -232,7 +232,7 @@ def enableGate():
     else:
         # raspberry box delay for commute from ON to OFF
         rasp_relay_out.on()
-        time.sleep(3)
+        time.sleep(2)
         rasp_relay_out.off()
         return True
         
