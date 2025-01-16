@@ -112,14 +112,11 @@ def readBarCodes(device, q: queue):
             for event in device.read_loop():
                 if event.type == ecodes.EV_KEY:
                     if BCODEREAD_ENABLED:
-                        print(BCODEREAD_ENABLED)
                         eventdata = categorize(event)
                         if eventdata.keystate == 1: # Keydown
                             scancode = eventdata.scancode
                             if scancode == 28: # Enter
-                                # saveBarcode(barcode)
                                 print("putting in queue")
-                                print(q.qsize())
                                 q.put(barcode)
                                 barcode = ''
                             else:
