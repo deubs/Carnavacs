@@ -262,6 +262,8 @@ def processResponse(response):
 
 
 def apicall(code):
+    return {'apistatus': True, 'code': True, 'm1': 'adelante', 'm2': 'maestro'}
+
     apikey = keys['key1']
     header = {
         'X-API-Key': f'{apikey}',
