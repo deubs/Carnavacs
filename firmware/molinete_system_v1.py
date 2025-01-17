@@ -13,12 +13,14 @@ import queue
 import time
 import checklan
 from requests import post, exceptions, Session
-from datetime import datetime
+from datetime import datetime, date
 from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
 import platform
 # import pdb
+from os import makedirs
+from os.path import exists 
 
 if "tango" in platform.node():
     import wiringpi
@@ -26,10 +28,15 @@ if "tango" in platform.node():
     GPIO_RESTART = 9 #PC15
     GPIO_RELAY_OUT = 10 #PC14
     GPIO_INPUT_1 = 13   #PC7
+    workingdir = "/home/orangepi/"
 else:
     from gpiozero import Button, DigitalInputDevice, OutputDevice
     rasp_button_restart = Button(4, pull_up=True) # PIN 7
     rasp_relay_out = OutputDevice(17) # PIN 11
+    rasp_sensor_in = DigitalInputDevice(27) # PIN 11
+    workingdir = "/home/pi/"
+
+print(workingdir)
     # rasp_gpio_input = DigitalInputDevice(27) # PIN 13
 
 # STATUS VARS
@@ -41,8 +48,7 @@ BJET = False
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
 
-BCODEREAD_ENABLED = True
-
+# threading_event = threading.Event()
 scancodes = {
 	11:	u'0',
 	2:	u'1',
@@ -61,6 +67,19 @@ sp = None
 
 print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
+
+class PauseDeviceTOKEN:
+    def __init__(self):
+        self.is_paused = False
+    
+    def pauseDevice(self):
+        self.is_paused = True
+    
+    def resumeDevice(self):
+        self.is_paused = False
+
+
+pauseDevice = PauseDeviceTOKEN()
 
 
 def detectInputDevice():
@@ -95,23 +114,21 @@ def connectInputDevice(inputdev):
         return device
 
 
-def readBarCodes(device, q: queue):
+def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
     print('begin reading...')
     barcode = ''
     while True:
         try:
             for event in device.read_loop():
-                if event.type == ecodes.EV_KEY:
-                    if BCODEREAD_ENABLED:
+                if not pause.is_paused:
+                    if event.type == ecodes.EV_KEY:
                         eventdata = categorize(event)
                         if eventdata.keystate == 1: # Keydown
                             scancode = eventdata.scancode
                             if scancode == 28: # Enter
-                                    # saveBarcode(barcode)
-                                    print("putting in queue")
-                                    # print(q.qsize())
-                                    q.put(barcode)
-                                    barcode = ''
+                                print("putting in queue")
+                                q.put(barcode)
+                                barcode = ''
                             else:
                                 key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
                                 barcode = barcode + key
@@ -123,30 +140,31 @@ def readBarCodes(device, q: queue):
             exit()
 
 
-def readPort(serialP, q:queue):
+def readPort(serialP, q:queue, pause: PauseDeviceTOKEN):
     """
         Serial port communication with GM65 barcode reader
     """
     print("Serial Port Opened")
     breading = True
+    bcode = True
     if serialP.isOpen():
         while breading:
             print("Reading Serial Port")
             data = ""
-            while True:
-                if BCODEREAD_ENABLED:
+            bcode = True
+            if not pause.is_paused:
+                while bcode:
                     if q.empty():
                         cmdRet = serialP.read().decode()
                         if (cmdRet == '\r' or cmdRet == '\n'):
                             q.put(data)
-                            break
+                            bcode = False
                         else:
                             data += str(cmdRet)
-            # print("Raw1 = " + str(data))
     else:
         print("Port is Closed")
 
-    
+
 def initSerialPort():
     """
         Initiates serial port in OPIz3
@@ -181,9 +199,9 @@ def ISRSignal(iplatform):
         print("waiting hole")
         while bwait4Hole:
             bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
-    # else:
-    #     while bwait4Hole:
-    #         bwait4Hole = rasp_gpio_input.value
+    else:
+        while bwait4Hole:
+            bwait4Hole = rasp_sensor_in.pin.state
     print("State is LOW")
     return bwait4Hole
 
@@ -214,8 +232,6 @@ def enableGate():
     Wait until signal from inductive sensor
     Enable COIL releasing relays. Iluminate RED light
     """
-    # pdb.set_trace()
-    # print(platform.node())
     if "tango" in platform.node():
         print("Release RELAYS")
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
@@ -226,12 +242,21 @@ def enableGate():
             return True
         return False
     else:
-        # raspberry box delay for commute from ON to OFF
-        rasp_relay_out.on()
-        time.sleep(3)
-        rasp_relay_out.off()
-        return True
-        
+        if "baliza" in platform.node():
+            # raspberry box delay for commute from ON to OFF
+            rasp_relay_out.on()
+            time.sleep(2)
+            rasp_relay_out.off()
+            return True
+        else:
+            rasp_relay_out.off()            
+            bHole = ISRSignal(0)
+            if not bHole:
+                print("Activate RELAYS")
+                rasp_relay_out.on()
+                return True
+            return False
+
 
 def printSTATUS(lcd):
     lcd.lcd_string("LAN " + str(BLAN), LCDI2C.LCD_LINE_1)
@@ -253,6 +278,9 @@ def processResponse(response):
 
 
 def apicall(code):
+    """
+
+    """
     apikey = keys['key1']
     header = {
         'X-API-Key': f'{apikey}',
@@ -288,20 +316,28 @@ def initLCD():
         BINITLCD = False
     return lcd
 
-bFILECREATED =  False
+
 def createFile():
+    """
+    Creates log file for read codes
+    """
+    fdir = f'{workingdir}/tickets'
+    if not exists(fdir):
+        makedirs(fdir)
     f = None
-    dt = datetime.now().isoformat()
+    dt = date.today().isoformat()
     try:
-        fname = f'tickets_{dt}.txt'
+        fname = f'{fdir}/tickets_{dt}.txt'
         f = open(fname, "a")
-        bFILECREATED = True
     except Exception as e:
         print(e)
     return f
 
 
 def printMessage(lcd_object, message, line, log):
+    """
+    Prints messages in display and stdout
+    """
     now = datetime.now()
     date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
     if log:
@@ -311,25 +347,27 @@ def printMessage(lcd_object, message, line, log):
 
 
 def initInputDevice(queue):
+    """
+    """
     idev = detectInputDevice()
     if idev is not None:
         dev = connectInputDevice(idev)
-        threading.Thread(target = readBarCodes, args = (dev, queue,), daemon = True).start()
+        threading.Thread(target = readBarCodes, args = (dev, queue, pauseDevice, ), daemon = True).start()
         BJET = True
     return idev
 
 
 def initSerialDevice(queue):
+    """
+    """
     sp = initSerialPort()
     if sp != None:
-        # lcd.lcd_string('GM65 OK...', LCDI2C.LCD_LINE_2)
-        # printMessage(lcd, 'GM65 OK...', LCDI2C.LCD_LINE_2)
-        threading.Thread(target = readPort, args = (sp, queue,), daemon = True).start()
+        threading.Thread(target = readPort, args = (sp, queue, pauseDevice, ) , daemon = True).start()
         BGM65 = True
         time.sleep(2)
     return sp
 
-import pdb
+
 def main():
     """
         Main function
@@ -378,13 +416,14 @@ def main():
         if brestart == 0:
             printMessage(lcd, "REINICIANDO", LCDI2C.LCD_LINE_1, True)
             printMessage(lcd, "YA VOLVEMOS...", LCDI2C.LCD_LINE_2, True)
+            if fhandler is not None:
+                fhandler.close()
             exit()
 
         if code is None:
             FAILURE_COUNT = 5
             if sp is not None:
                 if not gm65q.empty():
-                    BCODEREAD_ENABLED = False
                     print("reading queue...gm65")
                     gm65data = gm65q.get()
                     if gm65data is not None:     
@@ -392,17 +431,18 @@ def main():
                         code = gm65data
             if idev is not None:
                 if not jet111q.empty():
-                    BCODEREAD_ENABLED = False
                     print("reading queue...jet111")
                     jet111data = jet111q.get()
                     if jet111data is not None:
                         printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
                         code = jet111data
-
+                            
+        bfinalize_job = False
         if (code is not None):
+            pauseDevice.pauseDevice()
             result = apicall(code)
             print(code)
-            print(result)   
+            print(result) 
             if result['apistatus'] == True:
                 if result['code'] == False:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
@@ -415,34 +455,32 @@ def main():
                     if marked:
                         printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1, True)
                         printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
-                BCODEREAD_ENABLED =  True
-                code = None
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
+                bfinalize_job = True
             else:
                 printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
                 printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
                 FAILURE_COUNT -= 1
-                time.sleep(1)
+                ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
                 if FAILURE_COUNT == 0:
                     printMessage(lcd, "FALLA PERMANENTE", LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, "INFORME PROBLEMA", LCDI2C.LCD_LINE_2, True)
-                    BCODEREAD_ENABLED =  True
-                    code = None
                     time.sleep(3)
-
-                ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
+                    ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
+                    bfinalize_job = True
+                    
+            if bfinalize_job:
+                code = None
+                pauseDevice.resumeDevice()            
             if fhandler is not None:
                 fhandler.write(ticket_string)
-                fhandler.flush()
+                fhandler.flush()    
         else:
             code = None
             printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
             printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_2, False)
 
                     
-    # else:
-    #     lcd.lcd_string("Serial Port Fail", LCDI2C.LCD_LINE_1)
-    #     lcd.lcd_string("Input Fail", LCDI2C.LCD_LINE_2)
 
 if __name__ == '__main__':
     main()
