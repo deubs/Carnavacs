@@ -119,8 +119,8 @@ def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
     barcode = ''
     while True:
         try:
-            if not pause.is_paused:
-                for event in device.read_loop():
+            for event in device.read_loop():
+                if not pause.is_paused:
                     if event.type == ecodes.EV_KEY:
                         eventdata = categorize(event)
                         if eventdata.keystate == 1: # Keydown
