@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { generate_token, check_token } from "./jsonwebtoken";
 import { checkCredentials } from "./pseudodbusers";
 
-
-const _events = {
+const events = {
   "success": true,
   "message": null,
   "result": [
@@ -87,131 +86,78 @@ const _events = {
   ]
 }
 
-const _events_current = {
+const events_current = {
   "success": true,
   "message": null,
   "result": {
-    "id": 139,
-    "fecha": "2025-01-04T21:00:00",
-    "nombre": "1 Noche de Carnaval del Pais",
+    "id": 141,
+    "fecha": "2025-01-18T21:00:00",
+    "nombre": "3 Noche de Carnaval del Pais",
     "habilitado": true,
     "showName": "CARNAVAL25G"
   }
 }
 
-const _events_stats = {
+const events_stats = {
   "success": true,
   "message": null,
   "result": {
     "eventId": 0,
-    "totalTickets": 1,
-    "usedTickets": 0,
-    "remainingTickets": 1,
+    "totalTickets": 16660,
+    "usedTickets": 638,
+    "remainingTickets": 16022,
     "totalGates": 0,
     "openGates": 0,
     "closedGates": 0,
     "gates": [
       {
-        "gateId": 2,
-        "gateName": "Proveedores",
-        "accessDevices": [
-          {
-            "deviceId": 86,
-            "deviceName": "192.168.40.131",
-            "peopleCount": 16
-          },
-          {
-            "deviceId": 106,
-            "deviceName": "192.168.40.16",
-            "peopleCount": 41
-          },
-          {
-            "deviceId": 107,
-            "deviceName": "192.168.40.179",
-            "peopleCount": 1
-          },
-          {
-            "deviceId": 87,
-            "deviceName": "192.168.40.214",
-            "peopleCount": 637
-          }
-        ]
-      },
-      {
-        "gateId": 1,
-        "gateName": "Rocamora",
-        "accessDevices": [
-          {
-            "deviceId": 105,
-            "deviceName": "192.168.40.199",
-            "peopleCount": 2102
-          }
-        ]
-      },
-      {
         "gateId": 3,
         "gateName": "Ayacucho",
         "accessDevices": [
           {
-            "deviceId": 95,
-            "deviceName": "192.168.40.201",
-            "peopleCount": 920
-          },
-          {
             "deviceId": 88,
             "deviceName": "192.168.40.202",
-            "peopleCount": 1038
+            "peopleCount": 880
           },
           {
             "deviceId": 89,
             "deviceName": "192.168.40.203",
-            "peopleCount": 1205
+            "peopleCount": 1078
           },
           {
             "deviceId": 90,
             "deviceName": "192.168.40.204",
-            "peopleCount": 738
+            "peopleCount": 192
           },
           {
             "deviceId": 91,
             "deviceName": "192.168.40.205",
-            "peopleCount": 1275
+            "peopleCount": 1095
           },
           {
             "deviceId": 92,
             "deviceName": "192.168.40.206",
-            "peopleCount": 649
+            "peopleCount": 408
           },
           {
             "deviceId": 93,
             "deviceName": "192.168.40.207",
-            "peopleCount": 825
+            "peopleCount": 703
           },
           {
             "deviceId": 94,
             "deviceName": "192.168.40.208",
-            "peopleCount": 1222
+            "peopleCount": 304
+          },
+          {
+            "deviceId": 95,
+            "deviceName": "192.168.40.201",
+            "peopleCount": 856
           },
           {
             "deviceId": 96,
             "deviceName": "192.168.40.209",
-            "peopleCount": 1080
-          }
-        ]
-      },
-      {
-        "gateId": 6,
-        "gateName": "Puerta 8",
-        "accessDevices": [
-          {
-            "deviceId": 97,
-            "deviceName": "192.168.40.210",
-            "peopleCount": 571
-          },
-          {
-            "deviceId": 98,
-            "deviceName": "192.168.40.211",
-            "peopleCount": 1023
+            "peopleCount": 935
           }
         ]
       },
@@ -222,46 +168,282 @@ const _events_stats = {
           {
             "deviceId": 99,
             "deviceName": "192.168.40.212",
-            "peopleCount": 1086
-          },
-          {
-            "deviceId": 101,
-            "deviceName": "192.168.40.213",
-            "peopleCount": 17
+            "peopleCount": 942
           },
           {
             "deviceId": 100,
             "deviceName": "192.168.40.215",
-            "peopleCount": 1311
+            "peopleCount": 1238
+          },
+          {
+            "deviceId": 101,
+            "deviceName": "192.168.40.213",
+            "peopleCount": 4
           },
           {
             "deviceId": 102,
             "deviceName": "192.168.40.218",
-            "peopleCount": 1184
-          },
-          {
-            "deviceId": 104,
-            "deviceName": "192.168.40.219",
-            "peopleCount": 1372
+            "peopleCount": 1084
           },
           {
             "deviceId": 103,
             "deviceName": "192.168.40.220",
-            "peopleCount": 789
+            "peopleCount": 403
+          },
+          {
+            "deviceId": 104,
+            "deviceName": "192.168.40.219",
+            "peopleCount": 1142
+          }
+        ]
+      },
+      {
+        "gateId": 2,
+        "gateName": "Proveedores",
+        "accessDevices": [
+          {
+            "deviceId": 85,
+            "deviceName": "192.168.40.181",
+            "peopleCount": 1
+          },
+          {
+            "deviceId": 86,
+            "deviceName": "192.168.40.131",
+            "peopleCount": 4
+          },
+          {
+            "deviceId": 87,
+            "deviceName": "192.168.40.214",
+            "peopleCount": 841
+          },
+          {
+            "deviceId": 106,
+            "deviceName": "192.168.40.16",
+            "peopleCount": 110
+          }
+        ]
+      },
+      {
+        "gateId": 6,
+        "gateName": "Puerta 8",
+        "accessDevices": [
+          {
+            "deviceId": 97,
+            "deviceName": "192.168.40.210",
+            "peopleCount": 375
+          },
+          {
+            "deviceId": 98,
+            "deviceName": "192.168.40.211",
+            "peopleCount": 634
+          }
+        ]
+      },
+      {
+        "gateId": 1,
+        "gateName": "Rocamora",
+        "accessDevices": [
+          {
+            "deviceId": 105,
+            "deviceName": "192.168.40.199",
+            "peopleCount": 282
           }
         ]
       }
     ],
     "ticketStats": [
       {
-        "total": 1,
+        "total": 16022,
         "statusName": "Habilitado"
+      },
+      {
+        "total": 163,
+        "statusName": "Anulado"
+      },
+      {
+        "total": 475,
+        "statusName": "Ingreso"
       }
     ]
   }
 }
 
-const _gates = {
+const events_sectorStats = {
+  "success": true,
+  "message": null,
+  "result": [
+    {
+      "id": 0,
+      "name": "Popular",
+      "total": "12247",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SPBV",
+      "total": "44",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SPESTE",
+      "total": "8",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SPOESTE",
+      "total": "240",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS1A",
+      "total": "22",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS1B",
+      "total": "1",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS2A",
+      "total": "119",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS2B",
+      "total": "108",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS3A",
+      "total": "67",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS3B",
+      "total": "137",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS4A",
+      "total": "146",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS4B",
+      "total": "245",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS5A",
+      "total": "96",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS5B",
+      "total": "154",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS6A",
+      "total": "41",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS6B",
+      "total": "37",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS7A",
+      "total": "9",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SSILLAS7B",
+      "total": "4",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIP5B",
+      "total": "24",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIP6A",
+      "total": "8",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIP6B",
+      "total": "20",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIPNEW",
+      "total": "56",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIPRC",
+      "total": "227",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIPRE",
+      "total": "190",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIPRO",
+      "total": "274",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIPTC",
+      "total": "649",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIPTE",
+      "total": "184",
+      "readed": "0"
+    },
+    {
+      "id": 0,
+      "name": "SVIPTO",
+      "total": "228",
+      "readed": "0"
+    }
+  ]
+}
+
+const gates_gates = {
   "success": true,
   "message": null,
   "result": [
@@ -269,7 +451,7 @@ const _gates = {
       "id": 2,
       "nombre": "Puerta 2",
       "descripcion": "Piccini y Ayacucho",
-      "sobreNombre": "Proveedore",
+      "sobreNombre": "Proveedores",
       "enabled": true
     },
     {
@@ -296,82 +478,202 @@ const _gates = {
   ]
 }
 
-const _gates_id = {
+const gates_devices = {
+  "success": true,
+  "message": null,
+  "result": [
+    {
+      "id": 86,
+      "nroSerie": "192.168.40.131",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 2
+    },
+    {
+      "id": 106,
+      "nroSerie": "192.168.40.16",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 2
+    },
+    {
+      "id": 107,
+      "nroSerie": "192.168.40.179",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 2
+    },
+    {
+      "id": 85,
+      "nroSerie": "192.168.40.181",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 2
+    },
+    {
+      "id": 105,
+      "nroSerie": "192.168.40.199",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 1
+    },
+    {
+      "id": 95,
+      "nroSerie": "192.168.40.201",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 88,
+      "nroSerie": "192.168.40.202",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 89,
+      "nroSerie": "192.168.40.203",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 90,
+      "nroSerie": "192.168.40.204",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 91,
+      "nroSerie": "192.168.40.205",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 92,
+      "nroSerie": "192.168.40.206",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 93,
+      "nroSerie": "192.168.40.207",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 94,
+      "nroSerie": "192.168.40.208",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 96,
+      "nroSerie": "192.168.40.209",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 3
+    },
+    {
+      "id": 97,
+      "nroSerie": "192.168.40.210",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 6
+    },
+    {
+      "id": 98,
+      "nroSerie": "192.168.40.211",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 6
+    },
+    {
+      "id": 99,
+      "nroSerie": "192.168.40.212",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 4
+    },
+    {
+      "id": 101,
+      "nroSerie": "192.168.40.213",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 4
+    },
+    {
+      "id": 87,
+      "nroSerie": "192.168.40.214",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 2
+    },
+    {
+      "id": 100,
+      "nroSerie": "192.168.40.215",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 4
+    },
+    {
+      "id": 102,
+      "nroSerie": "192.168.40.218",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 4
+    },
+    {
+      "id": 104,
+      "nroSerie": "192.168.40.219",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 4
+    },
+    {
+      "id": 103,
+      "nroSerie": "192.168.40.220",
+      "accesoSectorFk": 1,
+      "puertaIngresoId": 4
+    }
+  ]
+}
+
+const gates_1 = {
   "success": true,
   "message": null,
   "result": {
-    "id": 8,
-    "nombre": "Puerta 5",
-    "descripcion": "Piccini y España",
-    "sobreNombre": null,
+    "id": 1,
+    "nombre": "Puerta 1",
+    "descripcion": "Piccini y Rocamora ",
+    "sobreNombre": "Rocamora",
     "enabled": false
   }
 }
 
-const response_tickets_validate = {
-    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-    "title": "One or more validation errors occurred.",
-    "status": 400,
-    "errors": {
-      "code": [
-        "The code field is required."
-      ]
-    },
-    "traceId": "00-00ac864bcf5a2f5895bd416d1c281a3a-7c58ea64194803e2-00"
-}
-
 
 export async function POST ( req ) {
-    console.log("header Auth: ", req.headers.Auth)
+  //console.log("header Auth: ", req.headers.Auth)
+  const { event, data } = await req.json()
 
-    const { event, data } = await req.json()
-    switch (event) {
-        case 1:
-            // login
-            try {
-                const res = checkCredentials(data)
-                if (res.login) {
-                    const token = await generate_token(data.user)
-                    return NextResponse.json({ login: true, token })
-                }
-                return NextResponse.json({ login: false })
-            } catch (error) {
-                return NextResponse.json({ error })
-            }
-        case 3:
-            // validacion de token jwt
-            try {
-                const { token } = data
-                await check_token(token)
-                return NextResponse.json({ r: "token correcto" })
-            } catch (error) {
-                return NextResponse.json({ error })
-            }
-        case 4:
-            try {
-                const { evento } = data
-                
-                if ( evento == "events") {
-                    return NextResponse.json(_events)
-                }
-                if ( evento == "event_current") {
-                    return NextResponse.json(_events_current)
-                }
-                if ( evento == "events_stats") {
-                    return NextResponse.json(_events_stats)
-                }
-                if ( evento == "gates") {
-                    return NextResponse.json(_gates)
-                }
-                if ( evento == "gates_id") {
-                  return NextResponse.json(_gates_id)
-              }
-            } catch (error) {
-                return NextResponse.json({ error })
-            }
-}
+  switch ( event ) {
+    case 1:
+      // login
+      try {
+        const res = checkCredentials(data)
+        
+        if (res.login) {
+          const token = await generate_token(data.user)
+          return NextResponse.json({ login: true, token })
+        } else { 
+          return NextResponse.json({ login: false }) }
+        
+      } catch (error) { 
+        return NextResponse.json({ error }) 
+      }
+    case 2:
+      try {
+        const { url } = data
+        if ( url == "events" ) return NextResponse.json(events)
+        if ( url == "events/current" ) return NextResponse.json(events_current)
+        if ( url == "events/stats" ) return NextResponse.json(events_stats)
+        if ( url == "events/sectorStats" ) return NextResponse.json(events_sectorStats)
+        if ( url == "gates/gates" ) return NextResponse.json(gates_gates)
+        if ( url == "gates/devices" ) return NextResponse.json(gates_devices)
+        if ( url == "gates/1" ) return NextResponse.json(gates_1)
+
+      } catch (error) {
+        return NextResponse.json({ error })
+      }
+    
+      default: return NextResponse.json({ r: "response default" })
+  }
 }
 
 export async function GET ( req ) {
-    return NextResponse.json({ error: "no get" })
+  return NextResponse.json({ error: "no get" })
 }

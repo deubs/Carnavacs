@@ -4,12 +4,12 @@ import css from "./css.module.css"
 
 import { fetch_login } from "@/app/utils/login"
 import { store_container } from "@/app/stores/container"
-import { store_message } from "@/app/stores/message"
+import { store_notification } from "@/app/stores/notification"
 
 
 export default function Login () {
   const { set_container } = store_container()
-  const { set_message } = store_message()
+  const { set_message } = store_notification()
 
   const checkCredentials = async ( form ) => {
     const user = form.get("user")
