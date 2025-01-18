@@ -249,6 +249,7 @@ def enableGate():
             rasp_relay_out.off()
             return True
         else:
+            print("release RELAY")
             rasp_relay_out.off()            
             bHole = ISRSignal(0)
             if not bHole:
