@@ -250,11 +250,11 @@ def enableGate():
             return True
         else:
             print("release RELAY")
-            rasp_relay_out.off()            
+            rasp_relay_out.on()            
             bHole = ISRSignal(0)
             if not bHole:
                 print("Activate RELAYS")
-                rasp_relay_out.on()
+                rasp_relay_out.off()
                 return True
             return False
 
