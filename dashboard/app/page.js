@@ -4,9 +4,9 @@ import css from "./page.module.css"
 import { store_container } from "./stores/container"
 
 import Login from "./components/login/login"
-import Dashboard from "./components/dashboard/dashboard"
+import Dashboard from "./dashboard/dashboard"
 import Loading from "./components/loading/loading"
-import Message from "./components/message/message"
+import Message from "./components/notification/Notification"
 
 export default function Container_main () {
 

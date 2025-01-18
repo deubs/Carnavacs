@@ -1,11 +1,11 @@
 "use client"
 import { RxHamburgerMenu } from "react-icons/rx";
 import { useState } from "react"
-import css from "./css.module.css"
-import { store_dashboard } from "@/app/stores/dashboard";
+import css from "@/app/styles/navbar.module.css"
+
+import Sidebar from "./sidebar";
 
 export default function Navbar () {
-    const { set_dashboard } = store_dashboard()
     const [ visible, setVisible ] = useState(false)
 
     const toggle = () => {
@@ -13,15 +13,10 @@ export default function Navbar () {
     }
 
     return <div className={css.main}>
-
         <RxHamburgerMenu
         onClick={toggle}
-        className={css.btn}
+        className={css.icon}
         />
-
-        <div className={`${css.sidebar} ${visible && css.visible }`}>
-            <button onClick={()=>{set_dashboard("home")}}>Inicio</button>
-            <button onClick={()=>{set_dashboard("sector_stats")}}>Estadísticas por sectores</button>
-        </div>
+        <Sidebar visible={visible} />
         </div>
 }
