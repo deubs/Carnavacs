@@ -235,7 +235,11 @@ def enableGate():
     if "tango" in platform.node():
         print("Release RELAYS")
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
-        bHole = ISRSignal(1)
+        if "tango14" == platform.node():
+            time.sleep(2)
+            bHole = False
+        else:
+            bHole = ISRSignal(1)
         if not bHole:
             print("Activate RELAYS")
             wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
@@ -249,11 +253,12 @@ def enableGate():
             rasp_relay_out.off()
             return True
         else:
-            rasp_relay_out.off()            
+            print("release RELAY")
+            rasp_relay_out.on()            
             bHole = ISRSignal(0)
             if not bHole:
                 print("Activate RELAYS")
-                rasp_relay_out.on()
+                rasp_relay_out.off()
                 return True
             return False
 
