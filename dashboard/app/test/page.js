@@ -1,14 +1,10 @@
 "use client"
+import { store_enviroment } from "../stores/enviroment"
 
 export default function Test () {
-
-    const get = async () => {
-        const r = await fetch("http://api.carnavaldelpais.com.ar/events")
-        const rr = await r.json()
-        console.log(rr)
-
+    const { API_URL, LOCAL_API_URL } = store_enviroment()
+    const check = () => {
+        console.log(API_URL, LOCAL_API_URL )
     }
-    return <div>
-        <button onClick={get}>test 1</button>
-    </div>
+    return <button onClick={check}>check</button>
 }
