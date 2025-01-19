@@ -15,7 +15,7 @@ export default function Login () {
   const checkCredentials = async ( form ) => {
     const user = form.get("user")
     const password = form.get("password")
-    const rta = await fetch_login(user, password, "dashboard/api")
+    const rta = await fetch_login(user, password, "/api")
     if (rta.login) {
       
       Cookies.set("token_auth", rta.token, { secure: true })
