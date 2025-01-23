@@ -417,7 +417,7 @@ def main():
         jet111data = None
         marked = False
         brestart = 1
-        if "tango" in platform.node():
+        if "tango" in platform.node() or 'vehiculos' in platform.node():
             brestart = wiringpi.digitalRead(GPIO_RESTART)
         else:
             brestart = rasp_button_restart.pin.state
