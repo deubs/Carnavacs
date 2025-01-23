@@ -39,7 +39,6 @@ import time
 # Define some device parameters
 if (platform.node() == "tangobkp02") or \
       (platform.node() == "tango18") or \
-      (platform.node() == "tango03") or \
         ("raspi01" in platform.node()) or \
             ("raspi03" in platform.node()):
     I2C_ADDR = 0x3F
