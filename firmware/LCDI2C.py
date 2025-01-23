@@ -70,9 +70,9 @@ E_DELAY = 0.0005
 #Open I2C interface
 print(platform.node())
 if "raspi" in platform.node():
-    bus = smbus.SMBus(1)  # Pi uses 1
+    bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
 else:
-    bus = smbus.SMBus(3)  # OrangePi uses 3
+    bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
 
 # bus = smbus.SMBus(3) # OrangePI Zero3 uses i2c_3
 
@@ -102,7 +102,6 @@ class LCD(object):
         bus.write_byte(I2C_ADDR, bits_low)
         self.lcd_toggle_enable(bits_low)
 
-
     def lcd_toggle_enable(self, bits):
     # Toggle enable
         time.sleep(E_DELAY)
@@ -111,18 +110,14 @@ class LCD(object):
         bus.write_byte(I2C_ADDR, (bits & ~ENABLE))
         time.sleep(E_DELAY)
 
-
     def lcd_string(self, message, line):
     # Send string to display
         message = message.ljust(LCD_WIDTH," ")
 
-        try:
-            self.lcd_byte(line, LCD_CMD)
-            for i in range(LCD_WIDTH):
-                self.lcd_byte(ord(message[i]),LCD_CHR)
-        except Exception as e:
-            print(e)
+        self.lcd_byte(line, LCD_CMD)
 
+        for i in range(LCD_WIDTH):
+            self.lcd_byte(ord(message[i]),LCD_CHR)
 
     def main(self):
     # Initialise display
