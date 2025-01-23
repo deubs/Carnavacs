@@ -383,9 +383,11 @@ def main():
     # print(lcd)
     fhandler = createFile()
 
-    BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
+    BLAN, ip = checklan.checkLAN(checklan.target, checklan.timeout)
     if BLAN:
         printMessage(lcd, "LAN DETECTED", LCDI2C.LCD_LINE_1, True)
+        printMessage(lcd, ip, LCDI2C.LCD_LINE_2, True)
+        time.sleep(2)
     else:
         printMessage(lcd, "LAN NOT DETECTED", LCDI2C.LCD_LINE_1, True)
 

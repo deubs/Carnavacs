@@ -29,10 +29,10 @@ def checkLAN(trgt: str, tout: int):
     except OSError as e:
         print (e.strerror)
         print ("Connection failed: %s\n" % e.errno)
-        return False
+        return False, ipADDRESS
     finally:        
         s.close()
-        return True
+        return True, ipADDRESS
 
 lancheck = checkLAN(target, timeout)
 print("LAN IS OK: " + str(lancheck))
