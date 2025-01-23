@@ -232,7 +232,7 @@ def enableGate():
     Wait until signal from inductive sensor
     Enable COIL releasing relays. Iluminate RED light
     """
-    if "tango" in platform.node():
+    if "tango" in platform.node() or "vehiculos" in platform.node():
         print("Release RELAYS")
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
         if "tango14" == platform.node() or "vehiculos" in platform.node():
