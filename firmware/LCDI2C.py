@@ -37,7 +37,7 @@ except ImportError:
 import time
 
 # Define some device parameters
-if (platform.node() == "tangobkp02") or \
+if (platform.node() == "vehiculos") or \
       (platform.node() == "tango18") or \
         ("raspi01" in platform.node()) or \
             ("raspi03" in platform.node()):
