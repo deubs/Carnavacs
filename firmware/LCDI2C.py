@@ -41,8 +41,7 @@ if (platform.node() == "tangobkp02") or \
       (platform.node() == "tango18") or \
       (platform.node() == "tango03") or \
         ("raspi01" in platform.node()) or \
-            ("raspi02" in platform.node()) or \
-                  ("raspi03" in platform.node()):
+            ("raspi03" in platform.node()):
     I2C_ADDR = 0x3F
 else:
     I2C_ADDR = 0x27 # I2C device address
