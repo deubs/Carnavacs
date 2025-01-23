@@ -102,6 +102,7 @@ class LCD(object):
         bus.write_byte(I2C_ADDR, bits_low)
         self.lcd_toggle_enable(bits_low)
 
+
     def lcd_toggle_enable(self, bits):
     # Toggle enable
         time.sleep(E_DELAY)
@@ -110,14 +111,15 @@ class LCD(object):
         bus.write_byte(I2C_ADDR, (bits & ~ENABLE))
         time.sleep(E_DELAY)
 
+
     def lcd_string(self, message, line):
     # Send string to display
         message = message.ljust(LCD_WIDTH," ")
-
+        
         self.lcd_byte(line, LCD_CMD)
-
         for i in range(LCD_WIDTH):
             self.lcd_byte(ord(message[i]),LCD_CHR)
+
 
     def main(self):
     # Initialise display
