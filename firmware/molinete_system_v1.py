@@ -20,7 +20,7 @@ import calendar
 import platform
 # import pdb
 from os import makedirs
-from os.path import exists 
+from os.path import exists, join
 
 if "tango" in platform.node():
     import wiringpi
@@ -326,13 +326,13 @@ def createFile():
     """
     Creates log file for read codes
     """
-    fdir = f'{workingdir}/tickets'
+    fdir = join(workingdir, 'tickets')
     if not exists(fdir):
         makedirs(fdir)
     f = None
     dt = date.today().isoformat()
     try:
-        fname = f'{fdir}/tickets_{dt}.txt'
+        fname = join(fdir, f'tickets_{dt}.txt')
         f = open(fname, "a")
     except Exception as e:
         print(e)
@@ -485,6 +485,6 @@ def main():
             printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
             printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_2, False)
 
-          
+
 if __name__ == '__main__':
     main()
