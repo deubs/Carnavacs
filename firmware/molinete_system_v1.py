@@ -316,6 +316,7 @@ def initLCD():
         lcd.lcd_init()
         printMessage(lcd, "LCD INIT", LCDI2C.LCD_LINE_1, True)
         printMessage(lcd, platform.node(), LCDI2C.LCD_LINE_2, True)
+        time.sleep(2)
         BINITLCD = True
     except Exception as e:
         print(e)
