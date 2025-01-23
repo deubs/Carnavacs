@@ -452,7 +452,7 @@ def main():
                 if result['code'] == False:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
-                    time.sleep(3)
+                    time.sleep(1)
                 else:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
@@ -476,7 +476,7 @@ def main():
                     
             if bfinalize_job:
                 code = None
-                pauseDevice.resumeDevice()            
+                pauseDevice.resumeDevice()
             if fhandler is not None:
                 fhandler.write(ticket_string)
                 fhandler.flush()    
@@ -485,7 +485,6 @@ def main():
             printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
             printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_2, False)
 
-                    
-
+          
 if __name__ == '__main__':
     main()
