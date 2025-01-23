@@ -347,8 +347,8 @@ def printMessage(lcd_object, message, line, log):
     date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
     if log:
         print(f'{message} -  {date_time_str}')
-    if BINITLCD:
-        lcd_object.lcd_string(message, line)
+    # if BINITLCD:
+    lcd_object.lcd_string(message, line)
 
 
 def initInputDevice(queue):
