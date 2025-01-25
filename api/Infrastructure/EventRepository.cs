@@ -33,6 +33,26 @@ namespace Carnavacs.Api.Infrastructure
             return result;
         }
 
+        public async Task<List<Sector>> GetBySectorAsync(int? eventId)
+        {
+            Event ev = await this.GetEventByIdAsync(eventId);
+
+            string sectorStat = @"SELECT SUBSTRING(section,1,charindex('F',section, 1)-1) Name, count(*) as Total, 
+                                         sum(case when estadoqrfk=2 then 0 else 1 end) as Readed
+                                         FROM TicketekTickets t 
+                                         INNER JOIN AccesosEntradasQR qr on convert(varchar, t.barcode) =qr.QRCodigo
+                                         INNER JOIN Ventas v on qr.ventaFk=v.id
+                                         where status=1 and charindex('F',section, 1)>0 and v.eventofk=@eventFk
+                                         group by substring(section,1,charindex('F',section, 1)-1)
+                                         union
+                                         select 'Popular', count(*), ISNULL(SUM(CASE WHEN estadoqrfk=2 then 0 else 1 end),0) as cant2 from TicketekTickets t
+                                         INNER JOIN AccesosEntradasQR qr on convert(varchar, t.barcode) =qr.QRCodigo
+                                         INNER JOIN Ventas v on qr.ventaFk=v.id
+                                         where status=1 and charindex('F',section, 1)=0 and v.eventofk=@eventFk";
+            var result = await Connection.QueryAsync<Sector>(sectorStat, new { eventFk = ev.Id }, Transaction);
+            return result.ToList();
+        }
+
         public Task<string> AddAsync(Event entity)
         {
             throw new NotImplementedException();
@@ -52,35 +72,56 @@ namespace Carnavacs.Api.Infrastructure
         public async Task<EventStats> GetStatsAsync(int? eventId)
         {
             EventStats stats = new EventStats();
-            var ev = await this.GetCurrentAsync();
+            Event ev = await GetEventByIdAsync(eventId);
+            eventId = ev.Id;
+
             string query = @"SELECT count(*) as Total, EstadoQrFk StatusId, s.Nombre as StatusName 
-                                 FROM AccesosEntradasQR e INNER JOIN Ventas v ON e.VentaFk = v.Id
-                                    INNER JOIN EstadosQR s ON e.EstadoQrFk = s.Id
+                                 FROM AccesosEntradasQR e 
+                                 INNER JOIN Ventas v ON e.VentaFk = v.Id
+                                 INNER JOIN EstadosQR s ON e.EstadoQrFk = s.Id
                                  WHERE V.EstadoVentaFk = @Enabled AND v.eventofk = @EventFk
                                  GROUP BY EstadoQrFk, s.Nombre";
-            var r = await Connection.QueryAsync<TicketStat>(query, new { Enabled = 1, EventFk = ev.Id }, Transaction);
+            var r = await Connection.QueryAsync<TicketStat>(query, new { Enabled = 1, EventFk = eventId }, Transaction);
 
             stats.TicketStats = r.ToList();
 
             //gates
-            string gateQuery = @"select  ad.id DeviceId, ad.NroSerie DeviceName, count(*) PeopleCount, pi.Id GateId, sobrenombre GateNickName
-                                from QREntradasLecturas qre
-                                 inner join AccesosDispositivos ad on qre.AccesoDispositivoFk = ad.Id
-                                 inner join puertaingreso pi on pi.id = ad.puertaingresoid 
-                                 where qre.QREntradaFk > 414646
-                                 group by  pi.Id, ad.id, ad.NroSerie, sobrenombre order by ad.NroSerie";
+            string gateQuery = @"SELECT  ad.id DeviceId, ad.NroSerie DeviceName, count(*) PeopleCount, pi.Id GateId, sobrenombre GateNickName
+                                FROM QREntradasLecturas qre
+                                INNER JOIN AccesosDispositivos ad on qre.AccesoDispositivoFk = ad.Id
+                                INNER JOIN puertaingreso pi on pi.id = ad.puertaingresoid 
+                                INNER JOIN AccesosEntradasQR e ON qre.QREntradaFk = e.Id
+                                INNER JOIN Ventas v ON e.ventaFk = v.id  
+                                WHERE qre.EstadoQrFk = 5 AND v.eventofk=@eventFk
+                                GROUP BY  pi.Id, ad.id, ad.NroSerie, sobrenombre";
 
-           var r2 = await Connection.QueryAsync<AccessDeviceInfo>(gateQuery, new { Enabled = 1, EventFk = ev.Id }, Transaction);
-            foreach(var res in r2)
+            var r2 = await Connection.QueryAsync<AccessDeviceInfo>(gateQuery, new { Enabled = 1, EventFk = ev.Id }, Transaction);
+            foreach (var res in r2)
             {
                 var g = stats.Gates.FirstOrDefault(x => x.GateId == res.GateId);
-                if (g==null) {
+                if (g == null)
+                {
                     g = new GateInfo { GateId = res.GateId, GateName = res.GateNickName };
                     stats.Gates.Add(g);
                 }
                 g.AccessDevices.Add(res);
             }
             return stats;
+        }
+
+        private async Task<Event> GetEventByIdAsync(int? eventId)
+        {
+            Event ev;
+            if (!eventId.HasValue)
+            {
+                ev = await this.GetCurrentAsync();
+            }
+            else
+            {
+                ev = await this.GetByIdAsync(eventId.Value);
+            }
+
+            return ev;
         }
     }
 }

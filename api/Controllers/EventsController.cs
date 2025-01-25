@@ -92,13 +92,45 @@ namespace Carnavacs.Api.Controllers
         [EndpointDescription("Get information about the event.")]
 
         [ProducesResponseType<ApiResponse<Event>>(StatusCodes.Status200OK, "application/json")]
-        public async Task<ApiResponse<EventStats>> GetStats()
+        public async Task<ApiResponse<EventStats>> GetStats(int? eventId)
         {
             var apiResponse = new ApiResponse<EventStats>();
 
             try
             {
-                var data = await _unitOfWork.Events.GetStatsAsync();
+                var data = await _unitOfWork.Events.GetStatsAsync(eventId);
+                apiResponse.Success = true;
+                apiResponse.Result = data;
+            }
+            catch (SqlException ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                _logger.LogError(ex, "Error getting event stats");
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                _logger.LogError(ex, "Error getting event stats");
+            }
+
+            return apiResponse;
+        }
+
+        [HttpGet("SectorStats")]
+        [EndpointName("GetEventStatsBySector")]
+        [EndpointSummary("Get Stats for current Event. Detail by sector")]
+        [EndpointDescription("Get detailed information about the event.")]
+
+        [ProducesResponseType<ApiResponse<List<Sector>>>(StatusCodes.Status200OK, "application/json")]
+        public async Task<ApiResponse<List<Sector>>> GetStatsBySector(int? eventId)
+        {
+            var apiResponse = new ApiResponse<List<Sector>>();
+
+            try
+            {
+                var data = await _unitOfWork.Events.GetBySectorAsync(eventId);
                 apiResponse.Success = true;
                 apiResponse.Result = data;
             }
