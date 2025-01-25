@@ -48,3 +48,5 @@ bin
 debug
 obj
 appSettings.json
+firmware/server/config.ini
+*~
