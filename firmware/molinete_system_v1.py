@@ -31,13 +31,13 @@ if "tango" in platform.node() or "vehiculos" in platform.node():
     workingdir = "/home/orangepi/"
 else:
     from gpiozero import Button, DigitalInputDevice, OutputDevice
+    print("importing gpiozero")
     rasp_button_restart = Button(4, pull_up=True) # PIN 7
     rasp_relay_out = OutputDevice(17) # PIN 11
     rasp_sensor_in = DigitalInputDevice(27) # PIN 11
     workingdir = "/home/pi/"
 
 print(workingdir)
-    # rasp_gpio_input = DigitalInputDevice(27) # PIN 13
 
 # STATUS VARS
 BLAN = False
@@ -401,7 +401,7 @@ def main():
         printMessage(lcd, "INPUT DEV OFF", LCDI2C.LCD_LINE_2, True)
     time.sleep(1)
     
-    if "raspi" in platform.node():
+    if "raspi" in platform.node() or "vehiculo" in platform.node():
         sp = None
     else:
         sp = initSerialDevice(gm65q)
