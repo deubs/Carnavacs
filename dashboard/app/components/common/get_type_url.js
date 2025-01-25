@@ -1,0 +1,1 @@
+export const get_type_url = (url) => url.includes("api") ? "api" : "boleteria"

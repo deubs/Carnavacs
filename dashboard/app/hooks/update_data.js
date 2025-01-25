@@ -1,10 +1,10 @@
 "use client"
 
-export async function update_data (endpoint, callback, id) {
+export async function update_data (apiurl, endpoint, callback, id) {
     const fetch_data = async () => {
         try {
             const query_parameter = id ? `?eventId=${id}` : ""
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${endpoint}${query_parameter}`)
+            const response = await fetch(`${apiurl}/${endpoint}${query_parameter}`)
             const response_json = await response.json()
             if (response_json.success) callback(response_json.result)
         } catch ( error ) {
