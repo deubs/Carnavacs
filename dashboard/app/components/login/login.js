@@ -5,17 +5,17 @@ import css from "@/app/styles/login.module.css"
 import { fetch_login } from "@/app/components/utils/login"
 import { store_container } from "@/app/stores/container"
 import { store_notification } from "@/app/stores/notification"
-import { store_enviroment } from "@/app/stores/enviroment"
 
 export default function Login () {
+
   const { set_container } = store_container()
   const { set_message } = store_notification()
-  //const { LOCAL_API_URL } = store_enviroment()
 
   const checkCredentials = async ( form ) => {
     const user = form.get("user")
     const password = form.get("password")
     const rta = await fetch_login(user, password, "/api")
+
     if (rta.login) {
       
       Cookies.set("token_auth", rta.token, { secure: true })
@@ -23,8 +23,11 @@ export default function Login () {
       sessionStorage.setItem("token_auth", rta.token)
       
       set_container("loading")
+
     } else {
+
       set_message("ERROR: credenciales incorrectas")
+      
     }
   }
   

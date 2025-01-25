@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export const store_container = create((set)=> ({ 
-    container: "loading",
+export const store_dashboard = create((set)=> ({ 
+    container: "home",
     set_container: (value) => set((st)=>({ container: value }))
 })) 
