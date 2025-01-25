@@ -50,6 +50,8 @@ export default function Loading () {
 
     useEffect(()=>{
 
+        if (API_URL != undefined) {
+
         set_events_current("loading")
         set_events_list("loading")
         set_events_stats("loading")
@@ -57,13 +59,15 @@ export default function Loading () {
         update_data(API_URL, "events", set_events_list, event_id)
         update_data(API_URL, "events/current", set_events_current, event_id)
         update_data(API_URL, "events/stats", set_events_stats, event_id)
+
         /*
         update_data_post("events", set_events_list)
         update_data_post("events/current", set_events_current)
         update_data_post("events/stats", set_events_stats)
         */
         set_container("dashboard")
-
+        }
+        
     }, [API_URL])
 
     return <div className={css.main}>
