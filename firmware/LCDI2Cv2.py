@@ -74,7 +74,7 @@ else:
 
 class LCD(object):
   
-    def lcd_init(self):
+    def lcd_init(self, i2caddress):
     # Initialise display
         self.lcd_byte(0x33,LCD_CMD) # 110011 Initialise
         self.lcd_byte(0x32,LCD_CMD) # 110010 Initialise
@@ -83,6 +83,7 @@ class LCD(object):
         self.lcd_byte(0x28,LCD_CMD) # 101000 Data length, number of lines, font size
         self.lcd_byte(0x01,LCD_CMD) # 000001 Clear display
         time.sleep(E_DELAY)
+        self.i2caddress = i2caddress
 
     def lcd_byte(self, bits, mode):
         # Send byte to data pins
@@ -92,19 +93,19 @@ class LCD(object):
         bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
         bits_low = mode | ((bits<<4) & 0xF0) | LCD_BACKLIGHT
         # High bits
-        bus.write_byte(I2C_ADDR, bits_high)
+        bus.write_byte(self.i2caddress, bits_high)
         self.lcd_toggle_enable(bits_high)
         # Low bits
-        bus.write_byte(I2C_ADDR, bits_low)
+        bus.write_byte(self.i2caddress, bits_low)
         self.lcd_toggle_enable(bits_low)
 
 
     def lcd_toggle_enable(self, bits):
     # Toggle enable
         time.sleep(E_DELAY)
-        bus.write_byte(I2C_ADDR, (bits | ENABLE))
+        bus.write_byte(self.i2caddress, (bits | ENABLE))
         time.sleep(E_PULSE)
-        bus.write_byte(I2C_ADDR, (bits & ~ENABLE))
+        bus.write_byte(self.i2caddress, (bits & ~ENABLE))
         time.sleep(E_DELAY)
 
 
@@ -117,9 +118,9 @@ class LCD(object):
             self.lcd_byte(ord(message[i]),LCD_CHR)
 
 
-    def main(self):
+    def main(self, address):
     # Initialise display
-        self.lcd_init()
+        self.lcd_init(address)
         while True:
             # Send some test
             self.lcd_string("RPiSpy         <",LCD_LINE_1)
@@ -132,9 +133,10 @@ class LCD(object):
 
 
 if __name__ == '__main__':
+    i2caddress = 0x27
     lcd = LCD()
     try:
-        lcd.main()
+        lcd.main(i2caddress)
     except KeyboardInterrupt:
         pass
     finally:
