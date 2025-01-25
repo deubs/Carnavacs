@@ -3,6 +3,7 @@ from datetime import datetime
 import calendar
 import pdb
 import time
+from apicall import apicall
 
 scancodes = {
 	11:	u'0',
@@ -68,7 +69,8 @@ try:
 				scancode = eventdata.scancode
 				if scancode == 28: # Enter
 					saveBarcode(barcode)
-					barcode = ''
+					apicall(barcode)
+					barcode = ""	
 				else:
 					key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
 					barcode = barcode + key

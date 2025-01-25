@@ -37,10 +37,17 @@ except ImportError:
 import time
 
 # Define some device parameters
-I2C_ADDR  = 0x27 # I2C device address
+if (platform.node() == "vehiculos") or \
+      (platform.node() == "tango18") or \
+        ("raspi01" in platform.node()) or \
+            ("raspi03" in platform.node()):
+    I2C_ADDR = 0x3F
+else:
+    I2C_ADDR = 0x27 # I2C device address
+
 LCD_WIDTH = 16   # Maximum characters per line
 
-# Define some device constants
+# Define some device constants      
 LCD_CHR = 1 # Mode - Sending data
 LCD_CMD = 0 # Mode - Sending command
 
@@ -60,7 +67,7 @@ E_DELAY = 0.0005
 
 #Open I2C interface
 print(platform.node())
-if platform.node() == "raspberrypi":
+if "raspi" in platform.node():
     bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
 else:
     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
@@ -93,6 +100,7 @@ class LCD(object):
         bus.write_byte(I2C_ADDR, bits_low)
         self.lcd_toggle_enable(bits_low)
 
+
     def lcd_toggle_enable(self, bits):
     # Toggle enable
         time.sleep(E_DELAY)
@@ -101,14 +109,15 @@ class LCD(object):
         bus.write_byte(I2C_ADDR, (bits & ~ENABLE))
         time.sleep(E_DELAY)
 
+
     def lcd_string(self, message, line):
     # Send string to display
         message = message.ljust(LCD_WIDTH," ")
-
+        
         self.lcd_byte(line, LCD_CMD)
-
         for i in range(LCD_WIDTH):
             self.lcd_byte(ord(message[i]),LCD_CHR)
+
 
     def main(self):
     # Initialise display

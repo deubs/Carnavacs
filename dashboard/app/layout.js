@@ -1,23 +1,25 @@
-import localFont from "next/font/local";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const fd = localFont({
-  src: "./fonts/fd.ttf",
-  variable: "--fd"
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
-const ku = localFont({
-  src: "./fonts/ku.ttf",
-  variable: "--ku"
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
+
 export const metadata = {
-  title: "Dashboard",
-  description: "",
+  title: "Carnaval Dashboard",
+  description: "Carnaval del país",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es">
-      <body className={`${ku.variable} ${fd.variable}`}>
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
       </body>
     </html>

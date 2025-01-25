@@ -6,6 +6,7 @@ keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://api.carnavaldelpais.com.ar/Ticket/Validate"
+apiurlverify = "http://api.carnavaldelpais.com.ar/Ticket/Verify"
 # apiurl = "http://192.168.40.100/Ticket/Validate"
 
 
@@ -73,12 +74,40 @@ def apicall(code):
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
 
 
+def apicallverify(code):
+    apikey = keys['key1']
+    header = {
+        'X-API-Key': f'{apikey}',
+        'Content-Type': "application/json"
+    }
+    payload = {'code': code}
+    try:
+        response = post(apiurlverify, params= payload, headers= header, timeout=3)
+        if response.status_code == 200:
+            result = processResponse(response.json())
+            return result
+        elif response.status_code == 401:
+            print(response.status_code)
+        elif response.status_code == 404:
+            print(response.status_code)
+        else:
+            print('no response')
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
+    except exceptions.Timeout:
+        print("The request timed out!")
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
+    except Exception as e:
+        print(e)
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
+
 if __name__ == "__main__":
-    code =  "103225458952"
-    result = apicall(code)
+    code =  "29496442226228"
+    result = apicallverify(code)
     print(result)
     ticket_string = f'code: {code}, status: {result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
     print(ticket_string)
+
+
 
 
 

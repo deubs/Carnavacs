@@ -1,11 +1,9 @@
 {
-  "name": "turnstile-dashboard",
+  "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "node server.js",
-    "devvv": "next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -13,12 +11,16 @@
   "dependencies": {
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
-    "next": "15.0.3",
-    "react": "19.0.0-rc-66855b96-20241106",
-    "react-dom": "19.0.0-rc-66855b96-20241106",
+    "next": "15.1.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.4.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-    "zod": "^3.23.8",
+    "zod": "^3.24.1",
     "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "html5-qrcode": "^2.3.8"
   }
 }
