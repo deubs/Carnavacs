@@ -1,6 +1,10 @@
+#!/usr/bin/env python3
+
 import paramiko
 import pyodbc
 import configparser
+import subprocess
+import time
 
 # Leer el archivo de configuración
 config = configparser.ConfigParser()
@@ -72,15 +76,33 @@ def configure_hostname_and_git(ip, hostname, git_repo_url, public_key):
     ssh.exec_command("sudo reboot")
     ssh.close()
 
+def update_local_repo():
+    result = subprocess.run(["git", "fetch"], capture_output=True, text=True)
+    if "Your branch is up to date" in result.stdout:
+        return False
+    else:
+        subprocess.run(["git", "pull"], capture_output=True, text=True)
+        return True
+
 def deploy_update():
-    subprocess.run(["git", "pull"], cwd=repo_path)
     devices = get_devices()
     for ip, hostname in devices.items():
         if ping_device(ip):
-            ssh_update(ip)
             configure_hostname_and_git(ip, hostname, git_repo_url, public_key)
 
+
+def ping_device(ip):
+    result = subprocess.run(["ping", "-c", "1", ip], capture_output=True, text=True)
+    return "1 packets transmitted, 1 received" in result.stdout
+
+
 if _name_ == "_main_":
+    devices = get_devices()
+    for ip, hostname in devices.items():
+        if ping_device(ip):
+            print("device {ip} is online")	
+
+if _name_ == "_moin_":
     while True:
         if update_local_repo():
             print("Actualización detectada, desplegando...")
