@@ -27,6 +27,9 @@ namespace Carnavacs.Api.Controllers
 
 
         [HttpPost("Validate")]
+        [EndpointName("ValidateTicket")]
+        [EndpointSummary("Validate a ticket and return result")]
+        [EndpointDescription("Check if ticket is valid or not, and mark as used")]
         //[Authorize(Policy = "RequireApiKey")]
         public async Task<ApiResponse<TicketValidationResult>> Validate(string code)
         {
@@ -54,6 +57,31 @@ namespace Carnavacs.Api.Controllers
 
             return apiResponse;
         }
+
+        [HttpPost("Verify")]
+        //[Authorize(Policy = "RequireApiKey")]
+        [EndpointName("VerifyTicket")]
+        [EndpointSummary("Check ticket status and return result")]
+        [EndpointDescription("Check if ticket is valid or not, readonly, doesn't change status")]
+        public async Task<ApiResponse<TicketValidationResult>> Verify(string code)
+        {
+            var apiResponse = new ApiResponse<TicketValidationResult> { Success = true };
+
+
+            try
+            {
+                apiResponse.Result = await _unitOfWork.Tickets.ValidateAsync(code);
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = "Unexpected Exception";
+                _logger.LogError(ex, "Error validating ticket");
+            }
+
+            return apiResponse;
+        }
+
 
     }
 }

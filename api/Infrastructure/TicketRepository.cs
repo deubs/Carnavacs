@@ -177,7 +177,7 @@ namespace Carnavacs.Api.Infrastructure
         public DateTime GetLastSync(string evt)
         {
 
-            string query = "SELECT ISNULL(MAX(UPDATEDAT), GETDATE()-365) FROM TicketekTickets WHERE showname=@evt";
+            string query = "SELECT TOP 1 ISNULL(UPDATEDAT, GETDATE()-10) FROM TicketekTickets ORDER BY id DESC";
             return Connection.ExecuteScalar<DateTime>(query, new {evt}, Transaction);
         }
     }
