@@ -1,10 +1,9 @@
 "use client"
-import { store_enviroment } from "../stores/enviroment"
+import { useEffect } from "react"
 
 export default function Test () {
-    const { API_URL, LOCAL_API_URL } = store_enviroment()
-    const check = () => {
-        console.log(API_URL, LOCAL_API_URL )
-    }
-    return <button onClick={check}>check</button>
-}
+
+    return <button onClick={()=>{
+        console.log(process.env.NEXT_PUBLIC_API_URL)
+    }}>test</button>
+} 

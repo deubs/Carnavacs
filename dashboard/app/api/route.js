@@ -661,6 +661,7 @@ export async function POST ( req ) {
         if ( url == "events" ) return NextResponse.json(events)
         if ( url == "events/current" ) return NextResponse.json(events_current)
         if ( url == "events/stats" ) return NextResponse.json(events_stats)
+          
         if ( url == "events/sectorStats" ) return NextResponse.json(events_sectorStats)
         if ( url == "gates/gates" ) return NextResponse.json(gates_gates)
         if ( url == "gates/devices" ) return NextResponse.json(gates_devices)

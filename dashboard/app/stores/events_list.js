@@ -1,14 +1,6 @@
 import { create } from "zustand"
 
 export const store_events_list = create((set)=> ({
-
-    loaded: false, 
-    data: undefined,
-
-    set_data: (value) => set((st) => ({
-
-        loaded: true,
-        data: value
-        
-        }))
+    events_list: "loading",
+    set_events_list: (value) => set((st) => ({ events_list: value }))
 }))
