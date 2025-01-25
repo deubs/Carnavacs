@@ -1,13 +1,17 @@
+fix ip
+change hostname (/etc/hostname)
+
+nano /etc/hostname
+
 #create a ssh key to add to github repo (ssh-keygen -t ed25519)
 
 copy to orangepi
 scp id_ed25519* orangepi@192.168.40.214:/home/orangepi/.ssh/
 
+login ssh
 
-
-fix ip
-change hostname
-
+mkdir src logs
+cd ~/src
 
 >apt update
 >apt full-upgrade
@@ -15,11 +19,10 @@ change hostname
 >git clone git@github.com:deubs/Carnavacs.git
 
 #install deps
->cd ~/src/Carnavacs/server/
+cd ~/src/Carnavacs/firmware/server/
 >apt install $(cat pkglist)
 
 
->mkdir -p /home/orangepi/logs/
 
 #setup crontab to run on boot
 
