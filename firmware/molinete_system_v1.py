@@ -20,9 +20,9 @@ import calendar
 import platform
 # import pdb
 from os import makedirs
-from os.path import exists 
+from os.path import exists, join
 
-if "tango" in platform.node():
+if "tango" in platform.node() or "vehiculos" in platform.node():
     import wiringpi
     print("importing wiringpi")
     GPIO_RESTART = 9 #PC15
@@ -213,7 +213,7 @@ def initGPIO():
     """
     print("INIT GPIO")
     try:
-        if "tango" in platform.node():
+        if "tango" in platform.node() or "vehiculos" in platform.node():
             print("init wiringpi")
             wiringpi.wiringPiSetup()
             wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
@@ -232,10 +232,10 @@ def enableGate():
     Wait until signal from inductive sensor
     Enable COIL releasing relays. Iluminate RED light
     """
-    if "tango" in platform.node():
+    if "tango" in platform.node() or "vehiculos" in platform.node():
         print("Release RELAYS")
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
-        if "tango14" == platform.node():
+        if "tango14" == platform.node() or "vehiculos" in platform.node():
             time.sleep(2)
             bHole = False
         else:
@@ -315,6 +315,8 @@ def initLCD():
         lcd = LCDI2C.LCD()
         lcd.lcd_init()
         printMessage(lcd, "LCD INIT", LCDI2C.LCD_LINE_1, True)
+        printMessage(lcd, platform.node(), LCDI2C.LCD_LINE_2, True)
+        time.sleep(2)
         BINITLCD = True
     except Exception as e:
         print(e)
@@ -326,13 +328,13 @@ def createFile():
     """
     Creates log file for read codes
     """
-    fdir = f'{workingdir}/tickets'
+    fdir = join(workingdir, 'tickets')
     if not exists(fdir):
         makedirs(fdir)
     f = None
     dt = date.today().isoformat()
     try:
-        fname = f'{fdir}/tickets_{dt}.txt'
+        fname = join(fdir, f'tickets_{dt}.txt')
         f = open(fname, "a")
     except Exception as e:
         print(e)
@@ -381,9 +383,11 @@ def main():
     # print(lcd)
     fhandler = createFile()
 
-    BLAN = checklan.checkLAN(checklan.target, checklan.timeout)
+    BLAN, ip = checklan.checkLAN(checklan.target, checklan.timeout)
     if BLAN:
         printMessage(lcd, "LAN DETECTED", LCDI2C.LCD_LINE_1, True)
+        printMessage(lcd, ip, LCDI2C.LCD_LINE_2, True)
+        time.sleep(2)
     else:
         printMessage(lcd, "LAN NOT DETECTED", LCDI2C.LCD_LINE_1, True)
 
@@ -413,7 +417,7 @@ def main():
         jet111data = None
         marked = False
         brestart = 1
-        if "tango" in platform.node():
+        if "tango" in platform.node() or 'vehiculos' in platform.node():
             brestart = wiringpi.digitalRead(GPIO_RESTART)
         else:
             brestart = rasp_button_restart.pin.state
@@ -452,7 +456,7 @@ def main():
                 if result['code'] == False:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
-                    time.sleep(3)
+                    time.sleep(1)
                 else:
                     printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
                     printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
@@ -476,7 +480,7 @@ def main():
                     
             if bfinalize_job:
                 code = None
-                pauseDevice.resumeDevice()            
+                pauseDevice.resumeDevice()
             if fhandler is not None:
                 fhandler.write(ticket_string)
                 fhandler.flush()    
@@ -485,7 +489,6 @@ def main():
             printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
             printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_2, False)
 
-                    
 
 if __name__ == '__main__':
     main()

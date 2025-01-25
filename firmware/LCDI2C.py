@@ -37,7 +37,10 @@ except ImportError:
 import time
 
 # Define some device parameters
-if (platform.node() == "tangobkp02") or (platform.node() == "tango18") or ("raspi01" in platform.node()) or ("raspi02" in platform.node()) or ("raspi03" in platform.node()):
+if (platform.node() == "vehiculos") or \
+      (platform.node() == "tango18") or \
+        ("raspi01" in platform.node()) or \
+            ("raspi03" in platform.node()):
     I2C_ADDR = 0x3F
 else:
     I2C_ADDR = 0x27 # I2C device address
@@ -97,6 +100,7 @@ class LCD(object):
         bus.write_byte(I2C_ADDR, bits_low)
         self.lcd_toggle_enable(bits_low)
 
+
     def lcd_toggle_enable(self, bits):
     # Toggle enable
         time.sleep(E_DELAY)
@@ -105,14 +109,15 @@ class LCD(object):
         bus.write_byte(I2C_ADDR, (bits & ~ENABLE))
         time.sleep(E_DELAY)
 
+
     def lcd_string(self, message, line):
     # Send string to display
         message = message.ljust(LCD_WIDTH," ")
-
+        
         self.lcd_byte(line, LCD_CMD)
-
         for i in range(LCD_WIDTH):
             self.lcd_byte(ord(message[i]),LCD_CHR)
+
 
     def main(self):
     # Initialise display
