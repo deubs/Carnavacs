@@ -21,6 +21,21 @@ import platform
 # import pdb
 from os import makedirs
 from os.path import exists, join
+import logging
+import logging.handlers
+logger = logging.getLogger('Synchronous Logging')
+
+http_handler = logging.handlers.HTTPHandler(
+    '192.168.0.62:3000',
+    'home/emiliano/src/esp32/log',
+    method='POST',
+)
+logger.addHandler(http_handler)
+
+# Log messages:
+logger.warn('Hey log a warning')
+logger.error("Hey log a error")
+
 
 if "tango" in platform.node() or "vehiculos" in platform.node():
     import wiringpi
@@ -80,6 +95,8 @@ class PauseDeviceTOKEN:
 
 
 pauseDevice = PauseDeviceTOKEN()
+
+
 
 
 def detectInputDevice():
@@ -351,6 +368,9 @@ def printMessage(lcd_object, message, line, log):
         print(f'{message} -  {date_time_str}')
     # if BINITLCD:
     lcd_object.lcd_string(message, line)
+
+def logmessage(level, message, print_in_screen):
+
 
 
 def initInputDevice(queue):
