@@ -25,7 +25,7 @@ from json import dumps
 import logging
 import logging.handlers
 
-logging.basicConfig(filename= "/home/pi/logs",
+logging.basicConfig(filename= f"/home/pi/logs/{platform.node()} - {datetime.today()}",
                     filemode='a',
                     # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     # datefmt='%H:%M:%S',
