@@ -365,15 +365,10 @@ def printMessageDict(lcd_object, messagedict):
         logmessage('error', e)
 
 
-def printMessage(lcd_object, message, line, log):
+def printMessage(lcd_object, message, line):
     """
     Prints messages in display and stdout
     """
-    now = datetime.now()
-    date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
-    if log:
-        print(f'{message} -  {date_time_str}')
-    # if BINITLCD:
     lcd_object.lcd_string(message, line)
 
 
@@ -423,11 +418,12 @@ def main():
 
     BLAN, ip = checklan.checkLAN(checklan.target, checklan.timeout)
     if BLAN:
-        printMessageDict(lcd, {LCDI2C.LCD_LINE_1: "LAN DETECTED", LCDI2C.LCD_LINE_2: ip})
+        lcd.lcd_string("LAN DETECTED", LCDI2C.LCD_LINE_1)
+        lcd.lcd_string(ip, LCDI2C.LCD_LINE_2)
         logmessage('info', f'LAN DETECTED {ip}')
         time.sleep(2)
     else:
-        printMessageDict(lcd, {LCDI2C.LCD_LINE_1, "LAN NOT DETECTED"})
+        lcd.lcd_string("LAN NOT DETECTED", LCDI2C.LCD_LINE_1)
         logmessage('info', f'LAN NOT DETECTED')
 
     gm65q = queue.Queue(maxsize = 1)
@@ -435,10 +431,10 @@ def main():
     initGPIO()
     idev = initInputDevice(jet111q)
     if idev is not None:
-        printMessageDict(lcd, {LCDI2C.LCD_LINE_2: "INPUT DEV ON"})
+        lcd.lcd_string("INPUT DEV ON", LCDI2C.LCD_LINE_2)
         logmessage('info', "INPUT DEV ON")
     else:
-        printMessageDict(lcd, {LCDI2C.LCD_LINE_2: "INPUT DEV OFF"})
+        lcd.lcd_string("INPUT DEV OFF", LCDI2C.LCD_LINE_2)
         logmessage('error', "INPUT DEV OFF")
         
     time.sleep(1)
@@ -451,7 +447,6 @@ def main():
         #     printMessage(lcd, "GM65 ON", LCDI2C.LCD_LINE_2, True)
         # else:
         #     printMessage(lcd, "GM65 OFF", LCDI2C.LCD_LINE_2, True)
-        time.sleep(2)
 
     code = None
     while True:
@@ -465,7 +460,8 @@ def main():
             brestart = rasp_button_restart.pin.state
 
         if brestart == 0:
-            printMessageDict(lcd, {LCDI2C.LCD_LINE_1: "REINICIANDO", LCDI2C.LCD_LINE_2: "YA VOLVEMOS..."})
+            lcd.lcd_string("REINICIANDO", LCDI2C.LCD_LINE_1)
+            lcd.lcd_string("YA VOLVEMOS", LCDI2C.LCD_LINE_2)
             logmessage('info', 'RESTART REQUESTED')
             if fhandler is not None:
                 fhandler.close()
@@ -476,15 +472,15 @@ def main():
             if sp is not None:
                 if not gm65q.empty():
                     gm65data = gm65q.get()
-                    if gm65data is not None:     
-                        printMessageDict(lcd, {LCDI2C.LCD_LINE_1: gm65data})
+                    if gm65data is not None:
+                        lcd.lcd_string(gm65data, LCDI2C.LCD_LINE_1)     
                         logmessage('info', f'{gm65data}')
                         code = gm65data
             if idev is not None:
                 if not jet111q.empty():
                     jet111data = jet111q.get()
                     if jet111data is not None:
-                        printMessageDict(lcd, {LCDI2C.LCD_LINE_1: jet111data})
+                        lcd.lcd_string(jet111data, LCDI2C.LCD_LINE_1)     
                         logmessage('info', f'{jet111data}')
                         code = jet111data
                             
@@ -494,13 +490,13 @@ def main():
             result = apicall(code)
             logmessage('info', dumps(result))
             if result['apistatus'] == True:
+                lcd.lcd_string(result['m1'], LCDI2C.LCD_LINE_1)
+                lcd.lcd_string(result['m2'], LCDI2C.LCD_LINE_2)
                 if result['code'] == False:
                     logmessage('error', f"{code} {result['m1']} {result['m2']}")
-                    printMessageDict(lcd, {LCDI2C.LCD_LINE_1: result['m1'], LCDI2C.LCD_LINE_2: result['m2']})
                     time.sleep(1)
                 else:
                     logmessage('info', f"{code} {result['m1']} {result['m2']}")
-                    printMessageDict(lcd, {LCDI2C.LCD_LINE_1: result['m1'], LCDI2C.LCD_LINE_2: result['m2']})
                     marked = enableGate()
                     if marked:
                         logmessage('info', f'{code} marked')
@@ -508,12 +504,14 @@ def main():
                 bfinalize_job = True
             else:
                 logmessage('error', f'FALLA DE SISTEMA - REINTENTANDO')
-                printMessageDict(lcd, {LCDI2C.LCD_LINE_1: 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_2: "REINTENTANDO"})
+                lcd.lcd_string("FALLA DE SISTEMA", LCDI2C.LCD_LINE_1)
+                lcd.lcd_string("REINTENTANDO", LCDI2C.LCD_LINE_2)
                 FAILURE_COUNT -= 1
                 ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
                 if FAILURE_COUNT == 0:
                     logmessage('error', f'FALLA PERMANENTE - INFORME PROBLEMA')
-                    printMessageDict(lcd, {LCDI2C.LCD_LINE_1: 'FALLA PERMANENTE', LCDI2C.LCD_LINE_2: "INFORME PROBLEMA"})
+                    lcd.lcd_string("FALLA PERMANENTE", LCDI2C.LCD_LINE_1)
+                    lcd.lcd_string("INFORME PROBLEMA", LCDI2C.LCD_LINE_2)
                     time.sleep(3)
                     ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
                     bfinalize_job = True
@@ -526,9 +524,9 @@ def main():
                 fhandler.flush()    
         else:
             code = None
-            printMessage(lcd, "CARNAVAL 2025", LCDI2C.LCD_LINE_1, False)
-            printMessage(lcd, "NUEVO INGRESO", LCDI2C.LCD_LINE_2, False)
-
+            lcd.lcd_string("CARNAVAL 2025", LCDI2C.LCD_LINE_1)
+            lcd.lcd_string("NUEVO INGRESO", LCDI2C.LCD_LINE_2)
+            
 
 if __name__ == '__main__':
     main()
