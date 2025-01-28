@@ -171,7 +171,6 @@ class AccessSystem(baseAccessSystem):
 
 
     def connectInputDevice(self):
-        pdb.set_trace( )
         try:           
             device = InputDevice(self.inputsystem) # Replace with your device
         except Exception as e:
@@ -276,14 +275,13 @@ class AccessSystem(baseAccessSystem):
             dev = self.connectInputDevice()
             threading.Thread(target = self.readBarCodes, args = (dev, queue, pauseDevice, ), daemon = True).start()
             BJET = True
-        return idev
+        return dev
 
 
     def main(self):
         """
             Main function
         """
-        pdb.set_trace()
         self.initLCD()
         fhandler = self.createFile(workingdir = '/home/pi', sysname = self.name)
         jet111q = queue.Queue(maxsize = 1)
