@@ -287,7 +287,7 @@ class AccessSystem(baseAccessSystem):
         self.initLCD()
         fhandler = self.createFile(workingdir = '/home/pi', sysname = self.name)
         jet111q = queue.Queue(maxsize = 1)
-        idev = self.initInputDevice(jet111q, self.inputsystem)
+        idev = self.initInputDevice(jet111q)
         if idev is not None:
             self.lcd.lcd_string("INPUT DEV ON", l2)
             self.logmessage('info', "INPUT DEV ON")
