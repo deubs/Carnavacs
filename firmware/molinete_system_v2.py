@@ -271,7 +271,7 @@ class AccessSystem(baseAccessSystem):
         if self.inputsystem is not None:
             dev = self.connectInputDevice()
             threading.Thread(target = self.readBarCodes, args = (dev, queue, pauseDevice, ), daemon = True).start()
-            self.logmessage('info')
+            self.logmessage('info', 'input device connected')
             BJET = True
         return dev
 
