@@ -356,6 +356,7 @@ def createFile():
 def printMessageDict(lcd_object, messagedict):
     try:
         for line, message in messagedict:
+            print(line, message)
             lcd_object.lcd_string(message, line)
     except Exception as e:
         logmessage('error', e)
