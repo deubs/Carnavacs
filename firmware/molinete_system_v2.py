@@ -27,7 +27,7 @@ logging.basicConfig(filename= f"/home/pi/logs/{platform.node()}_{date.today().is
                     filemode='a',
                     # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     # datefmt='%H:%M:%S',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 
 logger = logging.getLogger()
 
