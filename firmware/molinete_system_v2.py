@@ -153,7 +153,6 @@ class baseAccessSystem():
             print(e)
             return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}    
 
-import pdb
 class AccessSystem(baseAccessSystem):
     def __init__(self, 
                  i2cdisplayaddress, 
@@ -174,7 +173,7 @@ class AccessSystem(baseAccessSystem):
         try:           
             device = InputDevice(self.inputsystem) # Replace with your device
         except Exception as e:
-            print(e)
+            self.logmessage('error', e)
             return None
         else:
             self.logmessage('info', device.name)
@@ -193,7 +192,6 @@ class AccessSystem(baseAccessSystem):
                             if eventdata.keystate == 1: # Keydown
                                 scancode = eventdata.scancode
                                 if scancode == 28: # Enter
-                                    print("putting in queue")
                                     q.put(barcode)
                                     barcode = ''
                                 else:
@@ -270,10 +268,10 @@ class AccessSystem(baseAccessSystem):
     def initInputDevice(self, queue):
         """
         """
-        print(self.inputsystem)
         if self.inputsystem is not None:
             dev = self.connectInputDevice()
             threading.Thread(target = self.readBarCodes, args = (dev, queue, pauseDevice, ), daemon = True).start()
+            self.logmessage('info')
             BJET = True
         return dev
 
@@ -387,6 +385,7 @@ if __name__ == '__main__':
                     inputsystem = asys['Proveedores1']["input_device"], 
                     gpioout = asys['Proveedores1']['gpio_out'])
     asA.main()
+    
         # asB = AccessSystem(name = "Proveedores2",
         #                 i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
         #                 inputsystem = asys['Proveedores2']["input_device"], 
