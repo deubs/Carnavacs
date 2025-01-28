@@ -153,7 +153,7 @@ class baseAccessSystem():
             print(e)
             return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}    
 
-
+import pdb
 class AccessSystem(baseAccessSystem):
     def __init__(self, 
                  i2cdisplayaddress, 
@@ -171,6 +171,7 @@ class AccessSystem(baseAccessSystem):
 
 
     def connectInputDevice(self):
+        pdb.set_trace()
         try:           
             device = InputDevice(self.inputsystem) # Replace with your device
         except Exception as e:
