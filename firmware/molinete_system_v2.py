@@ -321,7 +321,7 @@ class AccessSystem(baseAccessSystem):
             if (code is not None):
                 pauseDevice.pauseDevice()
                 result = self.apicall(code)
-                self.logmessage('info', f'{code} {dumps(result)}')
+                self.logmessage('info', f'{code} - {dumps(result)}')
                 if result['apistatus'] == True:
                     self.lcd.lcd_string(result['m1'], l1)
                     self.lcd.lcd_string(result['m2'], l2)
