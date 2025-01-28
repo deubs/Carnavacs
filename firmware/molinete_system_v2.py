@@ -220,6 +220,19 @@ class AccessSystem(baseAccessSystem):
         self.lcd.lcd_string(message, line)
 
 
+    def logmessage(self, level, message):
+        """
+        logs messages to file
+        """
+        log_message = {'time_stamp': datetime.now(),
+                    'level': level, 
+                    'message': message}
+        if level == 'info':
+            logger.info(log_message)
+        elif level ==  'error':
+            logger.error(log_message)
+        
+
     def printMessageDict(self, messagedict):
         try:
             for line, message in messagedict:
