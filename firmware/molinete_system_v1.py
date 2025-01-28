@@ -261,7 +261,7 @@ def enableGate():
         if "baliza" in platform.node() or "raspidiscabaliza" in platform.node():
             # raspberry box delay for commute from ON to OFF
             rasp_relay_out.on()
-            time.sleep(2)
+            time.sleep(1)
             rasp_relay_out.off()
             return True
         else:
