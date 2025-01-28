@@ -102,7 +102,7 @@ class PauseDeviceTOKEN:
 pauseDevice = PauseDeviceTOKEN()
 
     
-class baseAccessSystem(logui):
+class baseAccessSystem():
     def __init__(self):
         pass
 
@@ -167,6 +167,7 @@ class AccessSystem(baseAccessSystem):
         self.gpio_out = gpioout
         self.lcd = None
         self.name = name
+        self.logger = logger
         self.main()
 
 
