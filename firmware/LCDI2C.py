@@ -36,15 +36,6 @@ except ImportError:
     import smbus
 import time
 
-# Define some device parameters
-if (platform.node() == "vehiculos") or \
-      (platform.node() == "tango18") or \
-        ("raspi01" in platform.node()) or \
-            ("raspi03" in platform.node()):
-    I2C_ADDR = 0x3F
-else:
-    I2C_ADDR = 0x27 # I2C device address
-
 LCD_WIDTH = 16   # Maximum characters per line
 
 # Define some device constants      
@@ -71,6 +62,16 @@ if "raspi" in platform.node():
     bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
 else:
     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
+
+for device in range(128):
+    try:
+        bus.read_byte(device)
+        i2c = device
+        print(i2c)
+    except: # exception if read_byte fails
+        pass
+
+I2C_ADDR = i2c
 
 class LCD(object):
   
@@ -134,8 +135,8 @@ class LCD(object):
             self.lcd_string("I2C LCD        <",LCD_LINE_2)
             time.sleep(3)        
             # Send some more text
-            self.lcd_string(">         RPiSpy",LCD_LINE_1)
-            self.lcd_string(">        I2C LCD",LCD_LINE_2)
+            self.lcd_string(platform.node(),LCD_LINE_1)
+            self.lcd_string(f"{hex(I2C_ADDR)}     I2C LCD",LCD_LINE_2)
             time.sleep(3)
 
 
