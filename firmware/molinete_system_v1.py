@@ -354,6 +354,7 @@ def createFile():
 
 
 def printMessageDict(lcd_object, messagedict):
+    print(messagedict)
     try:
         for line, message in messagedict:
             print(line, message)
