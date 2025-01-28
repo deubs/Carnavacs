@@ -47,7 +47,6 @@ class logui():
         elif level ==  'error':
             self.logger.error(log_message)
 
-
 print("importing gpiozero")
 rasp_button_restart = Button(4, pull_up=True) # PIN 7
 relay_outa = OutputDevice(17) # PIN 11
@@ -268,11 +267,12 @@ class AccessSystem(baseAccessSystem):
         self.gpio_out.off()
 
 
-    def initInputDevice(self, queue, inputdev):
+    def initInputDevice(self, queue):
         """
         """
-        if inputdev is not None:
-            dev = self.connectInputDevice(inputdev)
+        print(self.inputsystem)
+        if self.inputsystem is not None:
+            dev = self.connectInputDevice(self.inputsystem)
             threading.Thread(target = self.readBarCodes, args = (dev, queue, pauseDevice, ), daemon = True).start()
             BJET = True
         return idev
