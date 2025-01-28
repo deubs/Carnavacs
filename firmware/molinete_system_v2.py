@@ -378,17 +378,17 @@ def getInputDevices():
 
 if __name__ == '__main__':
     idevs = getInputDevices() 
-    if len(idevs) > 1:
+    # if len(idevs) > 1:
         # asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}, 
         #         "Proveedores2":{"gpio_out": relay_outb, "display_i2caddress": 0x3F, "input_device": idevs[1]}}
 
-        asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}}
+    asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}}
 
-        asA = AccessSystem(name = "Proveedores1",
-                        i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
-                        inputsystem = asys['Proveedores1']["input_device"], 
-                        gpioout = asys['Proveedores1']['gpio_out'])
-        asA.main()
+    asA = AccessSystem(name = "Proveedores1",
+                    i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
+                    inputsystem = asys['Proveedores1']["input_device"], 
+                    gpioout = asys['Proveedores1']['gpio_out'])
+    asA.main()
         # asB = AccessSystem(name = "Proveedores2",
         #                 i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
         #                 inputsystem = asys['Proveedores2']["input_device"], 
