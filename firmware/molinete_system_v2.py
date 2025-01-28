@@ -102,7 +102,7 @@ class PauseDeviceTOKEN:
 pauseDevice = PauseDeviceTOKEN()
 
     
-class baseAccessSystem(object, logui):
+class baseAccessSystem(logui):
     def __init__(self):
         pass
 
