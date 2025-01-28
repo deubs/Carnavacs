@@ -36,9 +36,8 @@ except ImportError:
     import smbus
 import time
 
-LCD_WIDTH = 16   # Maximum characters per line
-
 # Define some device constants      
+LCD_WIDTH = 16   # Maximum characters per line
 LCD_CHR = 1 # Mode - Sending data
 LCD_CMD = 0 # Mode - Sending command
 
@@ -67,7 +66,7 @@ for device in range(128):
     try:
         bus.read_byte(device)
         i2c = device
-        print(i2c)
+        print(hex(i2c))
     except: # exception if read_byte fails
         pass
 
