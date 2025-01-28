@@ -283,10 +283,10 @@ class AccessSystem(baseAccessSystem):
         """
             Main function
         """
+        pdb.set_trace()
         self.initLCD()
         fhandler = self.createFile(workingdir = '/home/pi', sysname = self.name)
         jet111q = queue.Queue(maxsize = 1)
-        pdb.set_trace()
         idev = self.initInputDevice(jet111q, self.inputsystem)
         if idev is not None:
             self.lcd.lcd_string("INPUT DEV ON", l2)
