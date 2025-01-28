@@ -25,7 +25,7 @@ from json import dumps
 import logging
 import logging.handlers
 
-logging.basicConfig(filename= f"/home/pi/logs/{platform.node()} - {datetime.today()}",
+logging.basicConfig(filename= f"/home/pi/logs/{platform.node()} - {date.today().isoformat()}.log",
                     filemode='a',
                     # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     # datefmt='%H:%M:%S',
@@ -127,7 +127,6 @@ def connectInputDevice(inputdev):
 
 
 def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
-    print('begin reading...')
     barcode = ''
     while True:
         try:
@@ -138,7 +137,6 @@ def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
                         if eventdata.keystate == 1: # Keydown
                             scancode = eventdata.scancode
                             if scancode == 28: # Enter
-                                print("putting in queue")
                                 q.put(barcode)
                                 barcode = ''
                             else:
