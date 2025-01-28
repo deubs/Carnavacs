@@ -76,6 +76,7 @@ I2C_ADDR = i2c
 class LCD(object):
   
     def lcd_init(self, i2caddress):
+        print(i2caddress)
     # Initialise display
         self.lcd_byte(0x33,LCD_CMD) # 110011 Initialise
         self.lcd_byte(0x32,LCD_CMD) # 110010 Initialise
@@ -83,8 +84,8 @@ class LCD(object):
         self.lcd_byte(0x0C,LCD_CMD) # 001100 Display On,Cursor Off, Blink Off 
         self.lcd_byte(0x28,LCD_CMD) # 101000 Data length, number of lines, font size
         self.lcd_byte(0x01,LCD_CMD) # 000001 Clear display
-        time.sleep(E_DELAY)
         self.i2caddress = i2caddress
+        time.sleep(E_DELAY)
 
     def lcd_byte(self, bits, mode):
         # Send byte to data pins
