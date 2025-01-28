@@ -356,7 +356,6 @@ def createFile():
 import pdb
 def printMessageDict(lcd_object, messagedict):
     print(messagedict)
-    pdb.set_trace()
     try:
         for line, message in messagedict:
             print(line, message)
