@@ -269,7 +269,7 @@ class AccessSystem(baseAccessSystem):
             Main function
         """
         self.initLCD()
-        fhandler = self.createFile(workingdir = join('/home/pi', sysname = self.name))
+        fhandler = self.createFile(workingdir = '/home/pi', sysname = self.name))
         jet111q = queue.Queue(maxsize = 1)
 
         idev = self.initInputDevice(jet111q, self.inputsystem)
