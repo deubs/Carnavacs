@@ -6,7 +6,6 @@
 #  OrangePI Zero3 access control system
 #  based on GM65 bar code scanner, NexuPOS Jet 111 bar code scanner, 16x2 LCD i2c, API calls 
 
-import serial
 import LCDI2Cv2
 import threading
 import queue
@@ -16,13 +15,38 @@ from requests import post, exceptions, Session
 from datetime import datetime, date
 from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
-import calendar
 import platform
-# import pdb
 from os import makedirs
 from os.path import exists, join
-
 from gpiozero import Button, DigitalInputDevice, OutputDevice
+import logging
+import logging.handlers
+from json import dumps
+
+logging.basicConfig(filename= f"/home/pi/logs/{platform.node()-{datetime.today()}}.log",
+                    filemode='a',
+                    # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    # datefmt='%H:%M:%S',
+                    level=logging.DEBUG)
+
+logger = logging.getLogger('Synchronous Logging')
+
+class logui():
+    def __init__(self):
+        self.logger = logger
+
+    def logmessage(self, level, message):
+        """
+        logs messages to file
+        """
+        log_message = {'time_stamp': datetime.now(),
+                    'level': level, 
+                    'message': message}
+        if level == 'info':
+            self.logger.info(log_message)
+        elif level ==  'error':
+            self.logger.error(log_message)
+
 
 print("importing gpiozero")
 rasp_button_restart = Button(4, pull_up=True) # PIN 7
@@ -61,6 +85,9 @@ sp = None
 print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
 
+l1 = LCDI2Cv2.LCD_LINE_1
+l2 = LCDI2Cv2.LCD_LINE_2
+
 class PauseDeviceTOKEN:
     def __init__(self):
         self.is_paused = False
@@ -74,56 +101,10 @@ class PauseDeviceTOKEN:
 
 pauseDevice = PauseDeviceTOKEN()
 
-
-def detectInputDevice():
-    """
-        From a list of input devices, select the one that matches the filter
-    """
-    devices = [InputDevice(path) for path in list_devices()]
-    inputdev = None
-    print(devices)
-    for device in devices:
-        print(device.name)
-        if ("IMAGER 2D" in device.name) or \
-            ("BF SCAN SCAN KEYBOARD" in device.name) or \
-                ("NT USB Keyboard" in device.name) or \
-                    ("TMS HIDKeyBoard" in device.name) or \
-                        ("ZKRFID R400" in device.name):
-
-            inputdev = device.path
-            break
-    return inputdev
     
-
-def readPort(serialP, q:queue, pause: PauseDeviceTOKEN):
-    """
-        Serial port communication with GM65 barcode reader
-    """
-    print("Serial Port Opened")
-    breading = True
-    bcode = True
-    if serialP.isOpen():
-        while breading:
-            print("Reading Serial Port")
-            data = ""
-            bcode = True
-            if not pause.is_paused:
-                while bcode:
-                    if q.empty():
-                        cmdRet = serialP.read().decode()
-                        if (cmdRet == '\r' or cmdRet == '\n'):
-                            q.put(data)
-                            bcode = False
-                        else:
-                            data += str(cmdRet)
-    else:
-        print("Port is Closed")
-
-
-class baseAccessSystem(object):
+class baseAccessSystem(object, logui):
     def __init__(self):
         pass
-
 
     def createFile(self, workingdir, sysname):
         """
@@ -196,8 +177,7 @@ class AccessSystem(baseAccessSystem):
             print(e)
             return None
         else:
-            print(device)
-            print(device.capabilities())
+            self.logmessage('info', device.name)
             return device
 
 
@@ -231,20 +211,28 @@ class AccessSystem(baseAccessSystem):
         """
         Prints messages in display and stdout
         """
-        now = datetime.now()
-        date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
-        if log:
-            print(f'{message} -  {date_time_str}')
+        # now = datetime.now()
+        # date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
+        # if log:
+        #     print(f'{message} -  {date_time_str}')
         # if BINITLCD:
         self.lcd.lcd_string(message, line)
+
+
+    def printMessageDict(self, messagedict):
+        try:
+            for line, message in messagedict:
+                self.lcd.lcd_string(message, line)
+        except Exception as e:
+            self.logmessage('error', e)
 
 
     def initLCD(self):
         try:
             self.lcd = LCDI2Cv2.LCD()
             self.lcd.lcd_init(self.display_address)
-            self.printMessage("LCD INIT", LCDI2Cv2.LCD_LINE_1, True)
-            self.printMessage(platform.node(), LCDI2Cv2.LCD_LINE_2, True)
+            self.lcd.lcd_string("LCD INIT", l1)
+            self.lcd.lcd_string(platform.node(), l2)
             time.sleep(2)
         except Exception as e:
             print(e)
@@ -269,7 +257,6 @@ class AccessSystem(baseAccessSystem):
     def initInputDevice(self, queue, inputdev):
         """
         """
-        # idev = detectInputDevice()
         if inputdev is not None:
             dev = self.connectInputDevice(inputdev)
             threading.Thread(target = self.readBarCodes, args = (dev, queue, pauseDevice, ), daemon = True).start()
@@ -282,15 +269,17 @@ class AccessSystem(baseAccessSystem):
             Main function
         """
         self.initLCD()
-        fhandler = self.createFile(workingdir=join('/home/pi', sysname=self.name))
-        # gm65q = queue.Queue(maxsize = 1)
+        fhandler = self.createFile(workingdir = join('/home/pi', sysname = self.name))
         jet111q = queue.Queue(maxsize = 1)
-        idev = self.initInputDevice(jet111q, self.inputsystem)
 
+        idev = self.initInputDevice(jet111q, self.inputsystem)
         if idev is not None:
-            self.printMessage("INPUT DEV ON", LCDI2Cv2.LCD_LINE_2, True)
+            self.lcd.lcd_string("INPUT DEV ON", l2)
+            self.logmessage('info', "INPUT DEV ON")
         else:
-            self.printMessage("INPUT DEV OFF", LCDI2Cv2.LCD_LINE_2, True)
+            self.lcd.lcd_string("INPUT DEV OFF", l2)
+            self.logmessage('error', "INPUT DEV OFF")
+
         time.sleep(1)
         
         code = None
@@ -301,8 +290,8 @@ class AccessSystem(baseAccessSystem):
             brestart = rasp_button_restart.pin.state
 
             if brestart == 0:
-                self.printMessage("REINICIANDO", LCDI2Cv2.LCD_LINE_1, True)
-                self.printMessage("YA VOLVEMOS...", LCDI2Cv2.LCD_LINE_2, True)
+                self.lcd.lcd_string("REINICIANDO", l1)
+                self.lcd.lcd_string("YA VOlVEMOS", l2)
                 if fhandler is not None:
                     fhandler.close()
                 exit()
@@ -311,39 +300,38 @@ class AccessSystem(baseAccessSystem):
                 FAILURE_COUNT = 5
                 if idev is not None:
                     if not jet111q.empty():
-                        print("reading queue...jet111")
+                        # print("reading queue...jet111")
                         jet111data = jet111q.get()
                         if jet111data is not None:
-                            self.printMessage(jet111data, LCDI2Cv2.LCD_LINE_1, True)
+                            self.lcd.lcd_string(jet111data, l1)
                             code = jet111data
-                                
+
             bfinalize_job = False
             if (code is not None):
                 pauseDevice.pauseDevice()
                 result = self.apicall(code)
+                self.logmessage('info', dumps(result))
                 if result['apistatus'] == True:
+                    self.lcd.lcd_string(result['m1'], l1)
+                    self.lcd.lcd_string(result['m2'], l2)
                     if result['code'] == False:
-                        self.printMessage(result['m1'], LCDI2Cv2.LCD_LINE_1, True)
-                        self.printMessage(result['m2'], LCDI2Cv2.LCD_LINE_2, True)
                         time.sleep(1)
                     else:
-                        self.printMessage(result['m1'], LCDI2Cv2.LCD_LINE_1, True)
-                        self.printMessage(result['m2'], LCDI2Cv2.LCD_LINE_2, True)
                         marked = self.enableGate()
                         if marked:
-                            self.printMessage("CODIGO MARCADO", LCDI2Cv2.LCD_LINE_1, True)
-                            self.printMessage("BIENVENIDO", LCDI2Cv2.LCD_LINE_2, True)
+                            self.lcd.lcd_string('CODIGO MARCADO', l1)
+                            self.lcd.lcd_string('BIENVENIDO', l2)
                     ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
                     bfinalize_job = True
                 else:
-                    self.printMessage('FALLA DE SISTEMA', LCDI2Cv2.LCD_LINE_1, True)
-                    self.printMessage("REINTENTANDO", LCDI2Cv2.LCD_LINE_2, True)
+                    self.lcd.lcd_string("FALLA DE SISTEMA", l1)
+                    self.lcd.lcd_string("REINTENTANDO", l2)
                     FAILURE_COUNT -= 1
                     ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
                     if FAILURE_COUNT == 0:
-                        self.printMessage(lcd, "FALLA PERMANENTE", self.LCDI2Cv2.LCD_LINE_1, True)
-                        self.printMessage(lcd, "INFORME PROBLEMA", self.LCDI2Cv2.LCD_LINE_2, True)
-                        time.sleep(3)
+                        self.lcd.lcd_string("FALLA PERMANENTE", l1)
+                        self.lcd.lcd_string("INFORME PROBLEMA", l2)
+                        time.sleep(2)
                         ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
                         bfinalize_job = True
                         
@@ -355,23 +343,38 @@ class AccessSystem(baseAccessSystem):
                     fhandler.flush()    
             else:
                 code = None
-                self.printMessage("CARNAVAL 2025", LCDI2Cv2.LCD_LINE_1, False)
-                self.printMessage("NUEVO INGRESO", LCDI2Cv2.LCD_LINE_2, False)
+                self.lcd.lcd_string("CARNAVAL 2015", l1)
+                self.lcd.lcd_string("NUEVO INGRESO", l2)
+
+def getInputDevices():
+    devices = [InputDevice(path) for path in list_devices()]
+    inputdevs = []
+    for device in devices:
+        print(device.name)
+        if ("IMAGER 2D" in device.name) or \
+            ("BF SCAN SCAN KEYBOARD" in device.name) or \
+                ("NT USB Keyboard" in device.name) or \
+                    ("ZKRFID R400" in device.name) or \
+                        ("TMS HIDKeyBoard" in device.name) or \
+                            ("BARCODE SCANNER Keyboard Interface" in device.name):
+            inputdevs.append(device)
+    return inputdevs
+
 
 if __name__ == '__main__':
+    idevs = getInputDevices() 
+    if len(idevs) > 1:
+        # asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}, 
+        #         "Proveedores2":{"gpio_out": relay_outb, "display_i2caddress": 0x3F, "input_device": idevs[1]}}
 
-    inputa = '/dev/input/input21'
-    inputb = '/dev/input/input22'
-    
-    asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x27, "input_device": inputa}, 
-            "Proveedores2":{"gpio_out": relay_outb, "display_i2caddress": 0x3F, "input_device": inputb}}
-    
-    asA = AccessSystem(name = "Proveedores1",
-                       i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
-                       inputsystem = asys['Proveedores1']["input_device"], 
-                       gpioout = asys['Proveedores1']['gpio_out'])
-    
-    asB = AccessSystem(name = "Proveedores2",
-                       i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
-                       inputsystem = asys['Proveedores2']["input_device"], 
-                       gpioout = asys['Proveedores2']['gpio_out'])
+        asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}}
+
+        asA = AccessSystem(name = "Proveedores1",
+                        i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
+                        inputsystem = asys['Proveedores1']["input_device"], 
+                        gpioout = asys['Proveedores1']['gpio_out'])
+        
+        # asB = AccessSystem(name = "Proveedores2",
+        #                 i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
+        #                 inputsystem = asys['Proveedores2']["input_device"], 
+        #                 gpioout = asys['Proveedores2']['gpio_out'])
