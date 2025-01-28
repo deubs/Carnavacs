@@ -170,9 +170,9 @@ class AccessSystem(baseAccessSystem):
         self.main()
 
 
-    def connectInputDevice(self, inputdev):
+    def connectInputDevice(self):
         try:           
-            device = InputDevice(inputdev) # Replace with your device
+            device = InputDevice(self.inputsystem) # Replace with your device
         except Exception as e:
             print(e)
             return None
