@@ -23,13 +23,13 @@ import logging
 import logging.handlers
 from json import dumps
 
-logging.basicConfig(filename= f"/home/pi/logs/{platform.node()-{datetime.today()}}.log",
+logging.basicConfig(filename= f"/home/pi/logs/{platform.node()}_{date.today().isoformat()}.log",
                     filemode='a',
                     # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     # datefmt='%H:%M:%S',
                     level=logging.DEBUG)
 
-logger = logging.getLogger('Synchronous Logging')
+logger = logging.getLogger()
 
 class logui():
     def __init__(self):
