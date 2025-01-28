@@ -21,20 +21,17 @@ import platform
 # import pdb
 from os import makedirs
 from os.path import exists, join
+from json import dumps
 import logging
 import logging.handlers
+
+logging.basicConfig(filename= "/home/pi/logs",
+                    filemode='a',
+                    # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    # datefmt='%H:%M:%S',
+                    level=logging.DEBUG)
+
 logger = logging.getLogger('Synchronous Logging')
-
-http_handler = logging.handlers.HTTPHandler(
-    '192.168.0.62:3000',
-    'home/emiliano/src/esp32/log',
-    method='POST',
-)
-logger.addHandler(http_handler)
-
-# Log messages:
-logger.warn('Hey log a warning')
-logger.error("Hey log a error")
 
 
 if "tango" in platform.node() or "vehiculos" in platform.node():
@@ -95,8 +92,6 @@ class PauseDeviceTOKEN:
 
 
 pauseDevice = PauseDeviceTOKEN()
-
-
 
 
 def detectInputDevice():
@@ -358,6 +353,14 @@ def createFile():
     return f
 
 
+def printMessageDict(lcd_object, messagedict):
+    try:
+        for line, message in messagedict:
+            lcd_object.lcd_string(message, line)
+    except Exception as e:
+        logmessage('error', e)
+
+
 def printMessage(lcd_object, message, line, log):
     """
     Prints messages in display and stdout
@@ -369,8 +372,18 @@ def printMessage(lcd_object, message, line, log):
     # if BINITLCD:
     lcd_object.lcd_string(message, line)
 
-def logmessage(level, message, print_in_screen):
 
+def logmessage(level, message):
+    """
+    logs messages to file
+    """
+    log_message = {'time_stamp': datetime.now(),
+                   'level': level, 
+                   'message': message}
+    if level == 'info':
+        logger.info(log_message)
+    elif level ==  'error':
+        logger.error(log_message)
 
 
 def initInputDevice(queue):
@@ -400,25 +413,30 @@ def main():
         Main function
     """
     lcd = initLCD()
-    # print(lcd)
+    if lcd is not None:
+        logmessage('info', 'LCD init')
     fhandler = createFile()
 
     BLAN, ip = checklan.checkLAN(checklan.target, checklan.timeout)
     if BLAN:
-        printMessage(lcd, "LAN DETECTED", LCDI2C.LCD_LINE_1, True)
-        printMessage(lcd, ip, LCDI2C.LCD_LINE_2, True)
+        printMessageDict({LCDI2C.LCD_LINE_1: "LAN DETECTED", LCDI2C.LCD_LINE_2: ip})
+        logmessage('info', f'LAN DETECTED {ip}')
         time.sleep(2)
     else:
-        printMessage(lcd, "LAN NOT DETECTED", LCDI2C.LCD_LINE_1, True)
+        printMessageDict({LCDI2C.LCD_LINE_1, "LAN NOT DETECTED"})
+        logmessage('info', f'LAN NOT DETECTED')
 
     gm65q = queue.Queue(maxsize = 1)
     jet111q = queue.Queue(maxsize = 1)
     initGPIO()
     idev = initInputDevice(jet111q)
     if idev is not None:
-        printMessage(lcd, "INPUT DEV ON", LCDI2C.LCD_LINE_2, True)
+        printMessageDict({LCDI2C.LCD_LINE_2: "INPUT DEV ON"})
+        logmessage('info', "INPUT DEV ON")
     else:
-        printMessage(lcd, "INPUT DEV OFF", LCDI2C.LCD_LINE_2, True)
+        printMessageDict({LCDI2C.LCD_LINE_2: "INPUT DEV OFF"})
+        logmessage('error', "INPUT DEV OFF")
+        
     time.sleep(1)
     
     if "raspi" in platform.node() or "vehiculo" in platform.node():
@@ -443,8 +461,8 @@ def main():
             brestart = rasp_button_restart.pin.state
 
         if brestart == 0:
-            printMessage(lcd, "REINICIANDO", LCDI2C.LCD_LINE_1, True)
-            printMessage(lcd, "YA VOLVEMOS...", LCDI2C.LCD_LINE_2, True)
+            printMessageDict({LCDI2C.LCD_LINE_1: "REINICIANDO", LCDI2C.LCD_LINE_2: "YA VOLVEMOS..."})
+            logmessage('info', 'RESTART REQUESTED')
             if fhandler is not None:
                 fhandler.close()
             exit()
@@ -453,47 +471,45 @@ def main():
             FAILURE_COUNT = 5
             if sp is not None:
                 if not gm65q.empty():
-                    print("reading queue...gm65")
                     gm65data = gm65q.get()
                     if gm65data is not None:     
-                        printMessage(lcd, gm65data, LCDI2C.LCD_LINE_1, True)
+                        printMessageDict({LCDI2C.LCD_LINE_1: gm65data})
+                        logmessage('info', f'{gm65data}')
                         code = gm65data
             if idev is not None:
                 if not jet111q.empty():
-                    print("reading queue...jet111")
                     jet111data = jet111q.get()
                     if jet111data is not None:
-                        printMessage(lcd, jet111data, LCDI2C.LCD_LINE_1, True)
+                        printMessageDict({LCDI2C.LCD_LINE_1: jet111data})
+                        logmessage('info', f'{jet111data}')
                         code = jet111data
                             
         bfinalize_job = False
         if (code is not None):
             pauseDevice.pauseDevice()
             result = apicall(code)
-            print(code)
-            print(result) 
+            logmessage('info', dumps(result))
             if result['apistatus'] == True:
                 if result['code'] == False:
-                    printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
-                    printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
+                    logmessage('error', f'{code} {result['m1']} {result['m2']}')
+                    printMessageDict({LCDI2C.LCD_LINE_1: result['m1'], LCDI2C.LCD_LINE_2: result['m2']})
                     time.sleep(1)
                 else:
-                    printMessage(lcd, result['m1'], LCDI2C.LCD_LINE_1, True)
-                    printMessage(lcd, result['m2'], LCDI2C.LCD_LINE_2, True)
+                    logmessage('info', f'{code} {result['m1']} {result['m2']}')
+                    printMessageDict({LCDI2C.LCD_LINE_1: result['m1'], LCDI2C.LCD_LINE_2: result['m2']})
                     marked = enableGate()
                     if marked:
-                        printMessage(lcd, "CODIGO MARCADO", LCDI2C.LCD_LINE_1, True)
-                        printMessage(lcd, "BIENVENIDO", LCDI2C.LCD_LINE_2, True)
+                        logmessage('info', f'{code} marked')
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
                 bfinalize_job = True
             else:
-                printMessage(lcd, 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_1, True)
-                printMessage(lcd, "REINTENTANDO", LCDI2C.LCD_LINE_2, True)
+                logmessage('error', f'FALLA DE SISTEMA - REINTENTANDO')
+                printMessageDict({LCDI2C.LCD_LINE_1: 'FALLA DE SISTEMA', LCDI2C.LCD_LINE_2: "REINTENTANDO"})
                 FAILURE_COUNT -= 1
                 ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
                 if FAILURE_COUNT == 0:
-                    printMessage(lcd, "FALLA PERMANENTE", LCDI2C.LCD_LINE_1, True)
-                    printMessage(lcd, "INFORME PROBLEMA", LCDI2C.LCD_LINE_2, True)
+                    logmessage('error', f'FALLA PERMANENTE - INFORME PROBLEMA')
+                    printMessageDict({LCDI2C.LCD_LINE_1: 'FALLA PERMANENTE', LCDI2C.LCD_LINE_2: "INFORME PROBLEMA"})
                     time.sleep(3)
                     ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
                     bfinalize_job = True
