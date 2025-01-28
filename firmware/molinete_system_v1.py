@@ -491,11 +491,11 @@ def main():
             logmessage('info', dumps(result))
             if result['apistatus'] == True:
                 if result['code'] == False:
-                    logmessage('error', f'{code} {result['m1']} {result['m2']}')
+                    logmessage('error', f"{code} {result['m1']} {result['m2']}")
                     printMessageDict({LCDI2C.LCD_LINE_1: result['m1'], LCDI2C.LCD_LINE_2: result['m2']})
                     time.sleep(1)
                 else:
-                    logmessage('info', f'{code} {result['m1']} {result['m2']}')
+                    logmessage('info', f"{code} {result['m1']} {result['m2']}")
                     printMessageDict({LCDI2C.LCD_LINE_1: result['m1'], LCDI2C.LCD_LINE_2: result['m2']})
                     marked = enableGate()
                     if marked:
