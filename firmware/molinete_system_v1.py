@@ -46,8 +46,7 @@ logging.basicConfig(filename= f"{workingdir}/logs/{platform.node()}_{date.today(
                     # datefmt='%H:%M:%S',
                     level=logging.DEBUG)
 
-logger = logging.getLogger('Synchronous Logging')
-
+logger = logging.getLogger()
 
 print(workingdir)
 
