@@ -391,5 +391,6 @@ if __name__ == '__main__':
     threading.Thread(target = asA.main, args = (), daemon = True).start()
     threading.Thread(target = asB.main, args = (), daemon = True).start()
     while True:
+        time.sleep(10)
         continue
     # asB.main()
