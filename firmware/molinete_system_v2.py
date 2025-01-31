@@ -1,10 +1,10 @@
 #!/usr/bin/python
 #--------------------------------------
-#  molinete_system_v1.py 
+#  molinete_system_v2.py 
 #  Author: Emiliano Melchiori
-#  Date: 28/11/2024
-#  OrangePI Zero3 access control system
-#  based on GM65 bar code scanner, NexuPOS Jet 111 bar code scanner, 16x2 LCD i2c, API calls 
+#  Date: 28/01/2025
+#  Raspberry Pi access control system
+#  based on dual NexuPOS Jet 111 bar code scanner, 16x2 LCD i2c, API calls 
 
 import LCDI2Cv2
 import threading
@@ -23,7 +23,14 @@ import logging
 import logging.handlers
 from json import dumps
 
-logging.basicConfig(filename= f"/home/pi/logs/{platform.node()}_{date.today().isoformat()}.log",
+print("importing gpiozero")
+rasp_button_restart = Button(4, pull_up=True) # PIN 7
+relay_outa = OutputDevice(17) # PIN 11
+relay_outb = OutputDevice(27) # PIN 11
+workingdir = "/home/pi"
+print(workingdir)
+
+logging.basicConfig(filename= f"{workingdir}/logs/{platform.node()}_{date.today().isoformat()}.log",
                     filemode='a',
                     # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     # datefmt='%H:%M:%S',
@@ -31,29 +38,6 @@ logging.basicConfig(filename= f"/home/pi/logs/{platform.node()}_{date.today().is
 
 logger = logging.getLogger()
 
-class logui():
-    def __init__(self):
-        self.logger = logger
-
-    def logmessage(self, level, message):
-        """
-        logs messages to file
-        """
-        log_message = {'time_stamp': datetime.now(),
-                    'level': level, 
-                    'message': message}
-        if level == 'info':
-            self.logger.info(log_message)
-        elif level ==  'error':
-            self.logger.error(log_message)
-
-print("importing gpiozero")
-rasp_button_restart = Button(4, pull_up=True) # PIN 7
-relay_outa = OutputDevice(17) # PIN 11
-relay_outb = OutputDevice(16) # PIN 11
-rasp_sensor_in = DigitalInputDevice(27) # PIN 11
-workingdir = "/home/pi/"
-print(workingdir)
 
 # STATUS VARS
 BLAN = False
@@ -104,6 +88,7 @@ pauseDevice = PauseDeviceTOKEN()
 class baseAccessSystem():
     def __init__(self):
         pass
+
 
     def createFile(self, workingdir, sysname):
         """
@@ -228,6 +213,8 @@ class AccessSystem(baseAccessSystem):
             logger.info(log_message)
         elif level ==  'error':
             logger.error(log_message)
+        elif level ==  'critical':
+            logger.critical(log_message)
         
 
     def printMessageDict(self, messagedict):
@@ -281,7 +268,7 @@ class AccessSystem(baseAccessSystem):
             Main function
         """
         self.initLCD()
-        fhandler = self.createFile(workingdir = '/home/pi', sysname = self.name)
+        fhandler = self.createFile(workingdir = workingdir, sysname = self.name)
         jet111q = queue.Queue(maxsize = 1)
         idev = self.initInputDevice(jet111q)
         if idev is not None:
@@ -292,7 +279,7 @@ class AccessSystem(baseAccessSystem):
             self.logmessage('error', "INPUT DEV OFF")
 
         time.sleep(1)
-        
+        nthreads =  threading.enumerate()
         code = None
         while True:
             jet111data = None
@@ -300,11 +287,18 @@ class AccessSystem(baseAccessSystem):
             brestart = 1
             brestart = rasp_button_restart.pin.state
 
+            if nthreads != threading.enumerate():
+                brestart = 0
+                self.logmessage('critical', 'INPUT DEVICE IS DISCONNECTED. INFORM')
+                self.lcd.lcd_string("PISTOLA", l1)
+                self.lcd.lcd_string("DESCONECTADA", l1)
+
             if brestart == 0:
                 self.lcd.lcd_string("REINICIANDO", l1)
                 self.lcd.lcd_string("YA VOlVEMOS", l2)
                 if fhandler is not None:
                     fhandler.close()
+                self.logmessage('error', 'RESTART REQUIRED')
                 exit()
 
             if code is None:
@@ -316,6 +310,9 @@ class AccessSystem(baseAccessSystem):
                         if jet111data is not None:
                             self.lcd.lcd_string(jet111data, l1)
                             code = jet111data
+                else:
+                    self.lcd.lcd_string("PISTOLA", l1)
+                    self.lcd.lcd_string("DESCONECTADA", l1)
 
             bfinalize_job = False
             if (code is not None):
@@ -374,11 +371,11 @@ def getInputDevices():
 
 if __name__ == '__main__':
     idevs = getInputDevices() 
-    # if len(idevs) > 1:
-        # asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}, 
-        #         "Proveedores2":{"gpio_out": relay_outb, "display_i2caddress": 0x3F, "input_device": idevs[1]}}
+    if len(idevs) > 1:
+        asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x27, "input_device": idevs[0]}, 
+                "Proveedores2":{"gpio_out": relay_outb, "display_i2caddress": 0x26, "input_device": idevs[1]}}
 
-    asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}}
+    # asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}}
 
     asA = AccessSystem(name = "Proveedores1",
                     i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
@@ -386,7 +383,8 @@ if __name__ == '__main__':
                     gpioout = asys['Proveedores1']['gpio_out'])
     asA.main()
     
-        # asB = AccessSystem(name = "Proveedores2",
-        #                 i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
-        #                 inputsystem = asys['Proveedores2']["input_device"], 
-        #                 gpioout = asys['Proveedores2']['gpio_out'])
+    asB = AccessSystem(name = "Proveedores2",
+                        i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
+                        inputsystem = asys['Proveedores2']["input_device"], 
+                        gpioout = asys['Proveedores2']['gpio_out'])
+    asB.main()
