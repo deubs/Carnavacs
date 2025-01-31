@@ -443,6 +443,8 @@ def main():
 
         if nthreads != threading.enumerate():
             logmessage('critical', 'INPUT DEVICE IS OFF. INFORM')
+            lcd.lcd_string("PISTOLA", l1)
+            lcd.lcd_string("DESCONECTADA", l2)
             brestart = 0
 
         if brestart == 0:
