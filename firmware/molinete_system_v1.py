@@ -462,14 +462,14 @@ def main():
                 if not gm65q.empty():
                     gm65data = gm65q.get()
                     if gm65data is not None:
-                        lcd.lcd_string(gm65data, l1)     
+                        # lcd.lcd_string(gm65data, l1)     
                         logmessage('info', f'{gm65data}')
                         code = gm65data
             if idev is not None:
                 if not jet111q.empty():
                     jet111data = jet111q.get()
                     if jet111data is not None:
-                        lcd.lcd_string(jet111data, l1)     
+                        # lcd.lcd_string(jet111data, l1)     
                         logmessage('info', f'{jet111data}')
                         code = jet111data
             else:
