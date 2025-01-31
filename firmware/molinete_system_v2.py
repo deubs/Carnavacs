@@ -151,7 +151,7 @@ class AccessSystem(baseAccessSystem):
         self.lcd = None
         self.name = name
         self.logger = logger
-        self.main()
+        # self.main()
 
 
     def connectInputDevice(self):
@@ -387,7 +387,7 @@ if __name__ == '__main__':
                         inputsystem = asys['Proveedores2']["input_device"], 
                         gpioout = asys['Proveedores2']['gpio_out'])
 
-    pdb.set_trace()
+    # pdb.set_trace()
     threading.Thread(target = asA.main, args = (), daemon = True).start()
     threading.Thread(target = asB.main, args = (), daemon = True).start()
     
