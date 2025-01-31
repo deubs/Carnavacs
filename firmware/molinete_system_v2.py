@@ -381,13 +381,14 @@ if __name__ == '__main__':
                     i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
                     inputsystem = asys['Proveedores1']["input_device"], 
                     gpioout = asys['Proveedores1']['gpio_out'])
-    threading.Thread(target = asA.main, args = (), daemon = True).start()
     # asA.main()
-    # pdb.set_trace()
     asB = AccessSystem(name = "Proveedores2",
                         i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
                         inputsystem = asys['Proveedores2']["input_device"], 
                         gpioout = asys['Proveedores2']['gpio_out'])
+
+    pdb.set_trace()
+    threading.Thread(target = asA.main, args = (), daemon = True).start()
     threading.Thread(target = asB.main, args = (), daemon = True).start()
     
     # asB.main()
