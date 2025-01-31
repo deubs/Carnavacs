@@ -369,6 +369,9 @@ def getInputDevices():
     return inputdevs
 
 import pdb
+
+from multiprocessing import Process
+
 if __name__ == '__main__':
     idevs = getInputDevices() 
     if len(idevs) > 1:
@@ -388,8 +391,12 @@ if __name__ == '__main__':
                         gpioout = asys['Proveedores2']['gpio_out'])
 
     # pdb.set_trace()
-    threading.Thread(target = asA.main, args = (), daemon = True).start()
-    threading.Thread(target = asB.main, args = (), daemon = True).start()
+    pa = Process(target= asA.main)
+    pa.start()
+
+    pb = Process(target= asB.main)
+    pb.star()
+    # threading.Thread(target = asB.main, args = (), daemon = True).start()
     while True:
         time.sleep(10)
         continue
