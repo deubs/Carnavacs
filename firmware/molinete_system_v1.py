@@ -445,6 +445,7 @@ def main():
             logmessage('critical', 'INPUT DEVICE IS OFF. INFORM')
             lcd.lcd_string("PISTOLA", l1)
             lcd.lcd_string("DESCONECTADA", l2)
+            time.sleep(2)
             brestart = 0
 
         if brestart == 0:
@@ -471,6 +472,11 @@ def main():
                         lcd.lcd_string(jet111data, l1)     
                         logmessage('info', f'{jet111data}')
                         code = jet111data
+            else:
+                lcd.lcd_string("PISTOLA", l1)
+                lcd.lcd_string("DESCONECTADA", l2)
+                time.sleep(2)
+
                             
         bfinalize_job = False
         if (code is not None):
