@@ -390,5 +390,6 @@ if __name__ == '__main__':
     # pdb.set_trace()
     threading.Thread(target = asA.main, args = (), daemon = True).start()
     threading.Thread(target = asB.main, args = (), daemon = True).start()
-    
+    while True:
+        continue
     # asB.main()
