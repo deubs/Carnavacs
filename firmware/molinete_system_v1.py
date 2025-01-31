@@ -25,15 +25,6 @@ from json import dumps
 import logging
 import logging.handlers
 
-logging.basicConfig(filename= f"/home/pi/logs/{platform.node()}_{date.today().isoformat()}.log",
-                    filemode='a',
-                    # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                    # datefmt='%H:%M:%S',
-                    level=logging.DEBUG)
-
-logger = logging.getLogger('Synchronous Logging')
-
-
 if "tango" in platform.node() or "vehiculos" in platform.node():
     import wiringpi
     print("importing wiringpi")
@@ -48,6 +39,15 @@ else:
     rasp_relay_out = OutputDevice(17) # PIN 11
     rasp_sensor_in = DigitalInputDevice(27) # PIN 11
     workingdir = "/home/pi/"
+
+logging.basicConfig(filename= f"{workingdir}/logs/{platform.node()}_{date.today().isoformat()}.log",
+                    filemode='a',
+                    # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    # datefmt='%H:%M:%S',
+                    level=logging.DEBUG)
+
+logger = logging.getLogger('Synchronous Logging')
+
 
 print(workingdir)
 
