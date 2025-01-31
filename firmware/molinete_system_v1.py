@@ -328,7 +328,7 @@ def initLCD():
         lcd = LCDI2C.LCD()
         lcd.lcd_init()
         lcd.lcd_string("LCD INIT", l1)
-        lcd.lcd_string(platform.node(), l1)
+        lcd.lcd_string(platform.node(), l2)
         logmessage('info', 'LCD INIT')
         time.sleep(2)
         BINITLCD = True
