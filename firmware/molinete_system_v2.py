@@ -368,7 +368,7 @@ def getInputDevices():
             inputdevs.append(device)
     return inputdevs
 
-
+import pdb
 if __name__ == '__main__':
     idevs = getInputDevices() 
     if len(idevs) > 1:
@@ -381,10 +381,13 @@ if __name__ == '__main__':
                     i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
                     inputsystem = asys['Proveedores1']["input_device"], 
                     gpioout = asys['Proveedores1']['gpio_out'])
-    asA.main()
-    
+    threading.Thread(target = asA.main, args = (), daemon = True).start()
+    # asA.main()
+    # pdb.set_trace()
     asB = AccessSystem(name = "Proveedores2",
                         i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
                         inputsystem = asys['Proveedores2']["input_device"], 
                         gpioout = asys['Proveedores2']['gpio_out'])
-    asB.main()
+    threading.Thread(target = asB.main, args = (), daemon = True).start()
+    
+    # asB.main()
