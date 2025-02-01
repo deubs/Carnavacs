@@ -231,6 +231,7 @@ class AccessSystem(baseAccessSystem):
         """
         # self.initLCD()
         self.lcd = lcd
+        print(self.lcd)
         fhandler = self.createFile(workingdir = workingdir, sysname = self.name)
         jet111q = queue.Queue(maxsize = 1)
         idev = self.initInputDevice(jet111q)
@@ -342,8 +343,10 @@ if __name__ == '__main__':
 
     lcd = LCDI2Cv2.LCD()
     lcd.lcd_init(display_addressa, display_addressb)
+    
     lcd.lcd_string("LCD INIT", l1, display_addressa)
     lcd.lcd_string(platform.node(), l2, display_addressa)
+    
     lcd.lcd_string("LCD INIT", l1, display_addressb)
     lcd.lcd_string(platform.node(), l2, display_addressb)
 
@@ -357,6 +360,7 @@ if __name__ == '__main__':
                     i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
                     inputsystem = asys['Proveedores1']["input_device"], 
                     gpioout = asys['Proveedores1']['gpio_out'])
+    
     threading.Thread(target = asA.main, args = (lcd, ), daemon = True).start()
     # pa = Process(target= asA.main, args=(lcd, ))
     # pa.start()
