@@ -390,13 +390,13 @@ if __name__ == '__main__':
     pa = Process(target= asA.main)
     pa.start()
 
-    # asB = AccessSystem(name = "Proveedores2",
-    #                     i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
-    #                     inputsystem = asys['Proveedores2']["input_device"], 
-    #                     gpioout = asys['Proveedores2']['gpio_out'])
+    asB = AccessSystem(name = "Proveedores2",
+                        i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
+                        inputsystem = asys['Proveedores2']["input_device"], 
+                        gpioout = asys['Proveedores2']['gpio_out'])
 
-    # pb = Process(target= asB.main)
-    # pb.start()
+    pb = Process(target= asB.main)
+    pb.start()
 
     while True:
         time.sleep(10)
