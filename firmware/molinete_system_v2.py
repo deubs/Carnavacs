@@ -22,6 +22,8 @@ from gpiozero import Button, DigitalInputDevice, OutputDevice
 import logging
 import logging.handlers
 from json import dumps
+import smbus2 as smbus
+
 
 print("importing gpiozero")
 rasp_button_restart = Button(4, pull_up=True) # PIN 7
@@ -81,9 +83,8 @@ class PauseDeviceTOKEN:
     def resumeDevice(self):
         self.is_paused = False
 
-
 pauseDevice = PauseDeviceTOKEN()
-
+bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
     
 class baseAccessSystem():
     def __init__(self):
@@ -151,6 +152,7 @@ class AccessSystem(baseAccessSystem):
         self.lcd = None
         self.name = name
         self.logger = logger
+        self.bus = bus
         # self.main()
 
 
@@ -228,7 +230,7 @@ class AccessSystem(baseAccessSystem):
     def initLCD(self):
         try:
             self.lcd = LCDI2Cv2.LCD()
-            self.lcd.lcd_init(self.display_address)
+            self.lcd.lcd_init(self.display_address, self.bus)
             self.lcd.lcd_string("LCD INIT", l1)
             self.lcd.lcd_string(platform.node(), l2)
             time.sleep(2)
@@ -378,26 +380,22 @@ if __name__ == '__main__':
         asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x27, "input_device": idevs[0]}, 
                 "Proveedores2":{"gpio_out": relay_outb, "display_i2caddress": 0x26, "input_device": idevs[1]}}
 
-    # asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x3f, "input_device": idevs[0]}}
 
     asA = AccessSystem(name = "Proveedores1",
                     i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
                     inputsystem = asys['Proveedores1']["input_device"], 
                     gpioout = asys['Proveedores1']['gpio_out'])
-    # asA.main()
     asB = AccessSystem(name = "Proveedores2",
                         i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
                         inputsystem = asys['Proveedores2']["input_device"], 
                         gpioout = asys['Proveedores2']['gpio_out'])
 
-    # pdb.set_trace()
     pa = Process(target= asA.main)
     pa.start()
 
     pb = Process(target= asB.main)
     pb.start()
-    # threading.Thread(target = asB.main, args = (), daemon = True).start()
+
     while True:
         time.sleep(10)
         continue
-    # asB.main()
