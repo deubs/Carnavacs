@@ -281,7 +281,7 @@ class AccessSystem(baseAccessSystem):
 
             bfinalize_job = False
             if (code is not None):
-                pauseDevice.pauseDevice()
+                # pauseDevice.pauseDevice()
                 result = self.apicall(code)
                 self.logmessage('info', f'{code} - {dumps(result)}')
                 if result['apistatus'] == True:
