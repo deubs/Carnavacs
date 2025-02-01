@@ -148,25 +148,26 @@ class LCD(object):
             self.lcd_byte(ord(message[i]), LCD_CHR, addr)
 
 
-    def main(self, address):
+    def main(self, addra, addrb):
     # Initialise display
-        self.lcd_init(address)
+        self.lcd_init(addra, addrb)
         while True:
             # Send some test
-            self.lcd_string("RPiSpy         <",LCD_LINE_1, address)
-            self.lcd_string("I2C LCD        <",LCD_LINE_2, address)
+            self.lcd_string("RPiSpy         <",LCD_LINE_1, addra)
+            self.lcd_string("I2C LCD        <",LCD_LINE_2, addra)
             time.sleep(3)        
             # Send some more text
-            self.lcd_string(">         RPiSpy",LCD_LINE_1, address)
-            self.lcd_string(">        I2C LCD",LCD_LINE_2, address)
+            self.lcd_string(">         RPiSpy",LCD_LINE_1, addrb)
+            self.lcd_string(">        I2C LCD",LCD_LINE_2, addrb)
             time.sleep(3)
 
 
 if __name__ == '__main__':
-    # i2caddress = 0x27
+    i2caddressa = 0x27
+    i2caddressb = 0x26
     lcd = LCD()
     try:
-        lcd.main(I2C_ADDR)
+        lcd.main(i2caddressa, i2caddressb)
     except KeyboardInterrupt:
         pass
     finally:
