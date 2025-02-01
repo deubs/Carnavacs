@@ -58,26 +58,26 @@ E_DELAY = 0.0005
 
 #Open I2C interface
 print(platform.node())
-if "raspi" in platform.node():
-    bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
-else:
-    bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
+# if "raspi" in platform.node():
+#     bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
+# else:
+#     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
 
-for device in range(128):
-    try:
-        bus.read_byte(device)
-        i2c = device
-        print(i2c)
-    except: # exception if read_byte fails
-        pass
-
-I2C_ADDR = i2c
+# for device in range(128):
+#     try:
+#         bus.read_byte(device)
+#         i2c = device
+#         print(i2c)
+#     except: # exception if read_byte fails
+#         pass
+# I2C_ADDR = i2c
 
 class LCD(object):
   
-    def lcd_init(self, i2caddress):
+    def lcd_init(self, i2caddress, bus):
         print(hex(i2caddress))
         self.i2caddress = i2caddress
+        self.bus = bus
     # Initialise display
         self.lcd_byte(0x33,LCD_CMD) # 110011 Initialise
         self.lcd_byte(0x32,LCD_CMD) # 110010 Initialise
@@ -95,19 +95,19 @@ class LCD(object):
         bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
         bits_low = mode | ((bits<<4) & 0xF0) | LCD_BACKLIGHT
         # High bits
-        bus.write_byte(self.i2caddress, bits_high)
+        self.bus.write_byte(self.i2caddress, bits_high)
         self.lcd_toggle_enable(bits_high)
         # Low bits
-        bus.write_byte(self.i2caddress, bits_low)
+        self.bus.write_byte(self.i2caddress, bits_low)
         self.lcd_toggle_enable(bits_low)
 
 
     def lcd_toggle_enable(self, bits):
     # Toggle enable
         time.sleep(E_DELAY)
-        bus.write_byte(self.i2caddress, (bits | ENABLE))
+        self.bus.write_byte(self.i2caddress, (bits | ENABLE))
         time.sleep(E_PULSE)
-        bus.write_byte(self.i2caddress, (bits & ~ENABLE))
+        self.bus.write_byte(self.i2caddress, (bits & ~ENABLE))
         time.sleep(E_DELAY)
 
 
