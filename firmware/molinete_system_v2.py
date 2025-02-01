@@ -228,16 +228,15 @@ class AccessSystem(baseAccessSystem):
             self.logmessage('error', e)
 
 
-    def initLCD(self):
-        try:
-            time.sleep(2)
-            self.lcd = LCDI2Cv2.LCD()
-            self.lcd.lcd_init(self.display_address, self.bus)
-            self.lcd.lcd_string("LCD INIT", l1)
-            self.lcd.lcd_string(platform.node(), l2)
-            time.sleep(2)
-        except Exception as e:
-            print(e)
+    # def initLCD(self):
+    #     try:
+    #         self.lcd = LCDI2Cv2.LCD()
+    #         self.lcd.lcd_init(self.display_address)
+    #         self.lcd.lcd_string("LCD INIT", l1)
+    #         self.lcd.lcd_string(platform.node(), l2)
+    #         time.sleep(2)
+    #     except Exception as e:
+    #         print(e)
 
 
     def detectLAN(self):
@@ -267,11 +266,12 @@ class AccessSystem(baseAccessSystem):
         return dev
 
 
-    def main(self):
+    def main(self, lcd):
         """
             Main function
         """
-        self.initLCD()
+        # self.initLCD()
+        self.lcd = lcd
         fhandler = self.createFile(workingdir = workingdir, sysname = self.name)
         jet111q = queue.Queue(maxsize = 1)
         idev = self.initInputDevice(jet111q)
@@ -377,6 +377,23 @@ import pdb
 from multiprocessing import Process
 
 if __name__ == '__main__':
+
+    # def initLCD(self):
+    #     try:
+    display_addressa = 0x26
+    display_addressb = 0x27
+
+    lcd = LCDI2Cv2.LCD()
+    lcd.lcd_init(display_addressa, display_addressb)
+    lcd.lcd_string("LCD INIT", l1, display_addressa)
+    lcd.lcd_string(platform.node(), l2, display_addressa)
+    lcd.lcd_string("LCD INIT", l1, display_addressb)
+    lcd.lcd_string(platform.node(), l2, display_addressb)
+
+    #         time.sleep(2)
+    #     except Exception as e:
+    #         print(e)
+
     idevs = getInputDevices() 
     if len(idevs) > 1:
         asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x27, "input_device": idevs[0]}, 
@@ -388,7 +405,7 @@ if __name__ == '__main__':
                     inputsystem = asys['Proveedores1']["input_device"], 
                     gpioout = asys['Proveedores1']['gpio_out'])
 
-    pa = Process(target= asA.main)
+    pa = Process(target= asA.main, args=(lcd, ))
     pa.start()
 
     asB = AccessSystem(name = "Proveedores2",
@@ -396,7 +413,7 @@ if __name__ == '__main__':
                         inputsystem = asys['Proveedores2']["input_device"], 
                         gpioout = asys['Proveedores2']['gpio_out'])
 
-    pb = Process(target= asB.main)
+    pb = Process(target= asB.main, args=(lcd, ))
     pb.start()
 
     while True:
