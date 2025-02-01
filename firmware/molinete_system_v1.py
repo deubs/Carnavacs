@@ -247,7 +247,7 @@ def enableGate():
     if "tango" in platform.node() or "vehiculos" in platform.node():
         print("Release RELAYS")
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
-        if "vehiculos" in platform.node():
+        if "vehiculos" in platform.node() or "tango14" in platform.node():
             time.sleep(2)
             bHole = False
         else:
