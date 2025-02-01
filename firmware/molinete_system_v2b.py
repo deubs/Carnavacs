@@ -382,21 +382,21 @@ if __name__ == '__main__':
                 "Proveedores2":{"gpio_out": relay_outb, "display_i2caddress": 0x26, "input_device": idevs[1]}}
 
 
-    asA = AccessSystem(name = "Proveedores1",
-                    i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
-                    inputsystem = asys['Proveedores1']["input_device"], 
-                    gpioout = asys['Proveedores1']['gpio_out'])
+    # asA = AccessSystem(name = "Proveedores1",
+    #                 i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
+    #                 inputsystem = asys['Proveedores1']["input_device"], 
+    #                 gpioout = asys['Proveedores1']['gpio_out'])
 
-    pa = Process(target= asA.main)
-    pa.start()
+    # pa = Process(target= asA.main)
+    # pa.start()
 
-    # asB = AccessSystem(name = "Proveedores2",
-    #                     i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
-    #                     inputsystem = asys['Proveedores2']["input_device"], 
-    #                     gpioout = asys['Proveedores2']['gpio_out'])
+    asB = AccessSystem(name = "Proveedores2",
+                        i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
+                        inputsystem = asys['Proveedores2']["input_device"], 
+                        gpioout = asys['Proveedores2']['gpio_out'])
 
-    # pb = Process(target= asB.main)
-    # pb.start()
+    pb = Process(target= asB.main)
+    pb.start()
 
     while True:
         time.sleep(10)
