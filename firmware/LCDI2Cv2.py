@@ -143,10 +143,9 @@ class LCD(object):
     def lcd_string(self, message, line, addr):
     # Send string to display
         message = message.ljust(LCD_WIDTH," ")
-        
         self.lcd_byte(line, LCD_CMD, addr)
         for i in range(LCD_WIDTH):
-            self.lcd_byte(ord(message[i]),LCD_CHR)
+            self.lcd_byte(ord(message[i]), LCD_CHR, addr)
 
 
     def main(self, address):
@@ -154,12 +153,12 @@ class LCD(object):
         self.lcd_init(address)
         while True:
             # Send some test
-            self.lcd_string("RPiSpy         <",LCD_LINE_1)
-            self.lcd_string("I2C LCD        <",LCD_LINE_2)
+            self.lcd_string("RPiSpy         <",LCD_LINE_1, address)
+            self.lcd_string("I2C LCD        <",LCD_LINE_2, address)
             time.sleep(3)        
             # Send some more text
-            self.lcd_string(">         RPiSpy",LCD_LINE_1)
-            self.lcd_string(">        I2C LCD",LCD_LINE_2)
+            self.lcd_string(">         RPiSpy",LCD_LINE_1, address)
+            self.lcd_string(">        I2C LCD",LCD_LINE_2, address)
             time.sleep(3)
 
 
