@@ -59,7 +59,7 @@ E_DELAY = 0.0005
 #Open I2C interface
 print(platform.node())
 # if "raspi" in platform.node():
-#     bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
+bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
 # else:
 #     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
 
@@ -73,23 +73,23 @@ print(platform.node())
 # I2C_ADDR = i2c
 
 
-from smbus2 import SMBus, i2c_msg
+# from smbus2 import SMBus, i2c_msg
 
-# Define the addresses of the two LCD displays
-address1 = 0x27
-address2 = 0x3F
+# # Define the addresses of the two LCD displays
+# address1 = 0x27
+# address2 = 0x3F
 
-# Define the data to be written to each display
-data1 = [40, 50]  # Example data for the first display
-data2 = [60, 70]  # Example data for the second display
+# # Define the data to be written to each display
+# data1 = [40, 50]  # Example data for the first display
+# data2 = [60, 70]  # Example data for the second display
 
-# Create i2c_msg objects for writing to each display
-write_msg1 = i2c_msg.write(address1, data1)
-write_msg2 = i2c_msg.write(address2, data2)
+# # Create i2c_msg objects for writing to each display
+# write_msg1 = i2c_msg.write(address1, data1)
+# write_msg2 = i2c_msg.write(address2, data2)
 
-# Perform the write operations
-with SMBus(1) as bus:
-    bus.i2c_rdwr(write_msg1, write_msg2)
+# # Perform the write operations
+# with SMBus(1) as bus:
+#     bus.i2c_rdwr(write_msg1, write_msg2)
 
 
 
