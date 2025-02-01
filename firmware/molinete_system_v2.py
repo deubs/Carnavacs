@@ -230,6 +230,7 @@ class AccessSystem(baseAccessSystem):
 
     def initLCD(self):
         try:
+            time.sleep(2)
             self.lcd = LCDI2Cv2.LCD()
             self.lcd.lcd_init(self.display_address, self.bus)
             self.lcd.lcd_string("LCD INIT", l1)
