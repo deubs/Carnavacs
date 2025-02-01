@@ -39,7 +39,7 @@ export default function Updates () {
         onTimeUpdate: tick_increment,
         autostart: false
     })
-
+    /*
     useEffect(()=>{
             set_container("dashboard")
             update_data_post("events", set_events_list, set_loop_status)
@@ -47,7 +47,7 @@ export default function Updates () {
             update_data_post("events/stats", set_events_stats, set_loop_status)
             update_data_post("events/sectorStats", set_sector_stats, set_loop_status)
     }, [])
-    /*
+    */
     useEffect(()=>{
         set_loop_status(true)
         start()
@@ -74,6 +74,5 @@ export default function Updates () {
         }
  
     }, [tick])
-    */
     return <></>
 }
