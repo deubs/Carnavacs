@@ -337,8 +337,6 @@ from multiprocessing import Process
 
 if __name__ == '__main__':
 
-    # def initLCD(self):
-    #     try:
     display_addressa = 0x26
     display_addressb = 0x27
 
@@ -348,10 +346,6 @@ if __name__ == '__main__':
     lcd.lcd_string(platform.node(), l2, display_addressa)
     lcd.lcd_string("LCD INIT", l1, display_addressb)
     lcd.lcd_string(platform.node(), l2, display_addressb)
-
-    #         time.sleep(2)
-    #     except Exception as e:
-    #         print(e)
 
     idevs = getInputDevices() 
     if len(idevs) > 1:
@@ -363,17 +357,16 @@ if __name__ == '__main__':
                     i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
                     inputsystem = asys['Proveedores1']["input_device"], 
                     gpioout = asys['Proveedores1']['gpio_out'])
-
-    pa = Process(target= asA.main, args=(lcd, ))
-    pa.start()
-
+    threading.Thread(target = asA.main, args = (lcd, ), daemon = True).start()
+    # pa = Process(target= asA.main, args=(lcd, ))
+    # pa.start()
     asB = AccessSystem(name = "Proveedores2",
                         i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
                         inputsystem = asys['Proveedores2']["input_device"], 
                         gpioout = asys['Proveedores2']['gpio_out'])
-
-    pb = Process(target= asB.main, args=(lcd, ))
-    pb.start()
+    # pb = Process(target= asB.main, args=(lcd, ))
+    threading.Thread(target = asA.main, args = (lcd, ), daemon = True).start()
+    # pb.start()
 
     while True:
         time.sleep(10)
