@@ -370,7 +370,7 @@ if __name__ == '__main__':
                         inputsystem = asys['Proveedores2']["input_device"], 
                         gpioout = asys['Proveedores2']['gpio_out'])
     # pb = Process(target= asB.main, args=(lcd, ))
-    threading.Thread(target = asA.main, args = (lcd, ), daemon = True).start()
+    threading.Thread(target = asB.main, args = (lcd, ), daemon = True).start()
     # pb.start()
 
     while True:
