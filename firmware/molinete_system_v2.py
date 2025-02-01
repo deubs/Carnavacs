@@ -232,6 +232,7 @@ class AccessSystem(baseAccessSystem):
         # self.initLCD()
         self.lcd = lcd
         print(self.lcd)
+        print(self.display_address)
         fhandler = self.createFile(workingdir = workingdir, sysname = self.name)
         jet111q = queue.Queue(maxsize = 1)
         idev = self.initInputDevice(jet111q)
