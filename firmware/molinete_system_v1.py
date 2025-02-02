@@ -364,7 +364,7 @@ def logmessage(level, message):
     """
     logs messages to file
     """
-    log_message = {'time_stamp': datetime.now(),
+    log_message = {'time_stamp': datetime.now().isoformat(),
                    'level': level, 
                    'message': message}
     if level == 'info':
