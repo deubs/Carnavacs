@@ -5,6 +5,7 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 import { Html5Qrcode } from "html5-qrcode";
 import { store_notification } from "@/app/stores/notification";
 import { store_ticket_validate } from "@/app/stores/ticket_validate";
+import { store_API_URL } from "@/app/stores/API_URL";
 
 import { check_ticket } from "@/app/hooks/scan_qr";
 import { Ticket_validation } from "@/app/components/tickets/Validate";
@@ -15,6 +16,7 @@ export default function Qr_scanner () {
 
     const { set_message } = store_notification()
     const { set_data } = store_ticket_validate()
+    const { API_URL } = store_API_URL()
 
     function onScanSuccess(decodedText, decodedResult) {
     // handle the scanned code as you like, for example:
@@ -38,10 +40,11 @@ export default function Qr_scanner () {
     // -----------------------------------------------------------
 
     const check_qr_validation = async () => {
-        const r = await check_ticket(decodedText)
-        if(r.success){
-            set_data({ m1: r.result.m1, m2: r.result.m2 })
-        }
+        const r = await check_ticket(API_URL, decodedText)
+        set_data({
+            m1: r.result.m1, 
+            m2: r.result.m2 
+            })
     }
     const scanner_2 = () => {
         Html5Qrcode.getCameras().

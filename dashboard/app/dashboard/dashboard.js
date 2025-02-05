@@ -6,6 +6,7 @@ import Event_current from "../components/events/Events_current"
 import Gates from "../components/gates/Gates"
 import Qr_scanner from "../components/utils/qr-scanner"
 import Tickets_data from "../components/tickets/Tickets_data"
+import Sector_stats from "../components/events/Sector_stats"
 //import Event_stats from "../components/events/Events_stats"
 
 import { store_dashboard } from "../stores/store_dashboard"
@@ -15,6 +16,7 @@ const Home = () => {
   <Event_current />
   <Tickets_data />
   <Gates />
+  <Sector_stats />
   </>
 }
 

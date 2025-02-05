@@ -275,170 +275,164 @@ const events_sectorStats = {
     {
       "id": 0,
       "name": "Popular",
-      "total": "12247",
-      "readed": "0"
+      "total": "9002",
+      "readed": "8416"
     },
     {
       "id": 0,
       "name": "SPBV",
-      "total": "44",
-      "readed": "0"
+      "total": "48",
+      "readed": "44"
     },
     {
       "id": 0,
       "name": "SPESTE",
-      "total": "8",
-      "readed": "0"
+      "total": "32",
+      "readed": "18"
     },
     {
       "id": 0,
       "name": "SPOESTE",
-      "total": "240",
-      "readed": "0"
+      "total": "312",
+      "readed": "301"
     },
     {
       "id": 0,
       "name": "SSILLAS1A",
-      "total": "22",
-      "readed": "0"
-    },
-    {
-      "id": 0,
-      "name": "SSILLAS1B",
-      "total": "1",
-      "readed": "0"
+      "total": "122",
+      "readed": "116"
     },
     {
       "id": 0,
       "name": "SSILLAS2A",
-      "total": "119",
-      "readed": "0"
+      "total": "165",
+      "readed": "161"
     },
     {
       "id": 0,
       "name": "SSILLAS2B",
-      "total": "108",
-      "readed": "0"
+      "total": "181",
+      "readed": "175"
     },
     {
       "id": 0,
       "name": "SSILLAS3A",
-      "total": "67",
-      "readed": "0"
+      "total": "175",
+      "readed": "172"
     },
     {
       "id": 0,
       "name": "SSILLAS3B",
-      "total": "137",
-      "readed": "0"
+      "total": "205",
+      "readed": "199"
     },
     {
       "id": 0,
       "name": "SSILLAS4A",
-      "total": "146",
-      "readed": "0"
+      "total": "386",
+      "readed": "364"
     },
     {
       "id": 0,
       "name": "SSILLAS4B",
-      "total": "245",
-      "readed": "0"
+      "total": "389",
+      "readed": "366"
     },
     {
       "id": 0,
       "name": "SSILLAS5A",
-      "total": "96",
-      "readed": "0"
+      "total": "169",
+      "readed": "169"
     },
     {
       "id": 0,
       "name": "SSILLAS5B",
-      "total": "154",
-      "readed": "0"
+      "total": "219",
+      "readed": "212"
     },
     {
       "id": 0,
       "name": "SSILLAS6A",
-      "total": "41",
-      "readed": "0"
+      "total": "55",
+      "readed": "52"
     },
     {
       "id": 0,
       "name": "SSILLAS6B",
-      "total": "37",
-      "readed": "0"
+      "total": "135",
+      "readed": "128"
     },
     {
       "id": 0,
       "name": "SSILLAS7A",
-      "total": "9",
-      "readed": "0"
+      "total": "21",
+      "readed": "20"
     },
     {
       "id": 0,
       "name": "SSILLAS7B",
-      "total": "4",
-      "readed": "0"
+      "total": "26",
+      "readed": "26"
     },
     {
       "id": 0,
       "name": "SVIP5B",
-      "total": "24",
-      "readed": "0"
+      "total": "98",
+      "readed": "98"
     },
     {
       "id": 0,
       "name": "SVIP6A",
-      "total": "8",
-      "readed": "0"
+      "total": "68",
+      "readed": "67"
     },
     {
       "id": 0,
       "name": "SVIP6B",
-      "total": "20",
-      "readed": "0"
+      "total": "64",
+      "readed": "61"
     },
     {
       "id": 0,
       "name": "SVIPNEW",
-      "total": "56",
-      "readed": "0"
+      "total": "92",
+      "readed": "91"
     },
     {
       "id": 0,
       "name": "SVIPRC",
-      "total": "227",
-      "readed": "0"
+      "total": "124",
+      "readed": "104"
     },
     {
       "id": 0,
       "name": "SVIPRE",
-      "total": "190",
-      "readed": "0"
+      "total": "246",
+      "readed": "188"
     },
     {
       "id": 0,
       "name": "SVIPRO",
-      "total": "274",
-      "readed": "0"
+      "total": "278",
+      "readed": "238"
     },
     {
       "id": 0,
       "name": "SVIPTC",
-      "total": "649",
-      "readed": "0"
+      "total": "670",
+      "readed": "631"
     },
     {
       "id": 0,
       "name": "SVIPTE",
-      "total": "184",
-      "readed": "0"
+      "total": "216",
+      "readed": "203"
     },
     {
       "id": 0,
       "name": "SVIPTO",
       "total": "228",
-      "readed": "0"
+      "readed": "218"
     }
   ]
 }
@@ -661,8 +655,8 @@ export async function POST ( req ) {
         if ( url == "events" ) return NextResponse.json(events)
         if ( url == "events/current" ) return NextResponse.json(events_current)
         if ( url == "events/stats" ) return NextResponse.json(events_stats)
-          
         if ( url == "events/sectorStats" ) return NextResponse.json(events_sectorStats)
+          
         if ( url == "gates/gates" ) return NextResponse.json(gates_gates)
         if ( url == "gates/devices" ) return NextResponse.json(gates_devices)
         if ( url == "gates/1" ) return NextResponse.json(gates_1)
