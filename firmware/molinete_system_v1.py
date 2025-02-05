@@ -59,7 +59,7 @@ structlog.configure(
 )
 
 logging.basicConfig(
-    filename= f"{workingdir}/logs/{platform.node()}_{date.today().isoformat()}.log",
+    filename= f"{workingdir}/logs/{platform.node()}.log",
     filemode='a',
     format="%(message)s",
     #stream=sys.stdout,
@@ -99,302 +99,302 @@ sp = None
 
 NOT_RECOGNIZED_KEY = u'X'
 
-    l1 = LCDI2C.LCD_LINE_1
-    l2 = LCDI2C.LCD_LINE_2
+l1 = LCDI2C.LCD_LINE_1
+l2 = LCDI2C.LCD_LINE_2
 
-    class PauseDeviceTOKEN:
-        def __init__(self):
-            self.is_paused = False
-        
-        def pauseDevice(self):
-            self.is_paused = True
-        
-        def resumeDevice(self):
-            self.is_paused = False
-
-
+class PauseDeviceTOKEN:
+    def __init__(self):
+        self.is_paused = False
+    
+    def pauseDevice(self):
+        self.is_paused = True
+    
+    def resumeDevice(self):
+        self.is_paused = False
 
 
-    pauseDevice = PauseDeviceTOKEN()
-
-    logger.info(
-            "device_status",
-            workingdir=workingdir,
-            scancodes=scancodes,
-            network_status="online",
-    )
 
 
-    def detectInputDevice():
-        """
-            From a list of input devices, select the one that matches the filter
-        """
-        devices = [InputDevice(path) for path in list_devices()]
-        inputdev = None
-        print(devices)
-        for device in devices:
-            print(device.name)
-            if ("IMAGER 2D" in device.name) or \
-                ("BF SCAN SCAN KEYBOARD" in device.name) or \
-                    ("NT USB Keyboard" in device.name) or \
-                        ("TMS HIDKeyBoard" in device.name) or \
-                            ("ZKRFID R400" in device.name):
+pauseDevice = PauseDeviceTOKEN()
 
-                inputdev = device.path
-                break
-        return inputdev
-        
-
-    def connectInputDevice(inputdev):
-        try:           
-            device = InputDevice(inputdev) # Replace with your device
-        except Exception as e:
-            print(e)
-            return None
-        else:
-            print(device)
-            print(device.capabilities())
-            return device
+logger.info(
+        "device_status",
+        workingdir=workingdir,
+        scancodes=scancodes,
+        network_status="online",
+)
 
 
-    def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
-        barcode = ''
-        while True:
-            try:
-                for event in device.read_loop():
-                    if not pause.is_paused:
-                        if event.type == ecodes.EV_KEY:
-                            eventdata = categorize(event)
-                            if eventdata.keystate == 1: # Keydown
-                                scancode = eventdata.scancode
-                                if scancode == 28: # Enter
-                                    q.put(barcode)
-                                    barcode = ''
-                                else:
-                                    key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
-                                    barcode = barcode + key
-                                    if key == NOT_RECOGNIZED_KEY:
-                                        print('unknown key, scancode=' + str(scancode))
-            except Exception as e:
-                print(e)
-                idev = None
-                exit()
+def detectInputDevice():
+    """
+        From a list of input devices, select the one that matches the filter
+    """
+    devices = [InputDevice(path) for path in list_devices()]
+    inputdev = None
+    print(devices)
+    for device in devices:
+        print(device.name)
+        if ("IMAGER 2D" in device.name) or \
+            ("BF SCAN SCAN KEYBOARD" in device.name) or \
+                ("NT USB Keyboard" in device.name) or \
+                    ("TMS HIDKeyBoard" in device.name) or \
+                        ("ZKRFID R400" in device.name):
+
+            inputdev = device.path
+            break
+    return inputdev
+    
+
+def connectInputDevice(inputdev):
+    try:           
+        device = InputDevice(inputdev) # Replace with your device
+    except Exception as e:
+        print(e)
+        return None
+    else:
+        print(device)
+        print(device.capabilities())
+        return device
 
 
-    def readPort(serialP, q:queue, pause: PauseDeviceTOKEN):
-        """
-            Serial port communication with GM65 barcode reader
-        """
-        print("Serial Port Opened")
-        breading = True
-        bcode = True
-        if serialP.isOpen():
-            while breading:
-                print("Reading Serial Port")
-                data = ""
-                bcode = True
+def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
+    barcode = ''
+    while True:
+        try:
+            for event in device.read_loop():
                 if not pause.is_paused:
-                    while bcode:
-                        if q.empty():
-                            cmdRet = serialP.read().decode()
-                            if (cmdRet == '\r' or cmdRet == '\n'):
-                                q.put(data)
-                                bcode = False
+                    if event.type == ecodes.EV_KEY:
+                        eventdata = categorize(event)
+                        if eventdata.keystate == 1: # Keydown
+                            scancode = eventdata.scancode
+                            if scancode == 28: # Enter
+                                q.put(barcode)
+                                barcode = ''
                             else:
-                                data += str(cmdRet)
-        else:
-            print("Port is Closed")
-
-
-    def initSerialPort():
-        """
-            Initiates serial port in OPIz3
-            Serial port is UART5 in OPIz3.
-        """
-        serial_port = None
-        try:
-            serial_port = serial.Serial(
-                port="/dev/ttyS5",
-                timeout=None,
-                baudrate=9600,
-                bytesize=serial.EIGHTBITS,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE
-            )
-            print("connected to: " + serial_port.portstr)
+                                key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
+                                barcode = barcode + key
+                                if key == NOT_RECOGNIZED_KEY:
+                                    print('unknown key, scancode=' + str(scancode))
         except Exception as e:
             print(e)
-        return serial_port
+            idev = None
+            exit()
 
+
+def readPort(serialP, q:queue, pause: PauseDeviceTOKEN):
+    """
+        Serial port communication with GM65 barcode reader
+    """
+    print("Serial Port Opened")
+    breading = True
+    bcode = True
+    if serialP.isOpen():
+        while breading:
+            print("Reading Serial Port")
+            data = ""
+            bcode = True
+            if not pause.is_paused:
+                while bcode:
+                    if q.empty():
+                        cmdRet = serialP.read().decode()
+                        if (cmdRet == '\r' or cmdRet == '\n'):
+                            q.put(data)
+                            bcode = False
+                        else:
+                            data += str(cmdRet)
+    else:
+        print("Port is Closed")
+
+
+def initSerialPort():
+    """
+        Initiates serial port in OPIz3
+        Serial port is UART5 in OPIz3.
+    """
+    serial_port = None
+    try:
+        serial_port = serial.Serial(
+            port="/dev/ttyS5",
+            timeout=None,
+            baudrate=9600,
+            bytesize=serial.EIGHTBITS,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE
+        )
+        print("connected to: " + serial_port.portstr)
+    except Exception as e:
+        print(e)
+    return serial_port
+
+bGATEOPEN = False
+
+def ISRSignal(iplatform):
+    """
+        
+    """
+    print("Reading inductive...")
     bGATEOPEN = False
-
-    def ISRSignal(iplatform):
-        """
-            
-        """
-        print("Reading inductive...")
-        bGATEOPEN = False
-        bwait4Hole = True
-        print("State is HIGH...")
-        if iplatform == 1:
-            print("waiting hole")
-            while bwait4Hole:
-                bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
-        else:
-            while bwait4Hole:
-                bwait4Hole = rasp_sensor_in.pin.state
-        print("State is LOW")
-        return bwait4Hole
+    bwait4Hole = True
+    print("State is HIGH...")
+    if iplatform == 1:
+        print("waiting hole")
+        while bwait4Hole:
+            bwait4Hole = wiringpi.digitalRead(GPIO_INPUT_1)
+    else:
+        while bwait4Hole:
+            bwait4Hole = rasp_sensor_in.pin.state
+    print("State is LOW")
+    return bwait4Hole
 
 
-    def initGPIO():
-        """
-            Initiates GPIO. Only for OrangePI Zero 3
-            OPIz3 using GPIO 17 and 18 for relays and 19 for inductive sensors.
-        """
-        print("INIT GPIO")
-        try:
-            if "tango" in platform.node() or "vehiculos" in platform.node():
-                print("init wiringpi")
-                wiringpi.wiringPiSetup()
-                wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
-                wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
-                wiringpi.pinMode(GPIO_INPUT_1, wiringpi.GPIO.INPUT)
-                wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
-                wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
-                wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
-        except Exception as e:
-            print(e)
-
-
-    def enableGate():
-        """
-        Dissable COIL using relays. Iluminate GREEN light 
-        Wait until signal from inductive sensor
-        Enable COIL releasing relays. Iluminate RED light
-        """
+def initGPIO():
+    """
+        Initiates GPIO. Only for OrangePI Zero 3
+        OPIz3 using GPIO 17 and 18 for relays and 19 for inductive sensors.
+    """
+    print("INIT GPIO")
+    try:
         if "tango" in platform.node() or "vehiculos" in platform.node():
-            print("Release RELAYS")
-            logmessage('info', 'Release RELAYS')
-            wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
-            if "vehiculos" in platform.node() or "tango14" in platform.node():
-                time.sleep(2)
-                bHole = False
-            else:
-                bHole = ISRSignal(1)
+            print("init wiringpi")
+            wiringpi.wiringPiSetup()
+            wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
+            wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
+            wiringpi.pinMode(GPIO_INPUT_1, wiringpi.GPIO.INPUT)
+            wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
+            wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
+            wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
+    except Exception as e:
+        print(e)
+
+
+def enableGate():
+    """
+    Dissable COIL using relays. Iluminate GREEN light 
+    Wait until signal from inductive sensor
+    Enable COIL releasing relays. Iluminate RED light
+    """
+    if "tango" in platform.node() or "vehiculos" in platform.node():
+        print("Release RELAYS")
+        logmessage('info', 'Release RELAYS')
+        wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
+        if "vehiculos" in platform.node() or "tango14" in platform.node():
+            time.sleep(2)
+            bHole = False
+        else:
+            bHole = ISRSignal(1)
+        if not bHole:
+            print("Activate RELAYS")
+            logmessage('info', 'ACTIVATE RELAYS')
+            wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
+            return True
+        return False
+    else:
+        if "baliza" in platform.node() or "raspidiscabaliza" in platform.node():
+            # raspberry box delay for commute from ON to OFF
+            logmessage('info', 'RELEASE RELAYS')
+            rasp_relay_out.on()
+            time.sleep(1)
+            rasp_relay_out.off()
+            logmessage('info', 'ACTIVATE RELAYS')
+            return True
+        else:
+            print("release RELAY")
+            logmessage('info', 'RELEASE RELAYS')
+            rasp_relay_out.on()            
+            bHole = ISRSignal(0)
             if not bHole:
-                print("Activate RELAYS")
                 logmessage('info', 'ACTIVATE RELAYS')
-                wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.LOW)
+                print("Activate RELAYS")
+                rasp_relay_out.off()
                 return True
             return False
-        else:
-            if "baliza" in platform.node() or "raspidiscabaliza" in platform.node():
-                # raspberry box delay for commute from ON to OFF
-                logmessage('info', 'RELEASE RELAYS')
-                rasp_relay_out.on()
-                time.sleep(1)
-                rasp_relay_out.off()
-                logmessage('info', 'ACTIVATE RELAYS')
-                return True
-            else:
-                print("release RELAY")
-                logmessage('info', 'RELEASE RELAYS')
-                rasp_relay_out.on()            
-                bHole = ISRSignal(0)
-                if not bHole:
-                    logmessage('info', 'ACTIVATE RELAYS')
-                    print("Activate RELAYS")
-                    rasp_relay_out.off()
-                    return True
-                return False
 
 
-    def printSTATUS(lcd):
-        lcd.lcd_string("LAN " + str(BLAN), l1)
-        lcd.lcd_string("GM65 " + str(BGM65) + " JET: " + str(BJET), l2)
-        time.sleep(5)
-        lcd.lcd_string("MAC: ", l1)
-        lcd.lcd_string(checklan.hexMAX, l2)
-        time.sleep(5)
-        lcd.lcd_string("IP: ", l1)
-        lcd.lcd_string(checklan.ipADDRESS, l2)
+def printSTATUS(lcd):
+    lcd.lcd_string("LAN " + str(BLAN), l1)
+    lcd.lcd_string("GM65 " + str(BGM65) + " JET: " + str(BJET), l2)
+    time.sleep(5)
+    lcd.lcd_string("MAC: ", l1)
+    lcd.lcd_string(checklan.hexMAX, l2)
+    time.sleep(5)
+    lcd.lcd_string("IP: ", l1)
+    lcd.lcd_string(checklan.ipADDRESS, l2)
 
 
-    def processResponse(response):
-        apistatus = response['success']
-        isValid = response['result']['isValid']
-        m1 = response['result']['m1']
-        m2 = response['result']['m2']
-        return {'apistatus': apistatus, 'code': isValid, 'm1': m1, 'm2': m2}
+def processResponse(response):
+    apistatus = response['success']
+    isValid = response['result']['isValid']
+    m1 = response['result']['m1']
+    m2 = response['result']['m2']
+    return {'apistatus': apistatus, 'code': isValid, 'm1': m1, 'm2': m2}
 
 
-    def apicall(code):
-        """
+def apicall(code):
+    """
 
-        """
-        apikey = keys['key1']
-        header = {
-            'X-API-Key': f'{apikey}',
-            'Content-Type': "application/json"
-        }
-        payload = {'code': code}
-        try:
-            response = post(apiurl, params=payload, headers=header, timeout=3)
-            if response.status_code == 200:
-                return processResponse(response.json())
-            if response.status_code == 401:
-                print(response.status_code)
-            if response.status_code == 404:
-                print(response.status_code)
-            return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'} 
-        except exceptions.Timeout:
-            print("The request timed out!")
-            return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
-        except Exception as e:
-            print(e)
-            return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
+    """
+    apikey = keys['key1']
+    header = {
+        'X-API-Key': f'{apikey}',
+        'Content-Type': "application/json"
+    }
+    payload = {'code': code}
+    try:
+        response = post(apiurl, params=payload, headers=header, timeout=3)
+        if response.status_code == 200:
+            return processResponse(response.json())
+        if response.status_code == 401:
+            print(response.status_code)
+        if response.status_code == 404:
+            print(response.status_code)
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'} 
+    except exceptions.Timeout:
+        print("The request timed out!")
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
+    except Exception as e:
+        print(e)
+        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
 
-    BINITLCD = False
-    def initLCD():
-        lcd = None
-        try:
-            lcd = LCDI2C.LCD()
-            lcd.lcd_init()
-            lcd.lcd_string("LCD INIT", l1)
-            lcd.lcd_string(platform.node(), l2)
-            logmessage('info', 'LCD INIT')
-            time.sleep(2)
-            BINITLCD = True
-        except Exception as e:
-            logmessage('critical', 'LCD DID NOT INIT')
-            BINITLCD = False
-        return lcd
-
-
-    def createFile():
-        """
-        Creates log file for read codes
-        """
-        fdir = join(workingdir, 'tickets')
-        if not exists(fdir):
-            makedirs(fdir)
-        f = None
-        dt = date.today().isoformat()
-        try:
-            fname = join(fdir, f'tickets_{dt}.txt')
-            f = open(fname, "a")
-        except Exception as e:
-            logmessage('critical', e)
-        return f
+BINITLCD = False
+def initLCD():
+    lcd = None
+    try:
+        lcd = LCDI2C.LCD()
+        lcd.lcd_init()
+        lcd.lcd_string("LCD INIT", l1)
+        lcd.lcd_string(platform.node(), l2)
+        logmessage('info', 'LCD INIT')
+        time.sleep(2)
+        BINITLCD = True
+    except Exception as e:
+        logmessage('critical', 'LCD DID NOT INIT')
+        BINITLCD = False
+    return lcd
 
 
-    def logmessage(level, message):
-        """
-        logs messages to file
-        """
-        log = getattr(logger, level)
-        log(message)
+def createFile():
+    """
+    Creates log file for read codes
+    """
+    fdir = join(workingdir, 'tickets')
+    if not exists(fdir):
+        makedirs(fdir)
+    f = None
+    dt = date.today().isoformat()
+    try:
+        fname = join(fdir, f'tickets_{dt}.txt')
+        f = open(fname, "a")
+    except Exception as e:
+        logmessage('critical', e)
+    return f
+
+
+def logmessage(level, message):
+    """
+    logs messages to file
+    """
+    log = getattr(logger, level)
+    log(message)
 
 def initInputDevice(queue):
     """
