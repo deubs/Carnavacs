@@ -66,6 +66,8 @@ logging.basicConfig(
     level=logging.DEBUG,
 )
 
+#disable unstructured log
+logging.getLogger('asyncio').setLevel(logging.WARNING)
 
 logger = structlog.get_logger()
 
