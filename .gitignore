@@ -50,3 +50,4 @@ obj
 appSettings.json
 firmware/server/config.ini
 *~
+__pycache__
