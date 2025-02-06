@@ -538,7 +538,7 @@ def main():
 
         bfinalize_job = False
         if (code is not None):
-            checkCode(code)
+            checkCode(code, lcd)
             pauseDevice.pauseDevice()
             result = apicall(code)
             logmessage('info', dumps(result))
