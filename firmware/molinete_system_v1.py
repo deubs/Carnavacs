@@ -123,40 +123,6 @@ logger.info(
 )
 
 
-<<<<<<< HEAD
-def detectInputDevice():
-    """
-        From a list of input devices, select the one that matches the filter
-    """
-    devices = [InputDevice(path) for path in list_devices()]
-    inputdev = None
-    print(devices)
-    for device in devices:
-        print(device.name)
-        if ("IMAGER 2D" in device.name) or \
-            ("BF SCAN SCAN KEYBOARD" in device.name) or \
-                ("NT USB Keyboard" in device.name) or \
-                    ("TMS HIDKeyBoard" in device.name) or \
-                        ("ZKRFID R400" in device.name):
-
-            inputdev = device.path
-            break
-    return inputdev
-    
-
-def connectInputDevice(inputdev):
-    try:           
-        device = InputDevice(inputdev) # Replace with your device
-    except Exception as e:
-        print(e)
-        return None
-    else:
-        print(device)
-        print(device.capabilities())
-        return device
-
-
-=======
 pauseDevice = PauseDeviceTOKEN()
 
 logger.info(
@@ -199,7 +165,6 @@ def connectInputDevice(inputdev):
         return device
 
 
->>>>>>> a05d634279d380aa099f7add2b3fd9636e843ff2
 def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
     barcode = ''
     while True:
@@ -353,84 +318,6 @@ def enableGate():
             return False
 
 
-<<<<<<< HEAD
-def processResponse(response):
-    apistatus = response['success']
-    isValid = response['result']['isValid']
-    m1 = response['result']['m1']
-    m2 = response['result']['m2']
-    return {'apistatus': apistatus, 'code': isValid, 'm1': m1, 'm2': m2}
-
-
-def apicall(code):
-    """
-
-    """
-    apikey = keys['key1']
-    header = {
-        'X-API-Key': f'{apikey}',
-        'Content-Type': "application/json"
-    }
-    payload = {'code': code}
-    try:
-        response = post(apiurl, params=payload, headers=header, timeout=3)
-        if response.status_code == 200:
-            return processResponse(response.json())
-        if response.status_code == 401:
-            print(response.status_code)
-        if response.status_code == 404:
-            print(response.status_code)
-        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'} 
-    except exceptions.Timeout:
-        print("The request timed out!")
-        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
-    except Exception as e:
-        print(e)
-        return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
-
-BINITLCD = False
-def initLCD():
-    lcd = None
-    try:
-        lcd = LCDI2C.LCD()
-        lcd.lcd_init()
-        lcd.lcd_string("LCD INIT", l1)
-        lcd.lcd_string(platform.node(), l2)
-        logmessage('info', 'LCD INIT')
-        time.sleep(2)
-        BINITLCD = True
-    except Exception as e:
-        logmessage('critical', 'LCD DID NOT INIT')
-        BINITLCD = False
-    return lcd
-
-
-def createFile():
-    """
-    Creates log file for read codes
-    """
-    fdir = join(workingdir, 'tickets')
-    if not exists(fdir):
-        makedirs(fdir)
-    f = None
-    dt = date.today().isoformat()
-    try:
-        fname = join(fdir, f'tickets_{dt}.txt')
-        f = open(fname, "a")
-    except Exception as e:
-        logmessage('critical', e)
-    return f
-
-
-def logmessage(level, message):
-    """
-    logs messages to file
-    """
-    log = getattr(logger, level)
-    log(message)
-
-
-=======
 def printSTATUS(lcd):
     lcd.lcd_string("LAN " + str(BLAN), l1)
     lcd.lcd_string("GM65 " + str(BGM65) + " JET: " + str(BJET), l2)
@@ -517,7 +404,6 @@ def logmessage(level, message):
     log = getattr(logger, level)
     log(message)
 
->>>>>>> a05d634279d380aa099f7add2b3fd9636e843ff2
 def initInputDevice(queue):
     """
     """
