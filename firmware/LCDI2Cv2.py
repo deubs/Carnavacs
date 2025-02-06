@@ -44,8 +44,6 @@ LCD_CMD = 0 # Mode - Sending command
 
 LCD_LINE_1 = 0x80 # LCD RAM address for the 1st line
 LCD_LINE_2 = 0xC0 # LCD RAM address for the 2nd line
-LCD_LINE_3 = 0x94 # LCD RAM address for the 3rd line
-LCD_LINE_4 = 0xD4 # LCD RAM address for the 4th line
 
 LCD_BACKLIGHT  = 0x08  # On
 #LCD_BACKLIGHT = 0x00  # Off
@@ -55,80 +53,49 @@ ENABLE = 0b00000100 # Enable bit
 # Timing constants
 E_PULSE = 0.0005
 E_DELAY = 0.0005
-
+E_WRITE_DELAY = 0.001
 #Open I2C interface
-print(platform.node())
-# if "raspi" in platform.node():
+print(f'NODE: {platform.node()}')
 bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
-# else:
-#     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
-
-# for device in range(128):
-#     try:
-#         bus.read_byte(device)
-#         i2c = device
-#         print(i2c)
-#     except: # exception if read_byte fails
-#         pass
-# I2C_ADDR = i2c
-
-
-# from smbus2 import SMBus, i2c_msg
-
-# # Define the addresses of the two LCD displays
-# address1 = 0x27
-# address2 = 0x3F
-
-# # Define the data to be written to each display
-# data1 = [40, 50]  # Example data for the first display
-# data2 = [60, 70]  # Example data for the second display
-
-# # Create i2c_msg objects for writing to each display
-# write_msg1 = i2c_msg.write(address1, data1)
-# write_msg2 = i2c_msg.write(address2, data2)
-
-# # Perform the write operations
-# with SMBus(1) as bus:
-#     bus.i2c_rdwr(write_msg1, write_msg2)
-
-
 
 class LCD(object):
   
     def lcd_init(self, i2caddressa, i2caddressb):
-        # print(hex(i2caddress))
         self.i2caddressa = i2caddressa
         self.i2caddressb = i2caddressb
-        # self.bus = bus
-    # Initialise display
-        self.lcd_byte(0x33,LCD_CMD, self.i2caddressa) # 110011 Initialise
-        self.lcd_byte(0x32,LCD_CMD, self.i2caddressa) # 110010 Initialise
-        self.lcd_byte(0x06,LCD_CMD, self.i2caddressa) # 000110 Cursor move direction
-        self.lcd_byte(0x0C,LCD_CMD, self.i2caddressa) # 001100 Display On,Cursor Off, Blink Off 
-        self.lcd_byte(0x28,LCD_CMD, self.i2caddressa) # 101000 Data length, number of lines, font size
-        self.lcd_byte(0x01,LCD_CMD, self.i2caddressa) # 000001 Clear display
-        self.lcd_byte(0x33,LCD_CMD, self.i2caddressb) # 110011 Initialise
-        self.lcd_byte(0x32,LCD_CMD, self.i2caddressb) # 110010 Initialise
-        self.lcd_byte(0x06,LCD_CMD, self.i2caddressb) # 000110 Cursor move direction
-        self.lcd_byte(0x0C,LCD_CMD, self.i2caddressb) # 001100 Display On,Cursor Off, Blink Off 
-        self.lcd_byte(0x28,LCD_CMD, self.i2caddressb) # 101000 Data length, number of lines, font size
-        self.lcd_byte(0x01,LCD_CMD, self.i2caddressb) # 000001 Clear display
-
+    # Initialise displays
+        self.initDisplay(self.i2caddressa)
+        self.initDisplay(self.i2caddressb)
         time.sleep(E_DELAY)
+
+
+    def initDisplay(self, addr):
+        print(f'begin init display with address {hex(addr)}')
+        self.lcd_byte(0x33, LCD_CMD, addr) # 110011 Initialise
+        self.lcd_byte(0x32, LCD_CMD, addr) # 110010 Initialise
+        self.lcd_byte(0x06, LCD_CMD, addr) # 000110 Cursor move direction
+        self.lcd_byte(0x0C, LCD_CMD, addr) # 001100 Display On,Cursor Off, Blink Off 
+        self.lcd_byte(0x28, LCD_CMD, addr) # 101000 Data length, number of lines, font size
+        self.lcd_byte(0x01, LCD_CMD, addr) # 000001 Clear display
+        print(f'finish init display with address {hex(addr)}')
+
 
     def lcd_byte(self, bits, mode, addr):
         # Send byte to data pins
         # bits = the data
         # mode = 1 for data
-        #        0 for command
-        bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
-        bits_low = mode | ((bits<<4) & 0xF0) | LCD_BACKLIGHT
-        # High bits
-        bus.write_byte(addr, bits_high)
-        self.lcd_toggle_enable(bits_high, addr)
-        # Low bits
-        bus.write_byte(addr, bits_low)
-        self.lcd_toggle_enable(bits_low, addr)
+        try:
+            bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
+            bits_low = mode | ((bits<<4) & 0xF0) | LCD_BACKLIGHT
+            # High bits
+            bus.write_byte(addr, bits_high)
+            self.lcd_toggle_enable(bits_high, addr)
+            # Low bits
+            bus.write_byte(addr, bits_low)
+            self.lcd_toggle_enable(bits_low, addr)
+        except Exception as e:
+            print(e)
+            self.initDisplay(addr)
 
 
     def lcd_toggle_enable(self, bits, addr):
@@ -140,8 +107,12 @@ class LCD(object):
         time.sleep(E_DELAY)
 
 
+    def lcd_clear(self, addr):
+        self.lcd_byte(0x01, LCD_CMD, addr) # 000001 Clear display
+
+
     def lcd_string(self, message, line, addr):
-    # Send string to display
+        # Send string to display
         message = message.ljust(LCD_WIDTH," ")
         self.lcd_byte(line, LCD_CMD, addr)
         for i in range(LCD_WIDTH):
@@ -153,12 +124,12 @@ class LCD(object):
         self.lcd_init(addra, addrb)
         while True:
             # Send some test
-            self.lcd_string("RPiSpy         <",LCD_LINE_1, addra)
-            self.lcd_string("I2C LCD        <",LCD_LINE_2, addra)
+            self.lcd_string("RPiSpy         <", LCD_LINE_1, addra)
+            self.lcd_string("I2C LCD        <", LCD_LINE_2, addrb)
             time.sleep(3)        
             # Send some more text
-            self.lcd_string(">         RPiSpy",LCD_LINE_1, addrb)
-            self.lcd_string(">        I2C LCD",LCD_LINE_2, addrb)
+            self.lcd_string(">         RPiSpy", LCD_LINE_1, addrb)
+            self.lcd_string(">        I2C LCD", LCD_LINE_2, addra)
             time.sleep(3)
 
 
@@ -171,5 +142,5 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     finally:
-        lcd.lcd_byte(0x01, LCD_CMD)
-
+        lcd.lcd_byte(0x01, LCD_CMD, i2caddressa)
+        lcd.lcd_byte(0x01, LCD_CMD, i2caddressb)
