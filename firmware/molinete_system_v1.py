@@ -463,14 +463,14 @@ def main():
 
     jet111q = queue.Queue(maxsize = 1)
     
-    bgpio = initGPIO()
-    if not bgpio:
-        logmessage('critical', 'GPIO NOT INITIATED')
-        logmessage('critical', 'SYSTEM WILL EXIT NOW')
-        lcd.lcd_string("PROBLEMA GPIO", l1)
-        lcd.lcd_string("REINICIO SISTEMA", l1)
-        time.sleep(2)
-        exit()
+    initGPIO()
+    # if not bgpio:
+    #     logmessage('critical', 'GPIO NOT INITIATED')
+    #     logmessage('critical', 'SYSTEM WILL EXIT NOW')
+    #     lcd.lcd_string("PROBLEMA GPIO", l1)
+    #     lcd.lcd_string("REINICIO SISTEMA", l2)
+    #     time.sleep(2)
+    #     exit()
 
     idev = initInputDevice(jet111q)
     if idev is not None:
