@@ -63,7 +63,7 @@ logging.basicConfig(
     filemode='a',
     format="%(message)s",
     #stream=sys.stdout,
-    level=logging.DEBUG,
+    level=logging.INFO,
 )
 
 #disable unstructured log
