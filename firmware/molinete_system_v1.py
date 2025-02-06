@@ -53,7 +53,6 @@ print(workingdir)
 # STATUS VARS
 BLAN = False
 BGM65 = False
-BJET = False
 # ORANGE PI ZERO 3 WIRING
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
@@ -114,15 +113,17 @@ def detectInputDevice():
             inputdev = device.path
             break
     return inputdev
-    
+
 
 def connectInputDevice(inputdev):
     try:           
         device = InputDevice(inputdev) # Replace with your device
     except Exception as e:
+        logmessage('error', 'e')
         print(e)
         return None
     else:
+        logmessage('info', device)
         print(device)
         print(device.capabilities())
         return device
@@ -198,15 +199,16 @@ def initSerialPort():
     return serial_port
 
 bGATEOPEN = False
-
 def ISRSignal(iplatform):
     """
         
     """
     print("Reading inductive...")
+    logmessage('info',"Reading inductive...")
     bGATEOPEN = False
     bwait4Hole = True
     print("State is HIGH...")
+    logmessage('info',"State is HIGH...")
     if iplatform == 1:
         print("waiting hole")
         while bwait4Hole:
@@ -214,6 +216,7 @@ def ISRSignal(iplatform):
     else:
         while bwait4Hole:
             bwait4Hole = rasp_sensor_in.pin.state
+    logmessage('info',"State is LOW...")
     print("State is LOW")
     return bwait4Hole
 
@@ -234,8 +237,12 @@ def initGPIO():
             wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
             wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
             wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
+            logmessage('info', 'ORANGEPI GPIO INIT')
+            return True
     except Exception as e:
         print(e)
+        logmessage('critical', 'ORANGEPI GPIO NOT INITIATED')
+        return False
 
 
 def enableGate():
@@ -251,6 +258,7 @@ def enableGate():
         if "vehiculos" in platform.node() or "tango14" in platform.node():
             time.sleep(2)
             bHole = False
+            logmessage('info', 'BALIZA SLEEP 2 SECS')
         else:
             bHole = ISRSignal(1)
         if not bHole:
@@ -260,36 +268,25 @@ def enableGate():
             return True
         return False
     else:
-        if "baliza" in platform.node() or "raspidiscabaliza" in platform.node():
+        if "baliza" in platform.node():
             # raspberry box delay for commute from ON to OFF
-            logmessage('info', 'RELEASE RELAYS')
+            logmessage('info', 'BALIZA RELEASE RELAYS')
             rasp_relay_out.on()
             time.sleep(1)
             rasp_relay_out.off()
-            logmessage('info', 'ACTIVATE RELAYS')
+            logmessage('info', 'BALIZA ACTIVATE RELAYS')
             return True
         else:
             print("release RELAY")
-            logmessage('info', 'RELEASE RELAYS')
+            logmessage('info', 'TUNRSTILE RELEASE RELAYS')
             rasp_relay_out.on()            
             bHole = ISRSignal(0)
             if not bHole:
-                logmessage('info', 'ACTIVATE RELAYS')
+                logmessage('info', 'TUNRSTILE ACTIVATE RELAYS')
                 print("Activate RELAYS")
                 rasp_relay_out.off()
                 return True
             return False
-
-
-def printSTATUS(lcd):
-    lcd.lcd_string("LAN " + str(BLAN), l1)
-    lcd.lcd_string("GM65 " + str(BGM65) + " JET: " + str(BJET), l2)
-    time.sleep(5)
-    lcd.lcd_string("MAC: ", l1)
-    lcd.lcd_string(checklan.hexMAX, l2)
-    time.sleep(5)
-    lcd.lcd_string("IP: ", l1)
-    lcd.lcd_string(checklan.ipADDRESS, l2)
 
 
 def processResponse(response):
@@ -321,9 +318,11 @@ def apicall(code):
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'} 
     except exceptions.Timeout:
         print("The request timed out!")
+        logmessage('CRITICAL', "The request timed out!")
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
     except Exception as e:
         print(e)
+        logmessage('CRITICAL', e)
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
 
 BINITLCD = False
@@ -355,6 +354,7 @@ def createFile():
     try:
         fname = join(fdir, f'tickets_{dt}.txt')
         f = open(fname, "a")
+        logmessage('info', 'ticket file created')
     except Exception as e:
         logmessage('critical', e)
     return f
@@ -382,7 +382,7 @@ def initInputDevice(queue):
     if idev is not None:
         dev = connectInputDevice(idev)
         threading.Thread(target = readBarCodes, args = (dev, queue, pauseDevice, ), daemon = True).start()
-        BJET = True
+        logmessage('info', 'INPUT DEVICE THREAD CREATED')
     return idev
 
 
@@ -396,6 +396,21 @@ def initSerialDevice(queue):
         time.sleep(2)
     return sp
 
+import os
+def checkCode(code:str, lcd):
+    """
+        Reboot and Shutdown codes
+    """
+    if code == '00000000000100000000000':
+        logmessage('info', 'REBOOT REQUIRED BY QR')
+        lcd.lcd_string("REBOOT BY QR", l1)
+        lcd.lcd_string("REBOOT BY QR", l2)
+        os.system('reboot')
+    if code == "11111111111111111111111":
+        logmessage('info', 'SHUT DOWN REQUIRED BY QR')
+        lcd.lcd_string("SHUTDOWN BY QR", l1)
+        lcd.lcd_string("SHUTDOWN BY QR", l2)
+        os.system('systemctl poweroff')
 
 def main():
     """
@@ -414,10 +429,20 @@ def main():
         time.sleep(2)
     else:
         lcd.lcd_string("LAN NOT DETECTED", l1)
-        logmessage('info', f'LAN NOT DETECTED')
+        logmessage('error', f'LAN NOT DETECTED')
+        time.sleep(2)
 
     jet111q = queue.Queue(maxsize = 1)
-    initGPIO()
+    
+    bgpio = initGPIO()
+    if not bgpio:
+        logmessage('critical', 'GPIO NOT INITIATED')
+        logmessage('critical', 'SYSTEM WILL EXIT NOW')
+        lcd.lcd_string("PROBLEMA GPIO", l1)
+        lcd.lcd_string("REINICIO SISTEMA", l1)
+        time.sleep(2)
+        exit()
+
     idev = initInputDevice(jet111q)
     if idev is not None:
         lcd.lcd_string("INPUT DEV ON", l2)
@@ -456,7 +481,7 @@ def main():
         if brestart == 0:
             lcd.lcd_string("REINICIANDO", l1)
             lcd.lcd_string("YA VOLVEMOS", l2)
-            logmessage('info', 'RESTART REQUIRED')
+            logmessage('critical', 'RESTART REQUIRED')
             if fhandler is not None:
                 fhandler.close()
             exit()
@@ -475,16 +500,16 @@ def main():
                     jet111data = jet111q.get()
                     if jet111data is not None:
                         # lcd.lcd_string(jet111data, l1)     
-                        logmessage('info', f'{jet111data}')
+                        logmessage('info', f'jet data {jet111data}')
                         code = jet111data
             else:
                 lcd.lcd_string("PISTOLA", l1)
                 lcd.lcd_string("DESCONECTADA", l2)
                 time.sleep(2)
 
-                            
         bfinalize_job = False
         if (code is not None):
+            checkCode(code)
             pauseDevice.pauseDevice()
             result = apicall(code)
             logmessage('info', dumps(result))
@@ -502,13 +527,13 @@ def main():
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
                 bfinalize_job = True
             else:
-                logmessage('error', f'FALLA DE SISTEMA - REINTENTANDO')
+                logmessage('critical', f'FALLA DE SISTEMA - REINTENTANDO')
                 lcd.lcd_string("FALLA DE SISTEMA", l1)
                 lcd.lcd_string("REINTENTANDO", l2)
                 FAILURE_COUNT -= 1
                 ticket_string = f'code: {code}, status: api failed, timestamp: {datetime.now()} \n'
                 if FAILURE_COUNT == 0:
-                    logmessage('error', f'FALLA PERMANENTE - INFORME PROBLEMA')
+                    logmessage('critical', f'FALLA PERMANENTE - INFORME PROBLEMA')
                     lcd.lcd_string("FALLA PERMANENTE", l1)
                     lcd.lcd_string("INFORME PROBLEMA", l2)
                     time.sleep(3)
