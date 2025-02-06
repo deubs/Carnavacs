@@ -24,6 +24,9 @@ from os.path import exists, join
 from json import dumps
 import logging
 import logging.handlers
+import structlog
+import sys
+import random
 
 if "tango" in platform.node() or "vehiculos" in platform.node():
     import wiringpi
@@ -40,15 +43,32 @@ else:
     rasp_sensor_in = DigitalInputDevice(27) # PIN 11
     workingdir = "/home/pi/"
 
-logging.basicConfig(filename= f"{workingdir}/logs/{platform.node()}_{date.today().isoformat()}.log",
-                    filemode='a',
-                    # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                    # datefmt='%H:%M:%S',
-                    level=logging.DEBUG)
+structlog.contextvars.bind_contextvars(
+    device=platform.node(),
+)
 
-logger = logging.getLogger()
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars, 
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer()
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+)
 
-print(workingdir)
+logging.basicConfig(
+    filename= f"{workingdir}/logs/{platform.node()}_{date.today().isoformat()}.log",
+    filemode='a',
+    format="%(message)s",
+    #stream=sys.stdout,
+    level=logging.DEBUG,
+)
+
+
+logger = structlog.get_logger()
+
 
 # STATUS VARS
 BLAN = False
@@ -75,7 +95,6 @@ scancodes = {
 idev = None
 sp = None
 
-print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
 
 l1 = LCDI2C.LCD_LINE_1
@@ -93,6 +112,13 @@ class PauseDeviceTOKEN:
 
 
 pauseDevice = PauseDeviceTOKEN()
+
+logger.info(
+        "device_status",
+        workingdir=workingdir,
+        scancodes=scancodes,
+        network_status="online",
+)
 
 
 def detectInputDevice():
@@ -113,17 +139,15 @@ def detectInputDevice():
             inputdev = device.path
             break
     return inputdev
-
+    
 
 def connectInputDevice(inputdev):
     try:           
         device = InputDevice(inputdev) # Replace with your device
     except Exception as e:
-        logmessage('error', 'e')
         print(e)
         return None
     else:
-        logmessage('info', device)
         print(device)
         print(device.capabilities())
         return device
@@ -199,16 +223,15 @@ def initSerialPort():
     return serial_port
 
 bGATEOPEN = False
+
 def ISRSignal(iplatform):
     """
         
     """
     print("Reading inductive...")
-    logmessage('info',"Reading inductive...")
     bGATEOPEN = False
     bwait4Hole = True
     print("State is HIGH...")
-    logmessage('info',"State is HIGH...")
     if iplatform == 1:
         print("waiting hole")
         while bwait4Hole:
@@ -216,7 +239,6 @@ def ISRSignal(iplatform):
     else:
         while bwait4Hole:
             bwait4Hole = rasp_sensor_in.pin.state
-    logmessage('info',"State is LOW...")
     print("State is LOW")
     return bwait4Hole
 
@@ -237,12 +259,8 @@ def initGPIO():
             wiringpi.pinMode(GPIO_RESTART, wiringpi.GPIO.INPUT)
             wiringpi.pullUpDnControl(GPIO_INPUT_1, wiringpi.GPIO.PUD_UP)
             wiringpi.pullUpDnControl(GPIO_RESTART, wiringpi.GPIO.PUD_UP)
-            logmessage('info', 'ORANGEPI GPIO INIT')
-            return True
     except Exception as e:
         print(e)
-        logmessage('critical', 'ORANGEPI GPIO NOT INITIATED')
-        return False
 
 
 def enableGate():
@@ -258,7 +276,6 @@ def enableGate():
         if "vehiculos" in platform.node() or "tango14" in platform.node():
             time.sleep(2)
             bHole = False
-            logmessage('info', 'BALIZA SLEEP 2 SECS')
         else:
             bHole = ISRSignal(1)
         if not bHole:
@@ -268,21 +285,21 @@ def enableGate():
             return True
         return False
     else:
-        if "baliza" in platform.node():
+        if "baliza" in platform.node() or "raspidiscabaliza" in platform.node():
             # raspberry box delay for commute from ON to OFF
-            logmessage('info', 'BALIZA RELEASE RELAYS')
+            logmessage('info', 'RELEASE RELAYS')
             rasp_relay_out.on()
             time.sleep(1)
             rasp_relay_out.off()
-            logmessage('info', 'BALIZA ACTIVATE RELAYS')
+            logmessage('info', 'ACTIVATE RELAYS')
             return True
         else:
             print("release RELAY")
-            logmessage('info', 'TUNRSTILE RELEASE RELAYS')
+            logmessage('info', 'RELEASE RELAYS')
             rasp_relay_out.on()            
             bHole = ISRSignal(0)
             if not bHole:
-                logmessage('info', 'TUNRSTILE ACTIVATE RELAYS')
+                logmessage('info', 'ACTIVATE RELAYS')
                 print("Activate RELAYS")
                 rasp_relay_out.off()
                 return True
@@ -318,11 +335,9 @@ def apicall(code):
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'} 
     except exceptions.Timeout:
         print("The request timed out!")
-        logmessage('CRITICAL', "The request timed out!")
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
     except Exception as e:
         print(e)
-        logmessage('CRITICAL', e)
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
 
 BINITLCD = False
@@ -354,7 +369,6 @@ def createFile():
     try:
         fname = join(fdir, f'tickets_{dt}.txt')
         f = open(fname, "a")
-        logmessage('info', 'ticket file created')
     except Exception as e:
         logmessage('critical', e)
     return f
@@ -364,15 +378,8 @@ def logmessage(level, message):
     """
     logs messages to file
     """
-    log_message = {'time_stamp': datetime.now().isoformat(),
-                   'level': level, 
-                   'message': message}
-    if level == 'info':
-        logger.info(log_message)
-    elif level ==  'error':
-        logger.error(log_message)
-    elif level ==  'critical':
-        logger.critical(log_message)
+    log = getattr(logger, level)
+    log(message)
 
 
 def initInputDevice(queue):
