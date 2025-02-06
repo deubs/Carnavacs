@@ -6,11 +6,12 @@
 #  Raspberry Pi access control system
 #  based on dual NexuPOS Jet 111 bar code scanner, 16x2 LCD i2c, API calls 
 
+import os
 import LCDI2Cv2
 import threading
 import queue
 import time
-import checklan
+# import checklan
 from requests import post, exceptions, Session
 from datetime import datetime, date
 from apikeys import keys
@@ -210,8 +211,9 @@ class AccessSystem(baseAccessSystem):
 
     def enableGate(self):
         self.gpio_out.on()
-        time.sleep(2)
+        time.sleep(1)
         self.gpio_out.off()
+        return True
 
 
     def initInputDevice(self, queue):
@@ -225,11 +227,29 @@ class AccessSystem(baseAccessSystem):
         return dev
 
 
+    def checkCode(self, code:str):
+        """
+            Reboot and Shutdown codes
+        """
+        if code == '00000000000100000000000':
+            self.logmessage('info', 'REBOOT REQUIRED BY QR')
+            self.lcd.lcd_string("REBOOT BY QR", l1, self.display_address)
+            self.lcd.lcd_string("REBOOT BY QR", l2, self.display_address)
+            os.system('reboot')
+        if code == "11111111111111111111111":
+            self.logmessage('info', 'SHUT DOWN REQUIRED BY QR')
+            self.lcd.lcd_string("SHUTDOWN BY QR", l1, self.display_address)
+            self.lcd.lcd_string("SHUTDOWN BY QR", l2, self.display_address)
+            os.system('systemctl poweroff')
+
+
     def main(self, lcd):
         """
             Main function
         """
         # self.initLCD()
+        ncodes = 0
+        bdirt = False
         self.lcd = lcd
         print(self.lcd)
         print(self.display_address)
@@ -246,6 +266,7 @@ class AccessSystem(baseAccessSystem):
         time.sleep(1)
         nthreads =  threading.enumerate()
         code = None
+        bdirt = True
         while True:
             jet111data = None
             marked = False
@@ -273,27 +294,32 @@ class AccessSystem(baseAccessSystem):
                         # print("reading queue...jet111")
                         jet111data = jet111q.get()
                         if jet111data is not None:
-                            self.lcd.lcd_string(jet111data, l1, self.display_address)
+                            self.lcd.lcd_string(f'{jet111data}', l1, self.display_address)
                             code = jet111data
+                            time.sleep(0.5)
                 else:
                     self.lcd.lcd_string("PISTOLA", l1, self.display_address)
                     self.lcd.lcd_string("DESCONECTADA", l1, self.display_address)
 
             bfinalize_job = False
             if (code is not None):
-                # pauseDevice.pauseDevice()
-                result = self.apicall(code)
+                ncodes += 1
+                pauseDevice.pauseDevice()
+                self.checkCode(code)
+                # result = self.apicall(code)
+                result = {'apistatus': True, 'code': code, 'm1': 'holis', 'm2': 'troesma'}
                 self.logmessage('info', f'{code} - {dumps(result)}')
                 if result['apistatus'] == True:
-                    self.lcd.lcd_string(result['m1'], l1, self.display_address)
-                    self.lcd.lcd_string(result['m2'], l2, self.display_address)
+                    self.lcd.lcd_string(f'{result["m1"]}', l1, self.display_address)
+                    self.lcd.lcd_string(f'{result["m2"]}', l2, self.display_address)
                     if result['code'] == False:
                         time.sleep(1)
                     else:
                         marked = self.enableGate()
                         if marked:
-                            self.lcd.lcd_string('CODIGO MARCADO', l1, self.display_address)
-                            self.lcd.lcd_string('BIENVENIDO', l2, self.display_address)
+                            self.logmessage('info', 'CODIGO MARCADO {code}')
+                            # self.lcd.lcd_string(f'CODIGO MARCADO', l1, self.display_address)
+                            # self.lcd.lcd_string(f'BIENVENIDO', l2, self.display_address)
                     ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
                     bfinalize_job = True
                 else:
@@ -306,18 +332,23 @@ class AccessSystem(baseAccessSystem):
                         self.lcd.lcd_string("INFORME PROBLEMA", l2, self.display_address)
                         time.sleep(2)
                         ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
-                        bfinalize_job = True
-                        
+                        bfinalize_job = True                   
                 if bfinalize_job:
+                    bdirt = True
                     code = None
                     pauseDevice.resumeDevice()
+                    if ncodes > 20:
+                        self.lcd.initDisplay(self.display_address)
+                        ncodes = 0 
                 if fhandler is not None:
                     fhandler.write(ticket_string)
-                    fhandler.flush()    
+                    fhandler.flush()
             else:
-                code = None
-                self.lcd.lcd_string("CARNAVAL 2015", l1, self.display_address)
+                # if bdirt:
+                self.lcd.lcd_string("CARNAVAL 2025", l1, self.display_address)
                 self.lcd.lcd_string("NUEVO INGRESO", l2, self.display_address)
+                # bdirt = False
+                # code = None
 
 def getInputDevices():
     devices = [InputDevice(path) for path in list_devices()]
@@ -373,6 +404,16 @@ if __name__ == '__main__':
     threading.Thread(target = asB.main, args = (lcd, ), daemon = True).start()
     # pb.start()
 
+    # nthreads = threading.enumerate()
     while True:
         time.sleep(10)
         continue
+    
+
+    lcd.lcd_string("EXIT", l1, display_addressa)
+    lcd.lcd_string(platform.node(), l2, display_addressa)
+    
+    lcd.lcd_string("EXIT", l1, display_addressb)
+    lcd.lcd_string(platform.node(), l2, display_addressb)
+
+    exit()
