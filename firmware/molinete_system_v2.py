@@ -24,7 +24,7 @@ import logging
 import logging.handlers
 from json import dumps
 import smbus2 as smbus
-
+import structlog
 
 print("importing gpiozero")
 rasp_button_restart = Button(4, pull_up=True) # PIN 7
