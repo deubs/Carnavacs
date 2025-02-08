@@ -27,8 +27,8 @@ export default function Event_current () {
         events_current == "loading" ? <Loading /> :
         events_current == "error" ? <Error /> :
         <>
-        <p>{events_current.nombre}</p>
-        <p>{data_parse(events_current.fecha)}</p>
+        <p>{events_current && events_current.nombre}</p>
+        <p>{events_current && data_parse(events_current.fecha)}</p>
         </>
     }
     </div>

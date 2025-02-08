@@ -53,7 +53,7 @@ export default function Updates () {
         start()
 
     }, [API_URL])
-    /*
+    
     useEffect(()=>{
         set_container("dashboard")
 
@@ -74,6 +74,6 @@ export default function Updates () {
         }
  
     }, [tick])
-    */
+    
     return <></>
 }

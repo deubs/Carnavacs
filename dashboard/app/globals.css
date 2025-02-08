@@ -3,7 +3,7 @@
   --border: rgba(255,255,255,.2);
   --foreground: #09122C;
   --foreground-nav: rgba(255,255,255,.1);
-  --background: #E17564;
+  --background: gray;
   --card: rgba(255,255,255,0.1);
   background: var(--background);
   font-size: 19px;

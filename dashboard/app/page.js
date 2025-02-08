@@ -22,6 +22,7 @@ export default function Home () {
       container == "loading" ? <Loading /> :
       container == "login" ? <Login /> :
       container == "dashboard" ? <Dashboard /> :
+      container == "qr" ? <Qr_scanner /> :
       "Error en cliente"
     }
   </div>

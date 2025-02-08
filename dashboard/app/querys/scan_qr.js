@@ -1,4 +1,4 @@
-export const check_ticket = async (url, decodedText) => {
+export const check_ticket = async (url, decodedText, set_data) => {
     try {
         const response = await fetch(`${url}/Ticket/Verify?code=${code}`, {
             method: "post",
@@ -9,12 +9,22 @@ export const check_ticket = async (url, decodedText) => {
         })
         const response_json = await response.json()
         if (response_json.success) {
-            return response_json
+            set_data({
+
+                m1: r.result.m1, 
+                m2: r.result.m2 
+                
+            })
         } else {
-            throw "error"
+            set_data({
+
+                m1: "Error en la validación del tiket",
+                m2: "Error en la validación del tiket"
+            
+            })
         }
     } catch (error) {
-        throw new Error("Error en la query de enviar qr en hooks/scan_qr")
+        console.log("Error en la query de enviar qr en hooks/scan_qr")
     }
     
 }
