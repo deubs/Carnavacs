@@ -331,8 +331,8 @@ class AccessSystem(baseAccessSystem):
                 ncodes += 1
                 pauseDevice.pauseDevice()
                 self.checkCode(code)
-                # result = self.apicall(code)
-                result = {'apistatus': True, 'code': code, 'm1': 'holis', 'm2': 'troesma'}
+                result = self.apicall(code)
+                # result = {'apistatus': True, 'code': code, 'm1': 'holis', 'm2': 'troesma'}
                 self.logmessage('info', f'{code} - {dumps(result)}')
                 if result['apistatus'] == True:
                     self.lcd.lcd_string(f'{result["m1"]}', l1, self.display_address)
