@@ -33,14 +33,33 @@ relay_outb = OutputDevice(27) # PIN 11
 workingdir = "/home/pi"
 print(workingdir)
 
-logging.basicConfig(filename= f"{workingdir}/logs/{platform.node()}_{date.today().isoformat()}.log",
-                    filemode='a',
-                    # format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                    # datefmt='%H:%M:%S',
-                    level=logging.INFO)
+structlog.contextvars.bind_contextvars(
+    device=platform.node(),
+)
 
-logger = logging.getLogger()
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars, 
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer()
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+)
 
+logging.basicConfig(
+    filename= f"{workingdir}/logs/{platform.node()}.log",
+    filemode='a',
+    format="%(message)s",
+    #stream=sys.stdout,
+    level=logging.INFO,
+)
+
+#disable unstructured log
+logging.getLogger('asyncio').setLevel(logging.WARNING)
+
+logger = structlog.get_logger()
 
 # STATUS VARS
 BLAN = False
@@ -85,6 +104,13 @@ class PauseDeviceTOKEN:
         self.is_paused = False
 
 pauseDevice = PauseDeviceTOKEN()
+
+logger.info(
+        "device_status",
+        workingdir=workingdir,
+        scancodes=scancodes,
+        network_status="online",
+)
 
 bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
     
@@ -198,16 +224,9 @@ class AccessSystem(baseAccessSystem):
         """
         logs messages to file
         """
-        log_message = {'time_stamp': datetime.now(),
-                    'level': level, 
-                    'message': message}
-        if level == 'info':
-            logger.info(log_message)
-        elif level ==  'error':
-            logger.error(log_message)
-        elif level ==  'critical':
-            logger.critical(log_message)
-        
+        log = getattr(logger, level)
+        log(message)
+
 
     def enableGate(self):
         self.gpio_out.on()
