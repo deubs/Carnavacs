@@ -11,7 +11,7 @@ export default function Tickets_data () {
     const { events_stats } = store_events_stats()
 
     return <div className={css.main}>
-        <h3>Tickets</h3>
+        <h3>ENTRADAS</h3>
         {
             events_stats == "loading" ? <Loading /> :
             events_stats == "error" ? <Error /> :

@@ -1,11 +1,24 @@
 .main {
+    color: var(--letter);
+    border: solid 1px var(--border);
+    background: var(--foreground);
+    backdrop-filter: blur(5px);
+
     display: flex;
     width: 90%;
     gap: 1rem;
     border-radius: 5px;
-    padding: 1rem;
-    border: solid 1px rgba(255,255,255,.1);
-    background: rgba(255,255,255,0.1);
+    padding: 2rem 1rem;
     justify-content: center;
     align-items: center;
+    animation: show .5s ease-in-out;
 }
+
+@keyframes show {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+  }

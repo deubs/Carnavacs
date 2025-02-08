@@ -25,7 +25,7 @@ export default function  Enviroment () {
             set_enviroment("DEV")
 
         } else {
-            set_message("Error obteniendo URL ENVIROMENT")
+            console.log("Error obteniendo URL ENVIROMENT")
         }
     }, [])
     return <></>

@@ -1,4 +1,5 @@
 .chart_bar {
+    color: var(--letter);
     display: flex;
     justify-content: center;
     align-items: center;

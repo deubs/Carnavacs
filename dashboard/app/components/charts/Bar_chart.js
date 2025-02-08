@@ -11,16 +11,15 @@ export const BarChart = ({ stats }) => {
         {
           label: 'Cantidad de ingresos',
           data: [stats[0], stats[1], stats[2]],
-          backgroundColor: [
-            'rgba(255, 255, 255, 0.35)',
-            'rgba(255, 255, 255, 0.35)',
-            'rgba(255, 255, 255, 0.35)'
-          ]
+          backgroundColor: 'rgba(255,255,255,0.15)',
+          borderColor: 'rgba(255,255,255,0.4)',
+          borderWidth: 1,
         }
       ]
     };
     const options = {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           x: {
             ticks: {

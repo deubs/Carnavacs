@@ -1,22 +1,22 @@
 "use client"
 import css from "@/app/styles/dashboard.module.css"
-import Navbar from "../components/navbar/navbar"
 
-import Event_current from "../components/events/Events_current"
-import Gates from "../components/gates/Gates"
-import Qr_scanner from "../components/utils/qr-scanner"
-import Tickets_data from "../components/tickets/Tickets_data"
-import Sector_stats from "../components/events/Sector_stats"
-//import Event_stats from "../components/events/Events_stats"
+import Navbar from "@/app/components/navbar/navbar"
+import Event_current from "@/app/components/events/Events_current"
+import Gates from "@/app/components/gates/Gates"
+import Qr_scanner from "@/app/components/utils/qr-scanner"
+import Tickets_data from "@/app/components/tickets/Tickets_data"
+import Sector_stats from "@/app/components/events/Sector_stats"
+//import Event_stats from "@/app/components/events/Events_stats"
 
-import { store_dashboard } from "../stores/store_dashboard"
+import { store_dashboard } from "@/app/stores/store_dashboard"
 
 const Home = () => {
   return <> 
   <Event_current />
   <Tickets_data />
-  <Gates />
   <Sector_stats />
+  <Gates />
   </>
 }
 

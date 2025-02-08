@@ -10,7 +10,7 @@ export default function Gates () {
     const { events_stats } = store_events_stats()
 
     return <div className={css.main}>
-        <h3>Ingresos</h3>
+        <h3>ACCESOS MOLINETES</h3>
         {
             events_stats == "loading" ? <Loading /> :
             events_stats == "error" ? <Error /> :

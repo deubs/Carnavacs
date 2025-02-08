@@ -12,7 +12,7 @@ export default function Event_li ({ data }) {
     const onClickEvent = () => {
         console.log("id del evento: ", data.id)
         set_event_id(data.id)
-        set_container("loading")    
+        //set_container("loading")    
     }
 
     return <div className={css.main}>

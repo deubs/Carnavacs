@@ -7,7 +7,7 @@ import { store_notification } from "@/app/stores/notification";
 import { store_ticket_validate } from "@/app/stores/ticket_validate";
 import { store_API_URL } from "@/app/stores/API_URL";
 
-import { check_ticket } from "@/app/hooks/scan_qr";
+import { check_ticket } from "@/app/querys/scan_qr";
 import { Ticket_validation } from "@/app/components/tickets/Validate";
 
 import Button from "../common/Button";

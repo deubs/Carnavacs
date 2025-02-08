@@ -1,4 +1,4 @@
-export const check_ticket = async (url,decodedText) => {
+export const check_ticket = async (url, decodedText) => {
     try {
         const response = await fetch(`${url}/Ticket/Verify?code=${code}`, {
             method: "post",

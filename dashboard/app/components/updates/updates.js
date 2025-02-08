@@ -15,8 +15,8 @@ import { store_events_sector_stats } from "@/app/stores/events_sector_stats";
 import { store_API_URL } from "@/app/stores/API_URL";
 import { store_enviroment } from "@/app/stores/enviroment";
 
-import { update_data } from "@/app/hooks/update_data";
-import { update_data_post } from "@/app/hooks/update_data";
+import { update_data } from "@/app/querys/update_data";
+import { update_data_post } from "@/app/querys/update_data";
 
 export default function Updates () {
 
@@ -39,7 +39,7 @@ export default function Updates () {
         onTimeUpdate: tick_increment,
         autostart: false
     })
-    /*
+    
     useEffect(()=>{
             set_container("dashboard")
             update_data_post("events", set_events_list, set_loop_status)
@@ -47,26 +47,26 @@ export default function Updates () {
             update_data_post("events/stats", set_events_stats, set_loop_status)
             update_data_post("events/sectorStats", set_sector_stats, set_loop_status)
     }, [])
-    */
+    
     useEffect(()=>{
         set_loop_status(true)
         start()
 
     }, [API_URL])
-
+    /*
     useEffect(()=>{
         set_container("dashboard")
 
         if (enviroment == "PROD") {
 
-            update_data(API_URL, "events", set_events_list, set_loop_status, event_id)
             update_data(API_URL, "events/current", set_events_current, set_loop_status, event_id)
+            update_data(API_URL, "events", set_events_list, set_loop_status, event_id)
             update_data(API_URL, "events/stats", set_events_stats, set_loop_status, event_id)
 
         } else if (enviroment == "DEV") {
 
-            update_data_post("events", set_events_list, set_loop_status)
             update_data_post("events/current", set_events_current, set_loop_status)
+            update_data_post("events", set_events_list, set_loop_status)
             update_data_post("events/stats", set_events_stats, set_loop_status)
 
         } else {
@@ -74,5 +74,6 @@ export default function Updates () {
         }
  
     }, [tick])
+    */
     return <></>
 }
