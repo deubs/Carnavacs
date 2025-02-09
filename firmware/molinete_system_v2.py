@@ -255,16 +255,19 @@ class AccessSystem(baseAccessSystem):
             self.lcd.lcd_string("REBOOT BY QR", l1, self.display_address)
             self.lcd.lcd_string("REBOOT BY QR", l2, self.display_address)
             os.system('reboot')
+            time.sleep(5)
         if code == "11111111111111111111111":
             self.logmessage('info', 'SHUT DOWN REQUIRED BY QR')
             self.lcd.lcd_string("SHUTDOWN BY QR", l1, self.display_address)
             self.lcd.lcd_string("SHUTDOWN BY QR", l2, self.display_address)
             os.system('systemctl poweroff')
+            time.sleep(5)
         if code == "22222222222222222222222":
             self.logmessage('info', 'LCD RESTART BY QR')
             self.lcd.lcd_string("LCD RESTART BY QR", l1, self.display_address)
             self.lcd.lcd_string("LCD RESTART BY QR", l2, self.display_address)
             self.lcd.initDisplay(self.display_address)
+            
             # os.system('systemctl poweroff')
 
 

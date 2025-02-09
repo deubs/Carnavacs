@@ -123,16 +123,6 @@ logger.info(
 )
 
 
-pauseDevice = PauseDeviceTOKEN()
-
-logger.info(
-        "device_status",
-        workingdir=workingdir,
-        scancodes=scancodes,
-        network_status="online",
-)
-
-
 def detectInputDevice():
     """
         From a list of input devices, select the one that matches the filter
@@ -435,11 +425,13 @@ def checkCode(code:str, lcd):
         lcd.lcd_string("REBOOT BY QR", l1)
         lcd.lcd_string("REBOOT BY QR", l2)
         os.system('reboot')
+        time.sleep(5)
     if code == "11111111111111111111111":
         logmessage('info', 'SHUT DOWN REQUIRED BY QR')
         lcd.lcd_string("SHUTDOWN BY QR", l1)
         lcd.lcd_string("SHUTDOWN BY QR", l2)
         os.system('systemctl poweroff')
+        time.sleep(5)
 
 def main():
     """
