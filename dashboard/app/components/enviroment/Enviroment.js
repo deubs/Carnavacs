@@ -1,12 +1,10 @@
 import { useEffect } from "react";
 import { store_API_URL } from "@/app/stores/API_URL";
 import { store_enviroment } from "@/app/stores/enviroment";
-import { store_notification } from "@/app/stores/notification";
 
 export default function  Enviroment () {
     const { set_API_URL } = store_API_URL()
     const { set_enviroment } = store_enviroment()
-    const { set_message } = store_notification()
 
     useEffect(()=>{
 

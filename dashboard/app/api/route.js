@@ -669,6 +669,22 @@ export async function POST ( req ) {
   }
 }
 
+/*
+const events_stats = {
+    "success": true,
+    "message": null,
+    "result": {
+      "eventId": 0,
+      "totalTickets": 16660,
+      "usedTickets": 638,
+      "remainingTickets": 16022,
+      "totalGates": 0,
+      "openGates": 0,
+      "closedGates": 0
+    }}
+*/
 export async function GET ( req ) {
+  const { eventId } = req.query;
+  console.log(eventId) 
   return NextResponse.json({ error: "no get" })
 }

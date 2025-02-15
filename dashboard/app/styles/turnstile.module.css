@@ -3,6 +3,7 @@
     border: solid 1px var(--border);
     background: var(--card);
     padding: .4rem .5rem;
+    flex-grow: 1;
 }
 .title {
     font-size: .7rem;
@@ -20,11 +21,11 @@
 }
 .number { 
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1.8rem;
     padding: .3rem 0;
 }
-
-@media (max-width: 767px) {
+ 
+@media (max-width: 700px) {
     .main {
         display: flex;
         flex-direction: column;

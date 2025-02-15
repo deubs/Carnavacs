@@ -1,19 +1,11 @@
 .main {
+    width: 100%;
     color: var(--letter);
     display: flex;
     flex-wrap: wrap;
     gap: .2rem;
 }
-.main h4 {
+.main p {
     width: 100%;
     padding-bottom: .5rem;
-    padding-top: 1rem;
-    padding-left: .5rem;
-    font-weight: 300;
 } 
-
-@media (max-width: 767px) {
-    .main {
-        gap: .2rem;
-    }
-}

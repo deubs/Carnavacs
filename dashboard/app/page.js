@@ -1,29 +1,44 @@
 "use client"
-import css from "./page.module.css"
+import styles from "./page.module.css"
 
-import { store_container } from "./stores/container"
+import { store_dashboard } from "@/app/stores/store_dashboard"
 
-import Login from "./components/login/login"
-import Dashboard from "./dashboard/dashboard"
-import Message from "./components/notification/Notification"
-import Enviroment from "./components/enviroment/Enviroment"
-import Loading from "./components/loading/loading"
-import Updates from "./components/updates/updates"
+import Enviroment from "@/app/components/enviroment/enviroment"
+import Loading from "@/app/components/updates/loading/loading"
+import Updates from "@/app/components/updates/updates"
+
+import Navbar from "@/app/components/navbar/navbar"
+import Gates from "@/app/components/card-turnstiles/gates"
+import Tickets_data from "@/app/components/card-event-stats/tickets_data"
+import Sector_stats from "@/app/components/card-sectors/sector_stats"
+import Qr_scanner from "@/app/components/card-qr-scan/qr-scanner"
+import All_nights from "@/app/components/card-all-nights/all-nights"
 
 export default function Home () {
-  const { container } = store_container()
+  const { container } = store_dashboard()
 
-  return <div className={css.main}>
-    <Message />
+  return <div className={styles.main}> 
     <Enviroment />
     <Updates />
     
     {
-      container == "loading" ? <Loading /> :
-      container == "login" ? <Login /> :
-      container == "dashboard" ? <Dashboard /> :
-      container == "qr" ? <Qr_scanner /> :
-      "Error en cliente"
+      container == "loading" ? 
+      <Loading /> :
+      container == "dashboard" ?
+      <>
+      <Navbar />
+      <All_nights />
+      <Tickets_data />
+      <Sector_stats />
+      <Gates />
+      </> :
+      container == "qr_scan" ?
+      <>
+      <Navbar />
+      <Qr_scanner />
+      </> :
+      "Error en el componente Home"
     }
+
   </div>
 }
