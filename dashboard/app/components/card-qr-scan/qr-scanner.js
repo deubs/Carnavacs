@@ -8,8 +8,8 @@ import { store_API_URL } from "@/app/stores/API_URL";
 import { check_ticket } from "@/app/components/utils/scan_qr";
 import Qr_information from "@/app/components/card-qr-scan/components/information";
 
-import Button from "@/app/components/common/button";
-import Card from "@/app/components/common/card";
+import Button from "@/app/components/common/Button";
+import Card from "@/app/components/common/Card";
 
 export default function Qr_scanner () {
 

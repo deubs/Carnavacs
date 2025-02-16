@@ -1,6 +1,6 @@
 "use client" 
 import css from "@/app/styles/events_li.module.css"
-import Button from "@/app/components/common/button"
+import Button from "@/app/components/common/Button"
 
 import { store_event_id } from "@/app/stores/event_id"
 

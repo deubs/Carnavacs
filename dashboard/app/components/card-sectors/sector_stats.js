@@ -5,9 +5,9 @@ import { store_events_sector_stats } from "@/app/stores/events_sector_stats"
 import Side_A from "@/app/components/card-sectors/components/side_a"
 import Side_B from "@/app/components/card-sectors/components/side_b"
 
-import { Error } from "@/app/components/common/error"
-import { Loading } from "@/app/components/common/loading"
-import Card from "../common/card"
+import { Error } from "@/app/components/common/Error"
+import { Loading } from "@/app/components/common/Loading"
+import Card from "../common/Card"
 
 export default function Sector_stats () {
     const { sector_stats } = store_events_sector_stats()

@@ -3,8 +3,8 @@ import css from "@/app/styles/events_list.module.css"
 import { store_events_list } from "@/app/stores/events_list"
 
 import Event_li from "@/app/components/navbar/components/components/components/events_li"
-import { Error } from "@/app/components/common/error"
-import { Loading } from "@/app/components/common/loading"
+import { Error } from "@/app/components/common/Error"
+import { Loading } from "@/app/components/common/Loading"
 
 export default function Events_list () {
     const { events_list } = store_events_list()
