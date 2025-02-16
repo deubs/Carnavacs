@@ -43,9 +43,8 @@ export default function Updates () {
         onTimeUpdate: ()=>{update_data()},
         autostart: false
     })
-
+    
     useEffect(()=>{
-        change_status()
         start()
     }, [API_URL])
     
