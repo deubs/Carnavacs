@@ -11,7 +11,7 @@ export async function update_data (apiurl, endpoint, set_event, set_loop_status,
                 set_event(response_json.result)
             } else {
                 set_event("error")
-                set_loop_status()
+                return set_loop_status()
             }
         } catch ( error ) {
             set_event("error")

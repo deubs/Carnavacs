@@ -32,7 +32,7 @@ export default function Updates () {
 
     const { loop_status, change_status, tick, tick_increment } = store_loop()
 
-    const update_data = () => {
+    const _update_data = () => {
         if (loop_status) {
             tick_increment()
         }
@@ -40,7 +40,7 @@ export default function Updates () {
 
     const { start, restart } = useTimer({
         interval: 2000,
-        onTimeUpdate: ()=>{update_data()},
+        onTimeUpdate: ()=>{_update_data()},
         autostart: false
     })
     
@@ -53,7 +53,7 @@ export default function Updates () {
 
         if (enviroment == "PROD") {
 
-            update_data(API_URL, "events/current", set_events_current, change_status, event_id)
+            update_data(API_URL, "events/current", set_events_current, change_status, event_id) 
             update_data(API_URL, "events", set_events_list, change_status, event_id)
             update_data(API_URL, "events/stats", set_events_stats, change_status, event_id)
             update_data(API_URL, "events/sectorStats", set_sector_stats, change_status, event_id)
