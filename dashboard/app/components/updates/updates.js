@@ -39,7 +39,7 @@ export default function Updates () {
     }
 
     const { start, restart } = useTimer({
-        interval: 2000000,
+        interval: 2000,
         onTimeUpdate: ()=>{update_data()},
         autostart: false
     })
