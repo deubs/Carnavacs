@@ -1,7 +1,7 @@
 .main {
     color: var(--letter);
     border: solid 1px var(--border);
-    background: var(--foreground-nav);
+    background: var(--foreground);
     padding: 1rem;
     padding-left: .5rem;
     height: 3rem;
@@ -12,7 +12,7 @@
     width: calc(100% - 1rem);
     border-radius: 5px;
     position: fixed;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(3px);
 }
 .loop_status {
     display: flex;

@@ -1,7 +1,7 @@
 .main { 
     color: var(-letter);
     border: solid 1px var(--border);
-    background: var(--card); 
+    background: var(--card);
     padding: .4rem .5rem;
     display: flex;
     flex-direction: column;
@@ -34,3 +34,21 @@
     font-size: 1.2rem;
     font-weight: bold;;
 }
+ 
+/*
+.color_sillas {
+    background: rgba(134,34,111, .5);
+}
+.color_sillas_vip {
+    background: rgba(176,38,141, .5);
+}
+.color_vip {
+    background: rgba(233,185,110,.5);
+}
+.color_pullman {
+    background: olivedrab;    
+}
+.color_tribuna {
+    background: lightcoral;
+}
+*/

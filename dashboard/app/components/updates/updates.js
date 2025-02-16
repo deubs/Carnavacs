@@ -25,7 +25,7 @@ export default function Updates () {
     const { set_sector_stats } = store_events_sector_stats()
 
     const { enviroment } = store_enviroment()
-    const { set_container } = store_dashboard()
+    const { container, set_container } = store_dashboard()
 
     const { API_URL } = store_API_URL()
     const { event_id } = store_event_id() 
@@ -39,7 +39,7 @@ export default function Updates () {
     }
 
     const { start, restart } = useTimer({
-        interval: 2000,
+        interval: 2000000,
         onTimeUpdate: ()=>{update_data()},
         autostart: false
     })
@@ -50,7 +50,7 @@ export default function Updates () {
     }, [API_URL])
     
     useEffect(()=>{
-        set_container("dashboard")
+        if (container != "dashboard") set_container("dashboard")
 
         if (enviroment == "PROD") {
 
