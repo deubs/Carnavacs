@@ -61,7 +61,7 @@ if "raspi" in platform.node():
     bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
 else:
     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
-
+i2c = 0
 for device in range(128):
     try:
         bus.read_byte(device)
@@ -90,6 +90,8 @@ class LCD(object):
         # bits = the data
         # mode = 1 for data
         #        0 for command
+        if i2c == 0:
+            return
         try:
             bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
             bits_low = mode | ((bits<<4) & 0xF0) | LCD_BACKLIGHT
