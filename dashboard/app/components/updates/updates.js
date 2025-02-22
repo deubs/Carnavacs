@@ -1,7 +1,6 @@
 "use client"
-import { useEffect } from "react";
+import { useEffect } from "react"; 
 
-import { useTimer } from "use-timer";
 import { store_loop } from "@/app/stores/loop";
 import { store_dashboard } from "@/app/stores/store_dashboard";
 
@@ -17,6 +16,7 @@ import { store_enviroment } from "@/app/stores/enviroment";
 import { update_data } from "@/app/components/utils/update_data";
 import { update_data_post } from "@/app/components/utils/update_data";
 
+
 export default function Updates () {
 
     const { set_events_current } = store_events_current()
@@ -26,47 +26,30 @@ export default function Updates () {
 
     const { enviroment } = store_enviroment()
     const { container, set_container } = store_dashboard()
-
     const { API_URL } = store_API_URL()
     const { event_id } = store_event_id() 
-
-    const { loop_status, change_status, tick, tick_increment } = store_loop()
-
-    const _update_data = () => {
-        if (loop_status) {
-            tick_increment()
-        }
-    }
-
-    const { start, restart } = useTimer({
-        interval: 2000,
-        onTimeUpdate: ()=>{_update_data()},
-        autostart: false
-    })
+    const { tick } = store_loop()
     
     useEffect(()=>{
-        start()
-    }, [API_URL])
-    
-    useEffect(()=>{
+
         if (container != "dashboard") set_container("dashboard")
 
         if (enviroment == "PROD") {
 
-            update_data(API_URL, "events/current", set_events_current, change_status, event_id) 
-            update_data(API_URL, "events", set_events_list, change_status, event_id)
-            update_data(API_URL, "events/stats", set_events_stats, change_status, event_id)
-            update_data(API_URL, "events/sectorStats", set_sector_stats, change_status, event_id)
+            update_data(API_URL, "events/current", set_events_current, event_id)  
+            update_data(API_URL, "events", set_events_list, event_id)
+            update_data(API_URL, "events/stats", set_events_stats, event_id)
+            update_data(API_URL, "events/sectorStats", set_sector_stats, event_id)
 
         } else if (enviroment == "DEV") {
 
-            update_data_post("events/current", set_events_current, change_status)
-            update_data_post("events", set_events_list, change_status)
-            update_data_post("events/stats", set_events_stats, change_status)
-            update_data_post("events/sectorStats", set_sector_stats, change_status)
-
+            update_data_post("events/current", set_events_current)
+            update_data_post("events", set_events_list)
+            update_data_post("events/stats", set_events_stats)
+            update_data_post("events/sectorStats", set_sector_stats)
+  
         } else {
-            console.log("error obteniendo datos") 
+            console.log("Error en componente Updates, enviroment: ", enviroment) 
         }
  
     }, [tick, event_id])

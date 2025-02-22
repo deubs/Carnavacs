@@ -20,7 +20,7 @@ export default function Tickets_data () {
             <div className={styles.main}>
                 <Event_data />
                 <Tickets_quantity />
-            </div>
+            </div> 
         }
         <Chart />
     </Card>

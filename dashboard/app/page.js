@@ -3,7 +3,7 @@ import styles from "./page.module.css"
 
 import { store_dashboard } from "@/app/stores/store_dashboard"
 
-import Enviroment from "@/app/components/enviroment/Enviroment"
+import Enviroment from "@/app/components/enviroment/enviroment"
 import Loading from "@/app/components/updates/loading/loading"
 import Updates from "@/app/components/updates/updates"
 
@@ -13,6 +13,7 @@ import Tickets_data from "@/app/components/card-event-stats/tickets_data"
 import Sector_stats from "@/app/components/card-sectors/sector_stats"
 import Qr_scanner from "@/app/components/card-qr-scan/qr-scanner"
 import All_nights from "@/app/components/card-all-nights/all-nights"
+import Timer from "@/app/components/timer/timer"
 
 export default function Home () {
   const { container } = store_dashboard()
@@ -20,6 +21,7 @@ export default function Home () {
   return <div className={styles.main}> 
     <Enviroment />
     <Updates />
+    <Timer />
     
     {
       container == "loading" ? 
@@ -27,7 +29,7 @@ export default function Home () {
       container == "dashboard" ?
       <>
       <Navbar />
-      <All_nights />
+      <All_nights /> 
       <Tickets_data />
       <Sector_stats />
       <Gates />

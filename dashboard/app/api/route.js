@@ -10,50 +10,57 @@ const events = {
       "id": 139,
       "fecha": "2025-01-04T21:00:00",
       "nombre": "1 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 140,
       "fecha": "2025-01-11T21:00:00",
       "nombre": "2 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 141,
       "fecha": "2025-01-18T21:00:00",
       "nombre": "3 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 142,
       "fecha": "2025-01-25T21:00:00",
       "nombre": "4 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 143,
       "fecha": "2025-02-01T21:00:00",
       "nombre": "5 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 144,
       "fecha": "2025-02-08T21:00:00",
       "nombre": "6 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 145,
       "fecha": "2025-02-15T21:00:00",
       "nombre": "7 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
+    },
+    {
+      "id": 150,
+      "fecha": "2025-02-21T20:00:00",
+      "nombre": "Eleccion de la Reina 2025",
+      "habilitado": true,
+      "showName": null
     },
     {
       "id": 146,
@@ -90,11 +97,11 @@ const events_current = {
   "success": true,
   "message": null,
   "result": {
-    "id": 141,
-    "fecha": "2025-01-18T21:00:00",
-    "nombre": "3 Noche de Carnaval del Pais",
-    "habilitado": true,
-    "showName": "CARNAVAL25G"
+    "id": 146,
+      "fecha": "2025-02-22T21:00:00",
+      "nombre": "8 Noche de Carnaval del Pais",
+      "habilitado": true,
+      "showName": "CARNAVAL25G"
   }
 }
 

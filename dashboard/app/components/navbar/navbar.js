@@ -1,5 +1,5 @@
 "use client"
-import styles from "@/app/styles/navbar.module.css"
+import styles from "@/app/styles/navbar.module.css" 
 
 import { RxHamburgerMenu } from "react-icons/rx";
 import { useState } from "react"
@@ -17,10 +17,10 @@ export default function Navbar () {
     return <div className={styles.main}>
         <div className={styles.loop_status}>
             <span><p>LS</p><p className={`${loop_status ? styles.on : styles.off }`}>{loop_status ? "ON" : "OFF"}</p></span>
-            <button onClick={()=>{change_status()}}>Change</button>
+            <button onClick={()=>{change_status(!loop_status)}}>Change</button>
         </div>
 
-        <RxHamburgerMenu
+        <RxHamburgerMenu 
         onClick={toggle}
         className={styles.icon}
         />

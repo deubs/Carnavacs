@@ -1,13 +1,13 @@
 .main {
     color: var(--letter);
-    background: var(--foreground);
+    background: var(--background);
     border-left: solid 1px var(--border);
     display: flex;
     flex-direction: column;
     position: fixed;
     right: 0;
     top: 0;
-    width: 30%;
+    width: 40%;
     height: 100vh;
     padding: 3.5rem .5rem 1rem 1rem;
     transform: translateX(calc(100% + 1rem));
