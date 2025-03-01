@@ -16,7 +16,7 @@ namespace Carnavacs.Api.Infrastructure
 
         public async Task<IReadOnlyList<Event>> GetAllAsync()
         {
-            var query = "SELECT * FROM Eventos WHERE habilitado=@Enabled order by fecha";
+            var query = "SELECT ev.* FROM Eventos ev INNER JOIN Espectaculos e ON ev.EspectaculoFk=e.id WHERE E.habilitado=@Enabled order by fecha";
             var events = await Connection.QueryAsync<Event>(query, new { Enabled = 1 }, Transaction);
             return events.ToList();
         }
@@ -38,14 +38,14 @@ namespace Carnavacs.Api.Infrastructure
             Event ev = await this.GetEventByIdAsync(eventId);
 
             string sectorStat = @"SELECT SUBSTRING(section,1,charindex('F',section, 1)-1) Name, count(*) as Total, 
-                                         sum(case when estadoqrfk=2 then 0 else 1 end) as Readed
+                                         sum(case when estadoqrfk in (2,4)  then 0 else 1 end) as Readed
                                          FROM TicketekTickets t 
                                          INNER JOIN AccesosEntradasQR qr on convert(varchar, t.barcode) =qr.QRCodigo
                                          INNER JOIN Ventas v on qr.ventaFk=v.id
                                          where status=1 and charindex('F',section, 1)>0 and v.eventofk=@eventFk
                                          group by substring(section,1,charindex('F',section, 1)-1)
                                          union
-                                         select 'Popular', count(*), ISNULL(SUM(CASE WHEN estadoqrfk=2 then 0 else 1 end),0) as cant2 from TicketekTickets t
+                                         select 'Popular', count(*), ISNULL(SUM(CASE WHEN estadoqrfk in (2,4) then 0 else 1 end),0) as cant2 from TicketekTickets t
                                          INNER JOIN AccesosEntradasQR qr on convert(varchar, t.barcode) =qr.QRCodigo
                                          INNER JOIN Ventas v on qr.ventaFk=v.id
                                          where status=1 and charindex('F',section, 1)=0 and v.eventofk=@eventFk";

@@ -65,7 +65,9 @@ namespace Carnavacs.Api
         [Description("Acceso")]
         Acceso = 33,
         [Description("Comision")]
-        Comision = 34
+        Comision = 34,
+        [Description("Ubicacion")]
+        Ubicacion = 99
     }
 
 }

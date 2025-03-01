@@ -9,9 +9,9 @@ namespace Carnavacs.Api.Infrastructure.Interfaces
         /// <summary>
         /// Mark ticket as used, or count retry if already used
         /// </summary>
-        /// <param name="ticketId">DB Internal ID</param>
+        /// <param name="code">Ticket code (barcode or qr)</param>
         /// <returns></returns>
-        Task UseAsync(int ticketId, string? device);
+        Task UseAsync(string code, string? device);
 
         /// <summary>
         /// Validate ticket and mark it as used, if persist is true, the ticket will be saved. 

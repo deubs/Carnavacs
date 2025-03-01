@@ -25,7 +25,13 @@ namespace Carnavacs.Api.Infrastructure
                 return new List<Ticket>();
 
             string query = @"SELECT e.Id, QRCodigo as Code, EstadoQrFk StatusId 
-                             FROM AccesosEntradasQR e INNER JOIN Ventas v ON e.VentaFk = v.Id 
+                             FROM AccesosEntradasQR e 
+                             INNER JOIN Ventas v ON e.VentaFk = v.Id 
+                             WHERE EstadoQrFk=@ticketStatus AND V.EstadoVentaFk = @orderStatus AND v.eventofk=@eventId
+                             UNION
+                             SELECT e.Id, QRCodigo as Code, EstadoQrFk StatusId 
+                             FROM AccesosUbicacionesQR e 
+                             INNER JOIN Ventas v ON e.VentaFk = v.Id 
                              WHERE EstadoQrFk=@ticketStatus AND V.EstadoVentaFk = @orderStatus AND v.eventofk=@eventId";
 
             var tickets = await Connection.QueryAsync<Ticket>(query, new
@@ -39,13 +45,17 @@ namespace Carnavacs.Api.Infrastructure
 
         public async Task<Ticket> GetByIdAsync(long id)
         {
-            string query = "SELECT Id, QRCodigo as Code, EstadoQrFk StatusId FROM AccesosEntradasQR WHERE Id=@Id";
+            string query = @"SELECT Id, QRCodigo as Code, EstadoQrFk StatusId FROM AccesosEntradasQR WHERE Id=@Id
+                             UNION
+                             SELECT Id, QRCodigo as Code, EstadoQrFk StatusId FROM AccesosUbicacionesQR WHERE Id=@Id";
             return await Connection.QuerySingleAsync<Ticket>(query, new { Id = id }, Transaction);
         }
 
         private async Task<Ticket> GetByCodeAsync(string code)
         {
-            string query = @"SELECT e.Id, QRCodigo as Code, EstadoQrFk StatusId, VentaFK FROM AccesosEntradasQR e WHERE e.QrCodigo=@code";
+            string query = @"SELECT e.Id, QRCodigo as Code, EstadoQrFk StatusId, VentaFK FROM AccesosEntradasQR e WHERE e.QrCodigo=@code
+                             UNION
+                             SELECT e.Id, QRCodigo as Code, EstadoQrFk StatusId, VentaFK FROM AccesosUbicacionesQR e WHERE e.QrCodigo=@code";
             return await Connection.QueryFirstOrDefaultAsync<Ticket>(query, new { code }, Transaction);
         }
 
@@ -56,7 +66,8 @@ namespace Carnavacs.Api.Infrastructure
 
         public async Task<string> UpdateAsync(Ticket entity)
         {
-            string upd = "UPDATE AccesosEntradasQR SET EstadoQrFk = @st WHERE Id=@Id;";
+            string table = entity.GetType() == TicketType.Ubicacion ? "AccesosUbicacionesQR" : "AccesosEntradasQR";
+            string upd = $"UPDATE {table} SET EstadoQrFk = @st WHERE Id=@Id;";
             var r = await Connection.ExecuteAsync(upd, new { st = TicketStatus.Used.Id, Id = entity.Id }, Transaction);
             return "ok";
         }
@@ -66,9 +77,9 @@ namespace Carnavacs.Api.Infrastructure
             throw new NotImplementedException();
         }
 
-        public async Task UseAsync(int ticketId, string deviceId)
+        public async Task UseAsync(string code, string deviceId)
         {
-            Ticket qr = await this.GetByIdAsync(ticketId);
+            Ticket qr = await this.GetByCodeAsync(code);
             bool enabled = qr.Enabled;
             if (qr.Enabled)
                 await this.UpdateAsync(qr);
