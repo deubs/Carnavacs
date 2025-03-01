@@ -36,12 +36,13 @@ namespace Carnavacs.Api.Infrastructure.Services
                 try
                 {
                     await ProcessAllTicketPagesAsync();
-                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error occurred while processing tickets");
-                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                }finally
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                 }
             }
         }
