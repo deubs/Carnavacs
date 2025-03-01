@@ -2,10 +2,10 @@
 import styles from "@/app/styles/tickets_data.module.css"
 import { store_events_stats } from "@/app/stores/events_stats"
 
-import { Error } from "@/app/components/common/Error"
-import { Loading } from "@/app/components/common/Loading"
+import { Error } from "@/app/components/common/error"
+import { Loading } from "@/app/components/common/loading"
 
-import Card from "@/app/components/common/Card"
+import Card from "@/app/components/common/card"
 import Event_data from "@/app/components/card-event-stats/components/event_data"
 import Tickets_quantity from "@/app/components/card-event-stats/components/tickets_quantity"
 import Chart from "@/app/components/card-event-stats/components/chart"

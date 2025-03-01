@@ -21,7 +21,7 @@ export default function  Enviroment () {
             set_enviroment("PROD")
             console.log("enviroment setted up: prod, url: ",process.env.NEXT_PUBLIC_APIURL_BOLETERIA)
 
-        } else if (url.includes("localhost")) {
+        } else if (url.includes("localhost") || url.includes(192)) {
 
             set_API_URL(process.env.NEXT_PUBLIC_APIURL_DEV)
             set_enviroment("DEV")

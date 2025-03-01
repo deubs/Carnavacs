@@ -6,7 +6,7 @@ export default function Event_data () {
     const { events_current } = store_events_current()
 
     return <div className={styles.main}>
-        <p>{ events_current && `${events_current.nombre}, ${data_parse(events_current.fecha)}`},</p>
+        <p>{ events_current && `${events_current.nombre}, ${data_parse(events_current.fecha)}`}</p>
     </div>
 }
  
