@@ -26,7 +26,7 @@ namespace Carnavacs.Api.Controllers
         [EndpointName("GetGates")]
         [EndpointSummary("Get All Gates")]
         [EndpointDescription("Get All Enabled Gates for current edition")]
-        [HttpGet]
+        [HttpGet ("Gates")]
         public async Task<ApiResponse<List<Gate>>> GetAll()
         {
             var apiResponse = new ApiResponse<List<Gate>>();
@@ -53,7 +53,36 @@ namespace Carnavacs.Api.Controllers
             return apiResponse;
         }
 
-    
+        [EndpointName("GetDevices")]
+        [EndpointSummary("Get All Devices in use")]
+        [EndpointDescription("Get All Enabled Access Devices for current edition")]
+        [HttpGet("Devices")]
+        public async Task<ApiResponse<List<AccessDevice>>> GetAllDevices()
+        {
+            var apiResponse = new ApiResponse<List<AccessDevice>>();
+
+            try
+            {
+                var data = await _unitOfWork.Gates.GetAllDevicesAsync();
+                apiResponse.Success = true;
+                apiResponse.Result = data.ToList();
+            }
+            catch (SqlException ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                _logger.LogError(ex, "Error getting all gates");
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                _logger.LogError(ex, "Error getting all Gates");
+            }
+
+            return apiResponse;
+        }
+
         [HttpGet("{id}")]
         public async Task<ApiResponse<Gate>> GetById([Description("The gate id")] int id)
         {

@@ -1,4 +1,6 @@
-﻿namespace Carnavacs.Api.Domain.Entities
+﻿using System.Text.Json.Serialization;
+
+namespace Carnavacs.Api.Domain.Entities
 {
     public class EventStats
     {
@@ -62,5 +64,11 @@
         public int DeviceId { get; set; }
         public string DeviceName { get; set; }
         public int PeopleCount { get; set; }
+
+        [JsonIgnore]
+        public int GateId { get; set; }
+
+        [JsonIgnore]
+        public string GateNickName { get; set; }
     }
 }
