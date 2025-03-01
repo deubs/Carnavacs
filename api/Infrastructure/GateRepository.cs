@@ -29,6 +29,16 @@ namespace Carnavacs.Api.Infrastructure
             return gates.ToList();
         }
 
+        public async Task<IReadOnlyList<AccessDevice>> GetAllDevicesAsync()
+        {
+
+            string query = @"select DISTINCT ad.* from [dbo].[AccesosDispositivos] ad INNER JOIN QREntradasLecturas l  ON l.AccesoDispositivoFk = ad.Id
+                             WHERE l.QREntradaFk>=414647 and PuertaIngresoId is not null order by ad.nroserie";
+
+            var devices = await Connection.QueryAsync<AccessDevice>(query,null, Transaction);
+            return devices.ToList();
+        }
+
         public async Task<Gate> GetByIdAsync(long id)
         {
             string query = "SELECT * FROM [PuertaIngreso] WHERE Id=@Id";

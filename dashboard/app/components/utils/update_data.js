@@ -49,12 +49,13 @@ export async function get_total_tickets (apiurl, id) {
             const response = await fetch(`${apiurl}/events/stats?eventId=${id}`)
             const response_json = await response.json()
             if (response_json.success) {
-                return response_json.result.totalTickets
+                return ({ error: false, quantity: response_json.result.totalTickets })
             } else {
                 throw new Error()
             }
         } catch ( error ) {
             console.log(`Error en update_data_nights, get_total_tickets, ${apiurl}, ${id}, Error:\n${error}`)
+            return ({ error: true, quantity: false })
         }
     }
     return await fetch_data()

@@ -639,40 +639,48 @@ const gates_1 = {
 
 export async function POST ( req ) {
   //console.log("header Auth: ", req.headers.Auth)
-  const { event, data } = await req.json()
-
-  switch ( event ) {
-    case 1:
-      // login
-      try {
-        const res = checkCredentials(data)
-        
-        if (res.login) {
-          const token = await generate_token(data.user)
-          return NextResponse.json({ login: true, token })
-        } else { 
-          return NextResponse.json({ login: false }) }
-        
-      } catch (error) { 
-        return NextResponse.json({ error }) 
-      }
-    case 2:
-      try {
-        const { url } = data
-        if ( url == "events" ) return NextResponse.json(events)
-        if ( url == "events/current" ) return NextResponse.json(events_current)
-        if ( url == "events/stats" ) return NextResponse.json(events_stats)
-        if ( url == "events/sectorStats" ) return NextResponse.json(events_sectorStats)
-          
-        if ( url == "gates/gates" ) return NextResponse.json(gates_gates)
-        if ( url == "gates/devices" ) return NextResponse.json(gates_devices)
-        if ( url == "gates/1" ) return NextResponse.json(gates_1)
-
-      } catch (error) {
-        return NextResponse.json({ error })
-      }
+  try {
+    const { event, data } = await req.json()
     
-      default: return NextResponse.json({ r: "response default" })
+    switch ( event ) {
+      case 1:
+        // login
+        try {
+          const res = checkCredentials(data)
+          
+          if (res.login) { 
+            const token = await generate_token(data.user)
+            return NextResponse.json({ login: true, token })
+          } else { 
+            return NextResponse.json({ login: false }) }
+          
+        } catch (error) { 
+          return NextResponse.json({ error }) 
+        }
+      case 2:
+        try {
+          const { url } = data
+          if ( url == "events" ) return NextResponse.json(events)
+          if ( url == "events/current" ) return NextResponse.json(events_current)
+          if ( url == "events/stats" ) return NextResponse.json(events_stats)
+          if ( url == "events/sectorStats" ) return NextResponse.json(events_sectorStats)
+            
+          if ( url == "gates/gates" ) return NextResponse.json(gates_gates)
+          if ( url == "gates/devices" ) return NextResponse.json(gates_devices)
+          if ( url == "gates/1" ) return NextResponse.json(gates_1)
+  
+        } catch (error) {
+          return NextResponse.json({ error })
+        }
+      
+        default: return NextResponse.json({ r: "response default" })
+    }
+  } catch (error) {
+    console.log(`Error en API local:
+      event: ${event},
+      data: ${data},
+      error: error`)
+      return NextResponse.json({ error: true })
   }
 }
 

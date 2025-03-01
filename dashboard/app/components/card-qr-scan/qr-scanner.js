@@ -1,6 +1,5 @@
 "use client"
 
-import { Html5QrcodeScanner } from "html5-qrcode";
 import { Html5Qrcode } from "html5-qrcode";
 import { store_ticket_validate } from "@/app/stores/ticket_validate";
 import { store_API_URL } from "@/app/stores/API_URL";
@@ -8,8 +7,8 @@ import { store_API_URL } from "@/app/stores/API_URL";
 import { check_ticket } from "@/app/components/utils/scan_qr";
 import Qr_information from "@/app/components/card-qr-scan/components/information";
 
-import Button from "@/app/components/common/Button";
-import Card from "@/app/components/common/Card";
+import Button from "@/app/components/common/button";
+import Card from "@/app/components/common/card";
 
 export default function Qr_scanner () {
 

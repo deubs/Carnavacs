@@ -14,11 +14,18 @@
     position: fixed;
     backdrop-filter: blur(3px);
 }
+.main img {
+    height: 3rem;
+    width: 3rem;
+    object-fit: scale-down;
+}
 .loop_status {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding: .5rem 0;
+    gap: .5rem;
 }
 .loop_status span {
     display: flex;

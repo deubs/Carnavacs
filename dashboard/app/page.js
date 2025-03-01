@@ -20,7 +20,7 @@ export default function Home () {
 
   return <div className={styles.main}> 
     <Enviroment />
-    <Updates />
+    <Updates />  
     <Timer />
     
     {
@@ -29,7 +29,7 @@ export default function Home () {
       container == "dashboard" ?
       <>
       <Navbar />
-      <All_nights /> 
+      <All_nights />
       <Tickets_data />
       <Sector_stats />
       <Gates />

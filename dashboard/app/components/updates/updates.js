@@ -32,7 +32,7 @@ export default function Updates () {
     
     useEffect(()=>{
 
-        if (container != "dashboard") set_container("dashboard")
+        if (container != "dashboard" && container != "qr_scan") set_container("dashboard")
 
         if (enviroment == "PROD") {
 
@@ -50,7 +50,7 @@ export default function Updates () {
   
         } else {
             console.log("Error en componente Updates, enviroment: ", enviroment) 
-        }
+        } 
  
     }, [tick, event_id])
     
