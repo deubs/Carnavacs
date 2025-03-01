@@ -1,6 +1,6 @@
 "use client"
 import css from "@/app/styles/sidebar.module.css"
-import styles from "@/app/styles/navbar.module.css" 
+import styles from "@/app/styles/navbar.module.css"
 
 import Events_list from "@/app/components/navbar/components/components/events_list";
 import Button from "@/app/components/common/button";
