@@ -1,0 +1,54 @@
+.main { 
+    color: var(-letter);
+    border: solid 1px var(--border);
+    background: var(--card);
+    padding: .4rem .5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+}
+.type {
+    font-size: .7rem;
+    display: block;
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+} 
+.sector {
+    text-align: center;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: .5rem 0;
+}
+.sillas {
+    font-size: 1.8rem;
+}
+.vip {
+    font-size: 1.1rem;
+}
+.quantity {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;;
+}
+ 
+/*
+.color_sillas {
+    background: rgba(134,34,111, .5);
+}
+.color_sillas_vip {
+    background: rgba(176,38,141, .5);
+}
+.color_vip {
+    background: rgba(233,185,110,.5);
+}
+.color_pullman {
+    background: olivedrab;    
+}
+.color_tribuna {
+    background: lightcoral;
+}
+*/

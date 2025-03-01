@@ -1,0 +1,12 @@
+.main {
+    color: var(--letter);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    gap: .5rem;
+    padding:.5rem;
+    padding-top: 4rem;
+    background: orangered;
+    padding: 4rem;
+}

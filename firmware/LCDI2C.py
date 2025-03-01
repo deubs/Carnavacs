@@ -36,18 +36,8 @@ except ImportError:
     import smbus
 import time
 
-# Define some device parameters
-if (platform.node() == "vehiculos") or \
-      (platform.node() == "tango18") or \
-        ("raspi01" in platform.node()) or \
-            ("raspi03" in platform.node()):
-    I2C_ADDR = 0x3F
-else:
-    I2C_ADDR = 0x27 # I2C device address
-
-LCD_WIDTH = 16   # Maximum characters per line
-
 # Define some device constants      
+LCD_WIDTH = 16   # Maximum characters per line
 LCD_CHR = 1 # Mode - Sending data
 LCD_CMD = 0 # Mode - Sending command
 
@@ -72,7 +62,15 @@ if "raspi" in platform.node():
 else:
     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
 
-# bus = smbus.SMBus(3) # OrangePI Zero3 uses i2c_3
+for device in range(128):
+    try:
+        bus.read_byte(device)
+        i2c = device
+        print(hex(i2c))
+    except: # exception if read_byte fails
+        pass
+
+I2C_ADDR = i2c
 
 class LCD(object):
   
@@ -86,37 +84,45 @@ class LCD(object):
         self.lcd_byte(0x01,LCD_CMD) # 000001 Clear display
         time.sleep(E_DELAY)
 
+
     def lcd_byte(self, bits, mode):
         # Send byte to data pins
         # bits = the data
         # mode = 1 for data
         #        0 for command
-        bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
-        bits_low = mode | ((bits<<4) & 0xF0) | LCD_BACKLIGHT
-        # High bits
-        bus.write_byte(I2C_ADDR, bits_high)
-        self.lcd_toggle_enable(bits_high)
-        # Low bits
-        bus.write_byte(I2C_ADDR, bits_low)
-        self.lcd_toggle_enable(bits_low)
+        try:
+            bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
+            bits_low = mode | ((bits<<4) & 0xF0) | LCD_BACKLIGHT
+            # High bits
+            bus.write_byte(I2C_ADDR, bits_high)
+            self.lcd_toggle_enable(bits_high)
+            # Low bits
+            bus.write_byte(I2C_ADDR, bits_low)
+            self.lcd_toggle_enable(bits_low)
+        except Exception as e:
+            print(e)
 
 
     def lcd_toggle_enable(self, bits):
-    # Toggle enable
-        time.sleep(E_DELAY)
-        bus.write_byte(I2C_ADDR, (bits | ENABLE))
-        time.sleep(E_PULSE)
-        bus.write_byte(I2C_ADDR, (bits & ~ENABLE))
-        time.sleep(E_DELAY)
+        try:
+            time.sleep(E_DELAY)
+            bus.write_byte(I2C_ADDR, (bits | ENABLE))
+            time.sleep(E_PULSE)
+            bus.write_byte(I2C_ADDR, (bits & ~ENABLE))
+            time.sleep(E_DELAY)
+        except Exception as e:
+            print(e)
 
 
     def lcd_string(self, message, line):
-    # Send string to display
-        message = message.ljust(LCD_WIDTH," ")
-        
-        self.lcd_byte(line, LCD_CMD)
-        for i in range(LCD_WIDTH):
-            self.lcd_byte(ord(message[i]),LCD_CHR)
+        # Send string to display
+        try:
+            message = message.ljust(LCD_WIDTH," ")
+            self.lcd_byte(line, LCD_CMD)
+            for i in range(LCD_WIDTH):
+                self.lcd_byte(ord(message[i]),LCD_CHR)
+        except Exception as e:
+            print(e)
 
 
     def main(self):
@@ -128,8 +134,8 @@ class LCD(object):
             self.lcd_string("I2C LCD        <",LCD_LINE_2)
             time.sleep(3)        
             # Send some more text
-            self.lcd_string(">         RPiSpy",LCD_LINE_1)
-            self.lcd_string(">        I2C LCD",LCD_LINE_2)
+            self.lcd_string(platform.node(),LCD_LINE_1)
+            self.lcd_string(f"{hex(I2C_ADDR)}     I2C LCD",LCD_LINE_2)
             time.sleep(3)
 
 

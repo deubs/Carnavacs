@@ -21,6 +21,8 @@ scancodes = {
 print(scancodes)
 NOT_RECOGNIZED_KEY = u'X'
 
+import pdb
+
 def getDevice():
 	devices = [InputDevice(path) for path in list_devices()]
 	inputdev = None
@@ -30,10 +32,28 @@ def getDevice():
 			("BF SCAN SCAN KEYBOARD" in device.name) or \
 				("NT USB Keyboard" in device.name) or \
 					("ZKRFID R400" in device.name) or \
-						("BARCODE SCANNER Keyboard Interface" in device.name):
+                    	("TMS HIDKeyBoard" in device.name) or \
+							("BARCODE SCANNER Keyboard Interface" in device.name):
 			inputdev = device.path
 			break
 	return inputdev
+
+
+def getInputDevices():
+	devices = [InputDevice(path) for path in list_devices()]
+	inputdev = []
+	for device in devices:
+		print(device.name)
+		if ("IMAGER 2D" in device.name) or \
+			("BF SCAN SCAN KEYBOARD" in device.name) or \
+				("NT USB Keyboard" in device.name) or \
+					("ZKRFID R400" in device.name) or \
+                    	("TMS HIDKeyBoard" in device.name) or \
+							("BARCODE SCANNER Keyboard Interface" in device.name):
+			inputdev.append(device.path)
+			# break
+	return inputdev
+
 
 inputdev = None
 while inputdev == None:
@@ -41,7 +61,7 @@ while inputdev == None:
 	if inputdev == None:
 		print("NO DEVICE FOUND")
 		time.sleep(2)
-
+		exit()
 try:           
 	device = InputDevice(inputdev) # Replace with your device
 except Exception as e:

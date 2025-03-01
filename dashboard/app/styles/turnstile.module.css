@@ -1,9 +1,50 @@
-.main {
-    width: 8rem;
-    border: solid 1px rgba(255,255,255,.3);
-    border-radius: 5px;
-    padding: .5rem;
+.main { 
+    color: var(--letter);
+    border: solid 1px var(--border);
+    background: var(--card);
+    padding: .4rem .5rem;
+    flex-grow: 1;
 }
-.main p {
-    font-size: 18px;
+.title {
+    font-size: .7rem;
+    display: block;
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+}
+.content {
+    font-size: .7rem;
+    display: block;
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+}
+.number { 
+    font-weight: bold;
+    font-size: 1.8rem;
+    padding: .3rem 0;
+}
+ 
+@media (max-width: 700px) {
+    .main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .title {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .number {
+        min-width: 4ch;
+    }
 }

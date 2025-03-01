@@ -2,3 +2,20 @@
     display: flex;
     gap: 1rem;
 }
+
+@keyframes show {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+  }
+/* 
+@media (max-width: 767px) {
+    .container {
+        justify-content: center;
+        align-items: center;
+    }
+}
+*/

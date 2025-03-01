@@ -1,0 +1,6 @@
+.main {
+    color: var(--letter);
+    display: flex;
+    gap: .2rem;
+    min-width: 100%;
+}

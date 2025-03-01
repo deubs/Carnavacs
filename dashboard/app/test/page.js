@@ -1,10 +1,22 @@
 "use client"
-import { store_enviroment } from "../stores/enviroment"
+import { useEffect } from "react"
+import css from "@/app/test/test.module.css"
+import { store_test } from "./store"
 
 export default function Test () {
-    const { API_URL, LOCAL_API_URL } = store_enviroment()
-    const check = () => {
-        console.log(API_URL, LOCAL_API_URL )
+  const { state, set_state } = store_test()
+
+  useEffect(()=>{
+    setTimeout(()=>{
+      set_state("Componente")
+    }, 2000)
+  }, [])
+  
+  if (!state) {
+      return <div className={css.main}>
+      <p>Retorno por defecto</p>
+      </div>
+    } else {
+      return <p>{ state }</p>
     }
-    return <button onClick={check}>check</button>
-}
+} 
