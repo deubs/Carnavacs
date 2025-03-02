@@ -36,7 +36,7 @@ export default function Updates () {
 
         if (enviroment == "PROD") {
 
-            update_data(API_URL, "events/current", set_events_current, event_id)  
+            update_data(API_URL, "events/current", set_events_current, event_id)
             update_data(API_URL, "events", set_events_list, event_id)
             update_data(API_URL, "events/stats", set_events_stats, event_id)
             update_data(API_URL, "events/sectorStats", set_sector_stats, event_id)

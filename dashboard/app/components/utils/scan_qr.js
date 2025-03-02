@@ -10,8 +10,8 @@ export const check_ticket = async (url, decodedText, set_data) => {
         const response_json = await response.json()
         if (response_json.success) {
             set_data({
-                m1: r.result.m1, 
-                m2: r.result.m2,
+                m1: response_json.result.m1, 
+                m2: response_json.result.m2,
                 info: ""
             })
         } else {

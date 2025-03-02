@@ -12,11 +12,16 @@ import Card from "@/app/components/common/card";
 
 export default function Qr_scanner () {
 
-    const { set_data } = store_ticket_validate()
+    const { set_data } = store_ticket_validate() 
     const { API_URL } = store_API_URL()
 
     const check_qr_validation = async (decodedText) => {
-        await check_ticket(API_URL, decodedText, set_data)
+        set_data({
+            m1: "",
+            m2: "",
+            info: `Escaneando código ${decodedText}`
+        })
+        await check_ticket(API_URL, decodedText, set_data) 
     }
 
     const scanner_2 = () => {
@@ -31,11 +36,13 @@ export default function Qr_scanner () {
                         cameraId = device.id
                         break;
                     }
+                    if (devices.indexOf(device) == devices.length -1) {
+                        alert("Cámara trasera no detectada, probando cámara delantera")                        
+                        cameraId = device.id
+                    }
                 }
-                if (!cameraId) {
-                   alert("Cámara trasera no detectada, probando cámara delantera")
-                } else {
-                    const html5QrCode = new Html5Qrcode("reader")
+
+                const html5QrCode = new Html5Qrcode("reader")
                     html5QrCode.start( cameraId,
                         {
                             fps: 15,    // Optional, frame per seconds for qr code scanning
@@ -49,18 +56,16 @@ export default function Qr_scanner () {
                             throw errorMessage
                     })
                     .catch((error) => {
-                        set_data({ 
-                            m1: "", 
-                            m2: "", 
-                            info: "Error inicializando componente reader"})
+                        throw error
                     })
-                }
+            } else {
+                throw "error obteniendo acceso a alguna cámara"
             }
         }).catch((error) => {
             set_data({ 
                 m1: "", 
                 m2: "", 
-                info: "Error en componente get cameras"})
+                info: "Error en componente get cameras: ",error})
         });
     }
 

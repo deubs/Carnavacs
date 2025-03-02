@@ -2,9 +2,9 @@
 
 export async function update_data (apiurl, endpoint, set_event, id) {
     const fetch_data = async () => {
-        console.log(`fetcheando datos de: ${apiurl}\nendpoint: ${endpoint}`)
         try {
             const query_parameter = id ? `?eventId=${id}` : ""
+            console.log(`fetcheando datos de: ${apiurl}\nendpoint: ${endpoint}\nquery parameter: ${query_parameter}`)
             const response = await fetch(`${apiurl}/${endpoint}${query_parameter}`)
             const response_json = await response.json()
             if (response_json.success) {
