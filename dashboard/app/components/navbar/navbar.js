@@ -12,9 +12,6 @@ export default function Navbar () {
     }
 
     return <div className={styles.main}>
-        <img
-        src="/logo.png"
-        />
         <RxHamburgerMenu 
         onClick={toggle}
         className={styles.icon}
@@ -22,3 +19,9 @@ export default function Navbar () {
         <Sidebar visible={visible} toggleVisible={toggle}/>
         </div>
 }
+
+/*
+<img
+        src="/logo.png"
+        />
+*/
