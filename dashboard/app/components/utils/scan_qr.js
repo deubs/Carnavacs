@@ -1,13 +1,22 @@
 export const check_ticket = async (url, decodedText, set_data) => {
+    console.log(`
+        fetcheando datos desde componente qr a:
+        url: ${url}
+        decodedText: ${decodedText}
+        `)
+
     try {
         const response = await fetch(`${url}/Ticket/Verify?code=${code}`, {
             method: "post",
-            headers: new Headers({"content-type":"application/json"}),
             body: JSON.stringify({
                 decodedText
             })
         })
         const response_json = await response.json()
+        console.log(`
+            response en json:
+            ${JSON.stringify(response_json)}`)
+
         if (response_json.success) {
             set_data({
                 m1: response_json.result.m1, 
@@ -23,7 +32,11 @@ export const check_ticket = async (url, decodedText, set_data) => {
             })
         }
     } catch (error) {
-        console.log("Error en la query de enviar qr en hooks/scan_qr")
+        console.log(`
+        Error en la query de enviar qr en hooks/scan_qr
+        Error: ${error}
+        Error en stringify: ${JSON.stringify(error)}
+        `)
     }
     
 }
