@@ -28,10 +28,9 @@ export default function  Enviroment () {
             console.log("enviroment setted up: dev, url: ",process.env.NEXT_PUBLIC_APIURL_DEV)
 
         } else {
-            
+
             console.log("Error obteniendo URL ENVIROMENT")
         }
     }, [])
     return <></>
 }
-

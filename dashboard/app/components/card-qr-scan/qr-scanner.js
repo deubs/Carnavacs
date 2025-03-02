@@ -74,5 +74,5 @@ export default function Qr_scanner () {
         <div id="reader" width="600"></div>
         <Button text={"Escanear código QR"} callback={scanner_2} />
         <Qr_information />
-        </Card> 
+        </Card>
 }

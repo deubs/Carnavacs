@@ -34,7 +34,7 @@ export default function Updates () {
 
         if (container != "dashboard" && container != "qr_scan") set_container("dashboard")
 
-        if (enviroment == "PROD") {
+        if (enviroment == "PROD") { 
 
             update_data(API_URL, "events/current", set_events_current, event_id)
             update_data(API_URL, "events", set_events_list, event_id)
@@ -47,7 +47,7 @@ export default function Updates () {
             update_data_post("events", set_events_list)
             update_data_post("events/stats", set_events_stats)
             update_data_post("events/sectorStats", set_sector_stats)
-  
+
         } else {
             console.log("Error en componente Updates, enviroment: ", enviroment) 
         } 
