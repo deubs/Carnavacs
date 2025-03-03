@@ -112,7 +112,7 @@ const events_stats = {
     "eventId": 0,
     "totalTickets": 16660,
     "usedTickets": 638,
-    "remainingTickets": 16022,
+    "remainingTickets": 16022, 
     "totalGates": 0,
     "openGates": 0,
     "closedGates": 0,

@@ -7,7 +7,7 @@ import { useState } from "react"
 export default function Navbar () {
     const [ visible, setVisible ] = useState(false)
 
-    const toggle = () => { 
+    const toggle = () => {
         setVisible(!visible)
     }
 

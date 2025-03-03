@@ -9,4 +9,3 @@ export default function Event_data () {
         <p>{ events_current && `${events_current.nombre}, ${data_parse(events_current.fecha)}`}</p>
     </div>
 }
- 

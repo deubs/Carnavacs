@@ -15,8 +15,8 @@ export default function Qr_scanner () {
     const { set_data } = store_ticket_validate() 
     const { API_URL } = store_API_URL()
 
-    const check_qr_validation = async (decodedText) => {
-        set_data({
+    const check_qr_validation = async (decodedText) => { 
+        set_data({ 
             m1: "",
             m2: "",
             info: `Escaneando código ${decodedText}`

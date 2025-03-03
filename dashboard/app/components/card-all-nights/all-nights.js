@@ -2,8 +2,8 @@
 import styles from "@/app/styles/all_nights.module.css"
 import { useEffect, useState } from "react" 
 
-import { Error } from "@/app/components/common/Error"
-import { Loading } from "@/app/components/common/Loading"
+import { Error } from "@/app/components/common/error"
+import { Loading } from "@/app/components/common/loading"
 
 import { store_events_current } from "@/app/stores/events_current"
 import { store_events_list } from "@/app/stores/events_list"
@@ -13,7 +13,7 @@ import { store_stats_all_nights } from "@/app/stores/stats_all_nights"
 import { get_total_tickets } from "@/app/components/utils/update_data"
 import { get_nights } from "@/app/components/utils/get_nights"
 
-import Card from "@/app/components/common/Card"
+import Card from "@/app/components/common/card"
 import Chart from "@/app/components/card-all-nights/components/line_chart"
 
 export default function All_nights () {

@@ -15,18 +15,19 @@ export default function Sidebar ({ visible, toggleVisible }) {
         toggleVisible()
         set_container("qr_scan")
     }
+
     const inicio = () => {
         toggleVisible()
         set_container("dashboard")
     }
     
-    return <div className={`${css.main} ${visible && css.visible }`}>
+    return <div className={`${css.main} ${visible && css.visible}`}>
         <Button text={"Inicio"} callback={inicio} />
-        <Button text={"Escanear QR"} callback={scan_qr} />  
+        <Button text={"Escanear QR"} callback={scan_qr} />
         <Events_list callback={toggleVisible} />
         <div className={styles.loop_status}>
             <span><p>Loop status</p><p className={`${loop_status ? styles.on : styles.off }`}>{loop_status ? "ON" : "OFF"}</p></span>
-            <button onClick={()=>{change_status(!loop_status)}}>Change</button>
-        </div> 
+            <button onClick={()=>{change_status(!loop_status)}}>Change Status</button>
+        </div>
         </div>
 }
