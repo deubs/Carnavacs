@@ -21,7 +21,7 @@ export async function update_data (apiurl, endpoint, set_event, id) {
     return await fetch_data()
 }
 
-export async function update_data_post (endpoint, set_event) {
+export async function update_data_post (endpoint, set_event) { 
     const fetch_data = async () => {
         console.log(`fetcheando datos de: ${endpoint}`)
         try {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generate_token, check_token } from "./jsonwebtoken";
 import { checkCredentials } from "./pseudodbusers";
-
+ 
 const events = {
   "success": true,
   "message": null,

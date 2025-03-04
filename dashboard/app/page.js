@@ -3,7 +3,7 @@ import styles from "./page.module.css"
 
 import { store_dashboard } from "@/app/stores/store_dashboard"
 
-import Enviroment from "@/app/components/enviroment/Enviroment"
+import Enviroment from "@/app/components/enviroment/enviroment"
 import Loading from "@/app/components/updates/loading/loading"
 import Updates from "@/app/components/updates/updates"
 

@@ -16,10 +16,9 @@ import { store_enviroment } from "@/app/stores/enviroment";
 import { update_data } from "@/app/components/utils/update_data";
 import { update_data_post } from "@/app/components/utils/update_data";
 
-
 export default function Updates () {
 
-    const { set_events_current } = store_events_current()
+    const { set_events_current, events_current } = store_events_current() 
     const { set_events_list } = store_events_list()
     const { set_events_stats } = store_events_stats()
     const { set_sector_stats } = store_events_sector_stats()
@@ -33,17 +32,20 @@ export default function Updates () {
     useEffect(()=>{
 
         if (container != "dashboard" && container != "qr_scan") set_container("dashboard")
+        if (enviroment == "PROD") {
 
-        if (enviroment == "PROD") { 
-
-            update_data(API_URL, "events/current", set_events_current, event_id)
+            if (events_current == "loading") {
+                update_data(API_URL, "events/current", set_events_current, event_id)
+            }
             update_data(API_URL, "events", set_events_list, event_id)
             update_data(API_URL, "events/stats", set_events_stats, event_id)
             update_data(API_URL, "events/sectorStats", set_sector_stats, event_id)
 
         } else if (enviroment == "DEV") {
-
+            
+            if (events_current == "loading") {
             update_data_post("events/current", set_events_current)
+            }
             update_data_post("events", set_events_list)
             update_data_post("events/stats", set_events_stats)
             update_data_post("events/sectorStats", set_sector_stats)

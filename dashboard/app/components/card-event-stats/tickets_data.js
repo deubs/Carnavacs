@@ -18,6 +18,7 @@ export default function Tickets_data () {
             events_stats == "loading" ? <Loading /> :
             events_stats == "error" ? <Error /> :
             <div className={styles.main}>
+                <Event_data/> 
                 <Tickets_quantity />
             </div>
         }
