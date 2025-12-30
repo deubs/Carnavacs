@@ -16,13 +16,13 @@ cd ~/src
 >apt update
 >apt full-upgrade
 
->git clone git@github.com:deubs/Carnavacs.git
+git clone git@github.com:deubs/Carnavacs.git
+git remote set-url origin ssh://git@git.lacuatro.com.ar/~/carnavacs.git
+git config --global pull.rebase false
 
 #install deps
 cd ~/src/Carnavacs/firmware/server/
 >apt install $(cat pkglist)
-
-
 
 #setup crontab to run on boot
 

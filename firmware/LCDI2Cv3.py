@@ -56,20 +56,6 @@ E_DELAY = 0.0005
 
 #Open I2C interface
 print(platform.node())
-# if "raspi" in platform.node():
-#     bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
-# else:
-#     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
-
-# for device in range(128):
-#     try:
-#         bus.read_byte(device)
-#         i2c = device
-#         print(i2c)
-#     except: # exception if read_byte fails
-#         pass
-
-# I2C_ADDR = i2c
 
 
 from smbus2 import SMBus, i2c_msg

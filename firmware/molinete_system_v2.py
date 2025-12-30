@@ -268,14 +268,11 @@ class AccessSystem(baseAccessSystem):
             self.lcd.lcd_string("LCD RESTART BY QR", l2, self.display_address)
             self.lcd.initDisplay(self.display_address)
             
-            # os.system('systemctl poweroff')
-
 
     def main(self, lcd):
         """
             Main function
         """
-        # self.initLCD()
         ncodes = 0
         bdirt = False
         self.lcd = lcd

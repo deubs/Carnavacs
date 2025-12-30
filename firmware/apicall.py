@@ -5,8 +5,8 @@ keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 'key3': '2329db1e-95e8-4265-986e-d02114dbf5dc'}
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
-apiurl = "http://api.carnavaldelpais.com.ar/Ticket/Validate"
-apiurlverify = "http://api.carnavaldelpais.com.ar/Ticket/Verify"
+apiurl = "https://api.carnavaldelpais.com.ar/Ticket/Validate"
+apiurlverify = "https://api.carnavaldelpais.com.ar/Ticket/Verify"
 # apiurl = "http://192.168.40.100/Ticket/Validate"
 
 
@@ -100,8 +100,9 @@ def apicallverify(code):
         print(e)
         return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}
 
+
 if __name__ == "__main__":
-    code =  "1032006417469"
+    code =  "1032017417469"
     result = apicallverify(code)
     print(result)
     ticket_string = f'code: {code}, status: {result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'

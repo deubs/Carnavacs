@@ -4,6 +4,7 @@ import calendar
 import pdb
 import time
 from apicall import apicall
+import threading
 
 scancodes = {
 	11:	u'0',
@@ -41,7 +42,7 @@ def getDevice():
 
 def getInputDevices():
 	devices = [InputDevice(path) for path in list_devices()]
-	inputdev = []
+	inputdevs = []
 	for device in devices:
 		print(device.name)
 		if ("IMAGER 2D" in device.name) or \
@@ -50,12 +51,45 @@ def getInputDevices():
 					("ZKRFID R400" in device.name) or \
                     	("TMS HIDKeyBoard" in device.name) or \
 							("BARCODE SCANNER Keyboard Interface" in device.name):
-			inputdev.append(device.path)
+			inputdevs.append(device)
 			# break
-	return inputdev
+	return inputdevs
 
 
-inputdev = None
+def readBarCodes(device):
+	barcode = ''
+	try:
+		for event in device.read_loop():
+			if event.type == ecodes.EV_KEY:
+				eventdata = categorize(event)
+				if eventdata.keystate == 1: # Keydown
+					scancode = eventdata.scancode
+					if scancode == 28: # Enter
+						print(f'{device.name} {barcode}')
+						barcode = ""	
+					else:
+						key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
+						barcode = barcode + key
+						if key == NOT_RECOGNIZED_KEY:
+							print('unknown key, scancode=' + str(scancode))
+	except Exception as e:
+		print(e)	
+
+inputdevs = getInputDevices()
+devices = []
+for indev in inputdevs:
+	print(indev.name)
+	print(indev.path)
+	device = InputDevice(indev)
+	threading.Thread(target = readBarCodes, args = (device, ), daemon = True).start()
+
+while True:
+	continue
+
+print(devices)
+exit()
+
+
 while inputdev == None:
 	inputdev = getDevice()
 	if inputdev == None:
