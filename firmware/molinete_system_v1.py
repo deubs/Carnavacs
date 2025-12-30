@@ -568,7 +568,7 @@ def main():
                 fhandler.flush()    
         else:
             code = None
-            lcd.lcd_string("CARNAVAL 2025", l1)
+            lcd.lcd_string("CARNAVAL 2026", l1)
             lcd.lcd_string("NUEVO INGRESO", l2)
             
 
