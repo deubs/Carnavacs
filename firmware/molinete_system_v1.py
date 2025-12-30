@@ -98,7 +98,6 @@ idev = None
 sp = None
 
 NOT_RECOGNIZED_KEY = u'X'
-
 l1 = LCDI2C.LCD_LINE_1
 l2 = LCDI2C.LCD_LINE_2
 
