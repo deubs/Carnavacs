@@ -1,4 +1,6 @@
 ﻿
+using System.Text.Json.Serialization;
+
 namespace Carnavacs.Api.Domain.Entities
 {
     public class TicketValidationResult
@@ -11,5 +13,9 @@ namespace Carnavacs.Api.Domain.Entities
         public bool IsValid => TicketStatus == TicketStatus.OK;
         public bool Exists => TicketStatus != TicketStatus.NotFound;
 
+        [JsonIgnore]
+        public bool Persist => Exists && TicketStatus != TicketStatus.Voided && 
+                    TicketStatus != TicketStatus.VoidPending && 
+                    TicketStatus != TicketStatus.Invalid;
     }
 }

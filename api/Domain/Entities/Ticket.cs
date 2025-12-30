@@ -20,7 +20,7 @@
             get
             {
                 TicketType t = GetType();
-                return t == TicketType.Acceso || t == TicketType.Comision;
+                return t == TicketType.Comision;
             }
         }
 
@@ -29,15 +29,24 @@
         public virtual bool Reusable()
         {
             TicketType t = GetType();
-            return this.Master || t == TicketType.Colaborador || t == TicketType.Acceso || t==TicketType.Comision;
+            return this.Master || t == TicketType.Colaborador || t == TicketType.Comision;
         }
 
         public virtual TicketType GetType()
         {
-            int tipo = 0;
-            string id = Code.Substring(2, 2);
-            Int32.TryParse(id, out tipo);
-            return (TicketType)tipo;
+            int sys = 0;
+            Int32.TryParse(Code.Substring(0, 2), out sys);
+            if (sys == 10)
+            {
+                Int32.TryParse(Code.Substring(2, 2), out sys);
+                return (TicketType)sys;
+            }
+            if (sys > 41) 
+                return TicketType.Ubicacion;
+
+            return TicketType.Desconocido;
+
+
         }
 
     }

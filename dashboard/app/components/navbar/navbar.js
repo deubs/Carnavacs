@@ -1,9 +1,8 @@
 "use client"
+import styles from "@/app/styles/navbar.module.css" 
+import Sidebar from "@/app/components/navbar/components/sidebar";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { useState } from "react"
-import css from "@/app/styles/navbar.module.css"
-
-import Sidebar from "./sidebar";
 
 export default function Navbar () {
     const [ visible, setVisible ] = useState(false)
@@ -12,11 +11,17 @@ export default function Navbar () {
         setVisible(!visible)
     }
 
-    return <div className={css.main}>
-        <RxHamburgerMenu
+    return <div className={styles.main}>
+        <RxHamburgerMenu 
         onClick={toggle}
-        className={css.icon}
+        className={styles.icon}
         />
-        <Sidebar visible={visible} />
+        <Sidebar visible={visible} toggleVisible={toggle}/>
         </div>
 }
+
+/*
+<img
+        src="/logo.png"
+        />
+*/

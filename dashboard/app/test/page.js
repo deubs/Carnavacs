@@ -1,15 +1,22 @@
 "use client"
 import { useEffect } from "react"
-import { store_loop } from "@/app/stores/loop"
+import css from "@/app/test/test.module.css"
+import { store_test } from "./store"
 
 export default function Test () {
-    const { loop_status, set_loop_status, count, count_increase } = store_loop()
+  const { state, set_state } = store_test()
 
-    return <div>
-        <p>contador: {count}</p>
-        <p>estado: {loop_status}</p>
-        <button onClick={()=>{count_increase()}}>incrementar</button>
-        <button onClick={()=>{console.log(loop_status)}}>console log estado</button>
-        <button onClick={()=>{set_loop_status(!loop_status)}}>change ls</button>
-    </div>
+  useEffect(()=>{
+    setTimeout(()=>{
+      set_state("Componente")
+    }, 2000)
+  }, [])
+  
+  if (!state) {
+      return <div className={css.main}>
+      <p>Retorno por defecto</p>
+      </div>
+    } else {
+      return <p>{ state }</p>
+    }
 } 

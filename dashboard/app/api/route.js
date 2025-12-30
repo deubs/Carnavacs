@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generate_token, check_token } from "./jsonwebtoken";
 import { checkCredentials } from "./pseudodbusers";
-
+ 
 const events = {
   "success": true,
   "message": null,
@@ -10,50 +10,57 @@ const events = {
       "id": 139,
       "fecha": "2025-01-04T21:00:00",
       "nombre": "1 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 140,
       "fecha": "2025-01-11T21:00:00",
       "nombre": "2 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 141,
       "fecha": "2025-01-18T21:00:00",
       "nombre": "3 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 142,
       "fecha": "2025-01-25T21:00:00",
       "nombre": "4 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 143,
       "fecha": "2025-02-01T21:00:00",
       "nombre": "5 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 144,
       "fecha": "2025-02-08T21:00:00",
       "nombre": "6 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
     },
     {
       "id": 145,
       "fecha": "2025-02-15T21:00:00",
       "nombre": "7 Noche de Carnaval del Pais",
-      "habilitado": true,
+      "habilitado": false,
       "showName": "CARNAVAL25G"
+    },
+    {
+      "id": 150,
+      "fecha": "2025-02-21T20:00:00",
+      "nombre": "Eleccion de la Reina 2025",
+      "habilitado": true,
+      "showName": null
     },
     {
       "id": 146,
@@ -90,11 +97,11 @@ const events_current = {
   "success": true,
   "message": null,
   "result": {
-    "id": 141,
-    "fecha": "2025-01-18T21:00:00",
-    "nombre": "3 Noche de Carnaval del Pais",
-    "habilitado": true,
-    "showName": "CARNAVAL25G"
+    "id": 146,
+      "fecha": "2025-02-22T21:00:00",
+      "nombre": "8 Noche de Carnaval del Pais",
+      "habilitado": true,
+      "showName": "CARNAVAL25G"
   }
 }
 
@@ -105,7 +112,7 @@ const events_stats = {
     "eventId": 0,
     "totalTickets": 16660,
     "usedTickets": 638,
-    "remainingTickets": 16022,
+    "remainingTickets": 16022, 
     "totalGates": 0,
     "openGates": 0,
     "closedGates": 0,
@@ -632,43 +639,67 @@ const gates_1 = {
 
 export async function POST ( req ) {
   //console.log("header Auth: ", req.headers.Auth)
-  const { event, data } = await req.json()
-
-  switch ( event ) {
-    case 1:
-      // login
-      try {
-        const res = checkCredentials(data)
-        
-        if (res.login) {
-          const token = await generate_token(data.user)
-          return NextResponse.json({ login: true, token })
-        } else { 
-          return NextResponse.json({ login: false }) }
-        
-      } catch (error) { 
-        return NextResponse.json({ error }) 
-      }
-    case 2:
-      try {
-        const { url } = data
-        if ( url == "events" ) return NextResponse.json(events)
-        if ( url == "events/current" ) return NextResponse.json(events_current)
-        if ( url == "events/stats" ) return NextResponse.json(events_stats)
-        if ( url == "events/sectorStats" ) return NextResponse.json(events_sectorStats)
-          
-        if ( url == "gates/gates" ) return NextResponse.json(gates_gates)
-        if ( url == "gates/devices" ) return NextResponse.json(gates_devices)
-        if ( url == "gates/1" ) return NextResponse.json(gates_1)
-
-      } catch (error) {
-        return NextResponse.json({ error })
-      }
+  try {
+    const { event, data } = await req.json()
     
-      default: return NextResponse.json({ r: "response default" })
+    switch ( event ) {
+      case 1:
+        // login
+        try {
+          const res = checkCredentials(data)
+          
+          if (res.login) { 
+            const token = await generate_token(data.user)
+            return NextResponse.json({ login: true, token })
+          } else { 
+            return NextResponse.json({ login: false }) }
+          
+        } catch (error) { 
+          return NextResponse.json({ error }) 
+        }
+      case 2:
+        try {
+          const { url } = data
+          if ( url == "events" ) return NextResponse.json(events)
+          if ( url == "events/current" ) return NextResponse.json(events_current)
+          if ( url == "events/stats" ) return NextResponse.json(events_stats)
+          if ( url == "events/sectorStats" ) return NextResponse.json(events_sectorStats)
+            
+          if ( url == "gates/gates" ) return NextResponse.json(gates_gates)
+          if ( url == "gates/devices" ) return NextResponse.json(gates_devices)
+          if ( url == "gates/1" ) return NextResponse.json(gates_1)
+  
+        } catch (error) {
+          return NextResponse.json({ error })
+        }
+      
+        default: return NextResponse.json({ r: "response default" })
+    }
+  } catch (error) {
+    console.log(`Error en API local:
+      event: ${event},
+      data: ${data},
+      error: error`)
+      return NextResponse.json({ error: true })
   }
 }
 
+/*
+const events_stats = {
+    "success": true,
+    "message": null,
+    "result": {
+      "eventId": 0,
+      "totalTickets": 16660,
+      "usedTickets": 638,
+      "remainingTickets": 16022,
+      "totalGates": 0,
+      "openGates": 0,
+      "closedGates": 0
+    }}
+*/
 export async function GET ( req ) {
+  const { eventId } = req.query;
+  console.log(eventId) 
   return NextResponse.json({ error: "no get" })
 }
