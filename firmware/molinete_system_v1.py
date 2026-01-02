@@ -28,7 +28,7 @@ import structlog
 import sys
 import random
 
-if "tango" in platform.node() or "vehiculos" in platform.node():
+if "tango" in platform.node():
     import wiringpi
     print("importing wiringpi")
     GPIO_RESTART = 9 #PC15

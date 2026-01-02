@@ -57,7 +57,7 @@ E_DELAY = 0.0005
 
 #Open I2C interface
 print(platform.node())
-if "raspi" in platform.node():
+if "raspi" in platform.node() or "vehiculos" in platform.node():
     bus = smbus.SMBus(1)  # Rev 1 Pi uses 0
 else:
     bus = smbus.SMBus(3)  # Rev 1 Pi uses 0
