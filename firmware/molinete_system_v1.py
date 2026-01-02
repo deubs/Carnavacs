@@ -284,11 +284,11 @@ def enableGate():
     Wait until signal from inductive sensor
     Enable COIL releasing relays. Iluminate RED light
     """
-    if "tango" in platform.node():
+    if "tango" in platform.node() or "baliza" in platform.node() :
         print("Release RELAYS")
         logmessage('info', 'Release RELAYS')
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
-        if "tango14" in platform.node() or "vehiculos" in platform.node():
+        if "baliza" in platform.node() or "vehiculos" in platform.node():
             time.sleep(2)
             bHole = False
         else:
@@ -300,7 +300,7 @@ def enableGate():
             return True
         return False
     else:
-        if "baliza" in platform.node() or "vehiculos" in platform.node():
+        if "vehiculos" in platform.node():
             # raspberry box delay for commute from ON to OFF
             logmessage('info', 'RELEASE RELAYS')
             rasp_relay_out.on()
