@@ -251,7 +251,7 @@ def initGPIO():
     """
     print("INIT GPIO")
     try:
-        if "tango" in platform.node() or "vehiculos" in platform.node():
+        if "tango" in platform.node():
             print("init wiringpi")
             wiringpi.wiringPiSetup()
             wiringpi.pinMode(GPIO_RELAY_OUT, wiringpi.GPIO.OUTPUT)
@@ -270,11 +270,11 @@ def enableGate():
     Wait until signal from inductive sensor
     Enable COIL releasing relays. Iluminate RED light
     """
-    if "tango" in platform.node() or "vehiculos" in platform.node():
+    if "tango" in platform.node():
         print("Release RELAYS")
         logmessage('info', 'Release RELAYS')
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
-        if "vehiculos" in platform.node() or "tango14" in platform.node():
+        if "tango14" in platform.node():
             time.sleep(2)
             bHole = False
         else:
@@ -486,7 +486,7 @@ def main():
         jet111data = None
         marked = False
         brestart = 1
-        if "tango" in platform.node() or 'vehiculos' in platform.node():
+        if "tango" in platform.node():
             brestart = wiringpi.digitalRead(GPIO_RESTART)
         else:
             brestart = rasp_button_restart.pin.state
