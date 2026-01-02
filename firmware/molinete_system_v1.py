@@ -173,7 +173,7 @@ def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
                         eventdata = categorize(event)
                         if eventdata.keystate == 1: # Keydown
                             scancode = eventdata.scancode
-                            # print(scancode)
+                            print(scancode)
                             if scancode == 28: # Enter
                                 q.put(barcode)
                                 barcode = ''
