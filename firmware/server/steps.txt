@@ -20,6 +20,8 @@ git clone git@github.com:deubs/Carnavacs.git
 git remote set-url origin ssh://git@git.lacuatro.com.ar/~/carnavacs.git
 git config --global pull.rebase false
 
+git remote set-url origin git@github.com:deubs/Carnavacs.git
+
 #install deps
 cd ~/src/Carnavacs/firmware/server/
 >apt install $(cat pkglist)

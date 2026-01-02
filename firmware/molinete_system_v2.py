@@ -370,7 +370,7 @@ class AccessSystem(baseAccessSystem):
                     fhandler.flush()
             else:
                 # if bdirt:
-                self.lcd.lcd_string("CARNAVAL 2025", l1, self.display_address)
+                self.lcd.lcd_string("CARNAVAL 2026", l1, self.display_address)
                 self.lcd.lcd_string("NUEVO INGRESO", l2, self.display_address)
                 # bdirt = False
                 # code = None

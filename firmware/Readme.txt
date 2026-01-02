@@ -11,6 +11,7 @@ python3-smbus
 python3-dev
 python3-setuptools
 python3-requests
+python3-structlog
 swig
 
 Ir a /usr/src/wiringOP-Python
