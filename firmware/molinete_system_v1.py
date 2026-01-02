@@ -168,7 +168,10 @@ def readBarCodes(device, q: queue, pause: PauseDeviceTOKEN):
                                 q.put(barcode)
                                 barcode = ''
                             else:
-                                key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
+                                # key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
+                                if scancode > 48 and scancode < 128:
+                                    key = str(scancode)
+                                # key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
                                 barcode = barcode + key
                                 if key == NOT_RECOGNIZED_KEY:
                                     print('unknown key, scancode=' + str(scancode))
