@@ -1,0 +1,125 @@
+{
+	"info": {
+		"_postman_id": "c26b6979-9638-433f-9ac8-eacc8fd3769c",
+		"name": "Quentro-Box",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "193024",
+		"_collection_link": "https://crowder.postman.co/workspace/Quentro-Box~6c632d6a-3cc3-49a4-b073-b5039df4c4b8/collection/193024-c26b6979-9638-433f-9ac8-eacc8fd3769c?action=share&source=collection_link&creator=193024"
+	},
+	"item": [
+		{
+			"name": "Sectors",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Quentro-Show",
+						"value": "SHOW_ID",
+						"type": "text"
+					},
+					{
+						"key": "X-Quentro-ShowKey",
+						"value": "TOKEN",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/access/sectors",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"access",
+						"sectors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Validate",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Quentro-Show",
+						"value": "SHOW_ID",
+						"type": "text"
+					},
+					{
+						"key": "X-Quentro-ShowKey",
+						"value": "TOKEN",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"code\": \"123\",\n    \"sectors\": [1, 2],\n    \"gate\": \"Molinete 1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/access/validate",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"access",
+						"validate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check (consulta)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Quentro-Show",
+						"value": "SHOW_ID",
+						"type": "text"
+					},
+					{
+						"key": "X-Quentro-ShowKey",
+						"value": "TOKEN",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"code\": \"1234\",\n    \"sectors\": [1],\n    \"gate\": \"Molinete 1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/access/check",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"access",
+						"check"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

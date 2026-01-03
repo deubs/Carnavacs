@@ -37,16 +37,27 @@ namespace Carnavacs.Api.Controllers
 
             /// True to mark the ticket as used and prevent reuse; false for a read-only validation
             bool persist = _configuration.GetValue<bool>("Persist");
+            string? clientIP = getClientIP();
 
             try
             {
-                apiResponse.Result = await _unitOfWork.Tickets.ValidateAsync(code);
+                // readOnly: false - this burns the ticket in Quentro API
+                apiResponse.Result = await _unitOfWork.Tickets.ValidateAsync(code, readOnly: false, deviceId: clientIP);
+                
                 if (apiResponse.Result.Persist && persist)
                 {
-                    await _unitOfWork.Tickets.UseAsync(code, getClientIP());
+                    if (apiResponse.Result.IsQuentro)
+                    {
+                        // Quentro ticket: already burned by API, just log the read
+                        await _unitOfWork.Tickets.LogQuentroAsync(code, clientIP, apiResponse.Result.TicketStatus);
+                    }
+                    else
+                    {
+                        // Old system ticket: mark as used and log
+                        await _unitOfWork.Tickets.UseAsync(code, clientIP);
+                    }
                     _unitOfWork.Commit();
                 }
-
             }
             catch (Exception ex)
             {
@@ -67,10 +78,10 @@ namespace Carnavacs.Api.Controllers
         {
             var apiResponse = new ApiResponse<TicketValidationResult> { Success = true };
 
-
             try
             {
-                apiResponse.Result = await _unitOfWork.Tickets.ValidateAsync(code);
+                // readOnly: true - uses /check endpoint, doesn't burn the ticket
+                apiResponse.Result = await _unitOfWork.Tickets.ValidateAsync(code, readOnly: true, deviceId: getClientIP());
             }
             catch (Exception ex)
             {

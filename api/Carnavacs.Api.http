@@ -1,8 +1,33 @@
-@Carnavacs.Api_HostAddress = https://localhost:51119
+@Carnavacs.Api_HostAddress = http://localhost:5119
 
-POST {{Carnavacs.Api_HostAddress}}/Ticket/Validate/
+# Validate ticket - marks as used (burns ticket in Quentro API)
+POST {{Carnavacs.Api_HostAddress}}/Ticket/Validate?code=38808543081136
+
+
+
+
 Accept: application/json
 Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
 
+###
+
+# Verify ticket - read-only check (uses /check in Quentro API, doesn't burn ticket)
+POST {{Carnavacs.Api_HostAddress}}/Ticket/Verify?code=38808543081136
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Get all gates
+GET {{Carnavacs.Api_HostAddress}}/Gates/Gates
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Get all devices
+GET {{Carnavacs.Api_HostAddress}}/Gates/Devices
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
 
 ###

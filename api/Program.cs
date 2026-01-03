@@ -3,6 +3,7 @@ using Carnavacs.Api.Domain;
 using Carnavacs.Api.Domain.Interfaces;
 using Carnavacs.Api.Infrastructure;
 using Carnavacs.Api.Infrastructure.Interfaces;
+using Carnavacs.Api.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Reflection;
@@ -11,7 +12,6 @@ using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Carnavacs.Api.Infrastructure.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +26,7 @@ builder.Services.AddSingleton<Carnavacs.Api.Infrastructure.TokenHandler>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<LoginManager>();
+builder.Services.AddScoped<IQuentroApiClient, QuentroApiClient>();
 builder.Services.AddControllers();
 
 //CORS-----------------------------
