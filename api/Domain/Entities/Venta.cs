@@ -2,9 +2,20 @@
 {
     public class Venta
     {
+        public string _nombre { get; set; }
         public int Id { get; set; }
-        public string Nombre { get; set; }
-        public  bool Habilitado { get; set; }
+
+        public int EventoFk { get; set; }
+        public string Nombre { 
+            get
+            {
+                return _nombre.ToUpper();
+            }
+            set
+            {
+                _nombre = value;
+            }
+        }
 
     }
 }

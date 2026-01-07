@@ -14,19 +14,21 @@ namespace Carnavacs.Api.Infrastructure
         private IDbConnection _connection;
         private IDbTransaction _transaction;
         private bool _disposed;
+        private readonly IQuentroApiClient? _quentroApiClient;
 
-        public UnitOfWork(DapperContext context)
+        public UnitOfWork(DapperContext context, IQuentroApiClient? quentroApiClient = null)
         {
             _connection = context.CreateConnection();
             _connection.Open();
             _transaction = _connection.BeginTransaction();
+            _quentroApiClient = quentroApiClient;
         }
 
         public IEventRepository Events => _eventRepository ?? (_eventRepository = new EventRepository(_transaction));
    
         public IGateRepository Gates => _gateRepository ?? (_gateRepository = new GateRepository(_transaction));
 
-        public ITicketRepository Tickets => _ticketRepository ?? (_ticketRepository = new TicketRepository(_transaction));
+        public ITicketRepository Tickets => _ticketRepository ?? (_ticketRepository = new TicketRepository(_transaction, _quentroApiClient));
 
         public void Commit()
         {
