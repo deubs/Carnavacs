@@ -333,7 +333,6 @@ class AccessSystem(baseAccessSystem):
                 if result['apistatus'] == True:
                     self.lcd.lcd_string(f'{result["m1"]}', l1, self.display_address)
                     self.lcd.lcd_string(f'{result["m2"]}', l2, self.display_address)
-                    time.sleep(2)
                     if result['code'] == False:
                         time.sleep(1)
                     else:
