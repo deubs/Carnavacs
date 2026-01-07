@@ -446,6 +446,7 @@ def checkCode(code:str, lcd):
         os.system('systemctl poweroff')
         time.sleep(5)
 
+
 def main():
     """
         Main function
@@ -550,9 +551,10 @@ def main():
             if result['apistatus'] == True:
                 lcd.lcd_string(result['m1'], l1)
                 lcd.lcd_string(result['m2'], l2)
+                time.sleep(2)
                 if result['code'] == False:
                     logmessage('error', f"{code} {result['m1']} {result['m2']}")
-                    time.sleep(1)
+                    time.sleep(3)
                 else:
                     logmessage('info', f"{code} {result['m1']} {result['m2']}")
                     marked = enableGate()
