@@ -37,10 +37,23 @@ namespace Carnavacs.Api.Infrastructure
         {
             Event ev = await this.GetEventByIdAsync(eventId);
 
-            // Query burned tickets from QREntradasLecturas grouped by TicketType (sector)
-            // For Quentro tickets, we only have burned count (Readed), not total issued
+            // Legacy query for TicketekTickets + Ventas (old system)
+            string legacySectorStat = @"SELECT SUBSTRING(section,1,charindex('F',section, 1)-1) Name, count(*) as Total,
+                                         sum(case when estadoqrfk in (2,4)  then 0 else 1 end) as Readed
+                                         FROM TicketekTickets t
+                                         INNER JOIN AccesosEntradasQR qr on convert(varchar, t.barcode) =qr.QRCodigo
+                                         INNER JOIN Ventas v on qr.ventaFk=v.id
+                                         where status=1 and charindex('F',section, 1)>0 and v.eventofk=@eventFk
+                                         group by substring(section,1,charindex('F',section, 1)-1)
+                                         union
+                                         select 'Popular', count(*), ISNULL(SUM(CASE WHEN estadoqrfk in (2,4) then 0 else 1 end),0) as cant2 from TicketekTickets t
+                                         INNER JOIN AccesosEntradasQR qr on convert(varchar, t.barcode) =qr.QRCodigo
+                                         INNER JOIN Ventas v on qr.ventaFk=v.id
+                                         where status=1 and charindex('F',section, 1)=0 and v.eventofk=@eventFk";
+
+            // Quentro query for new system tickets from QREntradasLecturas
             // EstadoQrFk = 5 means "Ingreso" (successfully entered)
-            string sectorStat = @"SELECT
+            string quentroSectorStat = @"SELECT
                                     ISNULL(l.TicketType, 'Sin Sector') as Name,
                                     COUNT(*) as Total,
                                     COUNT(*) as Readed
@@ -48,10 +61,19 @@ namespace Carnavacs.Api.Infrastructure
                                   WHERE l.QuentroCode IS NOT NULL
                                     AND l.EstadoQrFk = 5
                                     AND CAST(l.Fecha AS DATE) = CAST(@eventDate AS DATE)
-                                  GROUP BY l.TicketType
-                                  ORDER BY Name";
-            var result = await Connection.QueryAsync<Sector>(sectorStat, new { eventDate = ev.Fecha }, Transaction);
-            return result.ToList();
+                                  GROUP BY l.TicketType";
+
+            // Get legacy results
+            var legacyResult = await Connection.QueryAsync<Sector>(legacySectorStat, new { eventFk = ev.Id }, Transaction);
+
+            // Get Quentro results
+            var quentroResult = await Connection.QueryAsync<Sector>(quentroSectorStat, new { eventDate = ev.Fecha }, Transaction);
+
+            // Combine both results
+            var combinedResult = legacyResult.ToList();
+            combinedResult.AddRange(quentroResult);
+
+            return combinedResult.OrderBy(s => s.Name).ToList();
         }
 
         public Task<string> AddAsync(Event entity)
