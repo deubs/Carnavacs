@@ -30,15 +30,11 @@ FROM  @noches WHERE NOT EXISTS (SELECT * FROM EVENTOS WHERE FECHA=F);
 
 UPDATE Eventos SET Habilitado=0 WHERE EspectaculoFk<>@espId
 
-IF NOT EXISTS(SELECT *
-          FROM   INFORMATION_SCHEMA.COLUMNS
-          WHERE  TABLE_NAME = 'PuertaIngreso'
-                 AND COLUMN_NAME = 'Enabled') 
-ALTER TABLE PuertaIngreso ADD [Enabled] BIT NOT NULL DEFAULT 0;
-
-SELECT * FROM PUERTAINGRESO
 
 UPDATE PuertaIngreso SET Enabled = 1 WHERE Nombre IN ('Puerta 2', 'Puerta 3', 'Puerta 4', 'Puerta 8')
 
+--invitados
+insert eventos_tipoEntradas (eventofk, TipoEntradaFk,precio, visible, visibleweb, vigencia,quota)
+select id,24,0,1,0,'2027-03-10',1 from eventos where EspectaculoFk=@espId
 
 update Eventos_TipoEntradas set Vigencia='2027-01-01' where vigencia is null
