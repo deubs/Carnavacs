@@ -304,7 +304,7 @@ def enableGate():
             # raspberry box delay for commute from ON to OFF
             logmessage('info', 'RELEASE RELAYS')
             rasp_relay_out.on()
-            time.sleep(1)
+            time.sleep(2)
             rasp_relay_out.off()
             logmessage('info', 'ACTIVATE RELAYS')
             return True
@@ -446,6 +446,7 @@ def checkCode(code:str, lcd):
         os.system('systemctl poweroff')
         time.sleep(5)
 
+
 def main():
     """
         Main function
@@ -552,7 +553,7 @@ def main():
                 lcd.lcd_string(result['m2'], l2)
                 if result['code'] == False:
                     logmessage('error', f"{code} {result['m1']} {result['m2']}")
-                    time.sleep(1)
+                    time.sleep(3)
                 else:
                     logmessage('info', f"{code} {result['m1']} {result['m2']}")
                     marked = enableGate()

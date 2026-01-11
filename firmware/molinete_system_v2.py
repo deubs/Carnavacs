@@ -226,7 +226,7 @@ class AccessSystem(baseAccessSystem):
 
     def enableGate(self):
         self.gpio_out.on()
-        time.sleep(1)
+        time.sleep(2)
         self.gpio_out.off()
         return True
 
