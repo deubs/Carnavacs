@@ -19,7 +19,8 @@ namespace Carnavacs.Api.Infrastructure.Interfaces
         /// <param name="code">Quentro ticket code</param>
         /// <param name="device">Device identifier that read the ticket</param>
         /// <param name="status">The ticket status from validation</param>
-        Task LogQuentroAsync(string code, string? device, TicketStatus status);
+        /// <param name="ticketType">Ticket type/sector from Quentro API</param>
+        Task LogQuentroAsync(string code, string? device, TicketStatus status, string? ticketType = null);
 
         /// <summary>
         /// Validate ticket and mark it as used, if persist is true, the ticket will be saved. 

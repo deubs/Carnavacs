@@ -100,7 +100,7 @@ namespace Carnavacs.Api.Infrastructure
             await gateRepo.LogEntryAsync(log);
         }
 
-        public async Task LogQuentroAsync(string code, string? deviceId, TicketStatus status)
+        public async Task LogQuentroAsync(string code, string? deviceId, TicketStatus status, string? ticketType = null)
         {
             var gateRepo = new GateRepository(Transaction);
             AccessDevice device = await gateRepo.GetDeviceAsync(deviceId ?? "API");
@@ -110,7 +110,8 @@ namespace Carnavacs.Api.Infrastructure
                 AccesoDispositivoFk = device.Id,
                 EstadoQrFk = status.Id,
                 QrEntradaFk = null,
-                QuentroCode = code
+                QuentroCode = code,
+                TicketType = ticketType
             };
             await gateRepo.LogEntryAsync(log);
         }
@@ -247,6 +248,9 @@ namespace Carnavacs.Api.Infrastructure
                 result.M2 = "INVALIDA";
                 return result;
             }
+
+            // Capture ticket type/sector from Quentro response
+            result.TicketType = quentroResponse.TicketType;
 
             if (quentroResponse.Valid)
             {

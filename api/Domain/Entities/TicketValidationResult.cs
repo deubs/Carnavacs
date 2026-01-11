@@ -34,6 +34,12 @@ namespace Carnavacs.Api.Domain.Entities
         [JsonIgnore]
         public string? Code { get; set; }
 
+        /// <summary>
+        /// Ticket type/sector name from Quentro API (e.g., "Popular", "VIP", "Sillas 1A")
+        /// </summary>
+        [JsonIgnore]
+        public string? TicketType { get; set; }
+
         [JsonIgnore]
         public bool Persist => Exists && TicketStatus != TicketStatus.Voided && 
                     TicketStatus != TicketStatus.VoidPending && 
