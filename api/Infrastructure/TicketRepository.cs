@@ -223,7 +223,7 @@ namespace Carnavacs.Api.Infrastructure
             {
                 result.TicketStatus = TicketStatus.NotFound;
                 result.M1 = "ENTRADA";
-                result.M2 = "INVALIDA";
+                result.M2 = "NO ENCONTRADA";
                 return result;
             }
 
@@ -245,14 +245,18 @@ namespace Carnavacs.Api.Infrastructure
             {
                 result.TicketStatus = TicketStatus.NotFound;
                 result.M1 = "ENTRADA";
-                result.M2 = "INVALIDA";
+                result.M2 = "NO ENCONTRADA";
                 return result;
             }
 
             // Capture ticket type/sector from Quentro response
             result.TicketType = quentroResponse.TicketType;
 
-            if (quentroResponse.Valid)
+            // Check if this is a VOID ticket that should be treated as valid
+            var statusCode = quentroResponse.Status ?? quentroResponse.Code;
+            var isVoidTicket = statusCode?.ToUpperInvariant() == "VOID";
+
+            if (quentroResponse.Valid || isVoidTicket)
             {
                 result.TicketStatus = TicketStatus.OK;
                 result.M1 = quentroResponse.M1 ?? "BIENVENIDO";
@@ -260,7 +264,7 @@ namespace Carnavacs.Api.Infrastructure
             }
             else
             {
-                result.TicketStatus = MapQuentroStatus(quentroResponse.Status ?? quentroResponse.Code);
+                result.TicketStatus = MapQuentroStatus(statusCode);
                 result.M1 = quentroResponse.M1 ?? "ENTRADA";
 
                 // Capture usage info from Quentro API response
@@ -276,7 +280,7 @@ namespace Carnavacs.Api.Infrastructure
                     }
 
                     // Build M2 message similar to old system: "USADA-17:36"
-                    string msg = quentroResponse.M2 ?? quentroResponse.Message ?? "USADA";
+                    string msg = TranslateToSpanish(quentroResponse.M2 ?? quentroResponse.Message ?? "USED");
                     if (!string.IsNullOrEmpty(result.UsedDate) && !msg.Contains(result.UsedDate))
                     {
                         msg += "-" + result.UsedDate;
@@ -285,7 +289,7 @@ namespace Carnavacs.Api.Infrastructure
                 }
                 else
                 {
-                    result.M2 = quentroResponse.M2 ?? quentroResponse.Message ?? "INVALIDA";
+                    result.M2 = TranslateToSpanish(quentroResponse.M2 ?? quentroResponse.Message ?? statusCode);
                 }
             }
 
@@ -325,9 +329,36 @@ namespace Carnavacs.Api.Infrastructure
             {
                 "USED" => TicketStatus.Used,
                 "VOIDED" => TicketStatus.Voided,
+                "VOID" => TicketStatus.OK, // Treat void tickets as valid
                 "INVALID" => TicketStatus.Invalid,
                 "OK" => TicketStatus.OK,
                 _ => TicketStatus.NotFound
+            };
+        }
+
+        /// <summary>
+        /// Translate Quentro status/message codes to Spanish
+        /// </summary>
+        private static string TranslateToSpanish(string? message)
+        {
+            if (string.IsNullOrEmpty(message)) return "INVALIDA";
+
+            return message.ToUpperInvariant() switch
+            {
+                "ACCESS_NOT_FOUND" => "NO ENCONTRADA",
+                "NOT_FOUND" => "NO ENCONTRADA",
+                "USED" => "USADA",
+                "VOIDED" => "ANULADA",
+                "VOID" => "ADELANTE",
+                "INVALID" => "INVALIDA",
+                "OK" => "ADELANTE",
+                "WELCOME" => "BIENVENIDO",
+                "VALID" => "VALIDA",
+                "EXPIRED" => "EXPIRADA",
+                "NOT_YET_VALID" => "AUN NO VALIDA",
+                "WRONG_SECTOR" => "SECTOR INCORRECTO",
+                "WRONG_EVENT" => "EVENTO INCORRECTO",
+                _ => message // Return original if no translation
             };
         }
 
