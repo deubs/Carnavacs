@@ -317,7 +317,7 @@ class AccessSystem(baseAccessSystem):
                         if jet111data is not None:
                             self.lcd.lcd_string(f'{jet111data}', l1, self.display_address)
                             code = jet111data
-                            time.sleep(0.5)
+                            # time.sleep(0.5)
                 else:
                     self.lcd.lcd_string("PISTOLA", l1, self.display_address)
                     self.lcd.lcd_string("DESCONECTADA", l1, self.display_address)
