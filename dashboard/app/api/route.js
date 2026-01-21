@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
 import { generate_token, check_token } from "./jsonwebtoken";
 import { checkCredentials } from "./pseudodbusers";
- 
+
+const API_URL = process.env.NEXT_PUBLIC_APIURL_DEV || "http://192.168.40.100";
+
+async function proxyToApi(endpoint) {
+  try {
+    const response = await fetch(`${API_URL}/${endpoint}`);
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    console.log(`Error proxying to API: ${API_URL}/${endpoint}`, error);
+    return { success: false, error: error.message };
+  }
+}
+
 const events = {
   "success": true,
   "message": null,
@@ -660,16 +673,15 @@ export async function POST ( req ) {
       case 2:
         try {
           const { url } = data
-          if ( url == "events" ) return NextResponse.json(events)
-          if ( url == "events/current" ) return NextResponse.json(events_current)
-          if ( url == "events/stats" ) return NextResponse.json(events_stats)
-          if ( url == "events/sectorStats" ) return NextResponse.json(events_sectorStats)
-            
-          if ( url == "gates/gates" ) return NextResponse.json(gates_gates)
-          if ( url == "gates/devices" ) return NextResponse.json(gates_devices)
-          if ( url == "gates/1" ) return NextResponse.json(gates_1)
-  
+          const result = await proxyToApi(url)
+          if (result.success) {
+            return NextResponse.json(result.data)
+          } else {
+            console.log(`API proxy failed for ${url}, error: ${result.error}`)
+            return NextResponse.json({ success: false, error: result.error })
+          }
         } catch (error) {
+          console.log(`Error in case 2: ${error}`)
           return NextResponse.json({ error })
         }
       

@@ -95,15 +95,16 @@ namespace Carnavacs.Api.Infrastructure
         internal async Task<int> LogEntryAsync(TicketLog log)
         {
 
-            string insertQuery = @"INSERT INTO dbo.[QREntradasLecturas] (QrEntradaFk, Fecha, EstadoQrFk, AccesoDispositivoFk, QuentroCode)
+            string insertQuery = @"INSERT INTO dbo.[QREntradasLecturas] (QrEntradaFk, Fecha, EstadoQrFk, AccesoDispositivoFk, QuentroCode, TicketType)
                         OUTPUT INSERTED.[Id]
-                        VALUES(@qrId, @dt, @ticketStatusId, @deviceId, @quentroCode);";
-            return await Connection.QuerySingleAsync<int>(insertQuery, new { 
+                        VALUES(@qrId, @dt, @ticketStatusId, @deviceId, @quentroCode, @ticketType);";
+            return await Connection.QuerySingleAsync<int>(insertQuery, new {
                 qrId = log.QrEntradaFk,
                 dt = log.Fecha,
                 ticketStatusId = log.EstadoQrFk,
                 deviceId = log.AccesoDispositivoFk,
-                quentroCode = log.QuentroCode}, Transaction);
+                quentroCode = log.QuentroCode,
+                ticketType = log.TicketType}, Transaction);
 
         }
     }

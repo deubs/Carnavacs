@@ -19,5 +19,10 @@
         /// Quentro ticket code (for tickets from Quentro API that don't have a local QrEntradaFk)
         /// </summary>
         public string? QuentroCode { get; set; }
+
+        /// <summary>
+        /// Ticket type/sector name (e.g., "Popular", "VIP", "Sillas 1A") from Quentro API
+        /// </summary>
+        public string? TicketType { get; set; }
     }
 }

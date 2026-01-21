@@ -48,8 +48,8 @@ namespace Carnavacs.Api.Controllers
                 {
                     if (apiResponse.Result.IsQuentro)
                     {
-                        // Quentro ticket: already burned by API, just log the read
-                        await _unitOfWork.Tickets.LogQuentroAsync(code, clientIP, apiResponse.Result.TicketStatus);
+                        // Quentro ticket: already burned by API, just log the read with ticket type for sector stats
+                        await _unitOfWork.Tickets.LogQuentroAsync(code, clientIP, apiResponse.Result.TicketStatus, apiResponse.Result.TicketType);
                     }
                     else
                     {
