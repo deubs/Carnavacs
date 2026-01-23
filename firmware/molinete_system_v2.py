@@ -226,7 +226,7 @@ class AccessSystem(baseAccessSystem):
 
     def enableGate(self):
         self.gpio_out.on()
-        time.sleep(2)
+        time.sleep(1.5)
         self.gpio_out.off()
         return True
 
@@ -358,7 +358,7 @@ class AccessSystem(baseAccessSystem):
                     bdirt = True
                     code = None
                     pauseDevice.resumeDevice()
-                    if ncodes > 20:
+                    if ncodes > 5:
                         self.lcd.initDisplay(self.display_address)
                         ncodes = 0 
                 if fhandler is not None:
