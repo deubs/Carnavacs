@@ -372,7 +372,8 @@ class AccessSystem(baseAccessSystem):
                 if nloops > 20:
                     self.lcd.initDisplay(self.display_address)
                     nloops = 0
-                    self.lcd.lcd_string("LCD init", l2, self.display_address)
+                    ncodes = 0
+                    # self.lcd.lcd_string("LCD init", l2, self.display_address)
                 
                 # bdirt = False
                 # code = None
