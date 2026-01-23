@@ -288,6 +288,7 @@ class AccessSystem(baseAccessSystem):
         nthreads =  threading.enumerate()
         code = None
         bdirt = True
+        nloops = 0
         while True:
             jet111data = None
             marked = False
@@ -307,7 +308,7 @@ class AccessSystem(baseAccessSystem):
                     fhandler.close()
                 self.logmessage('error', 'RESTART REQUIRED')
                 exit()
-
+            nloops += 1
             if code is None:
                 FAILURE_COUNT = 5
                 if idev is not None:
@@ -368,6 +369,11 @@ class AccessSystem(baseAccessSystem):
                 # if bdirt:
                 self.lcd.lcd_string("CARNAVAL 2026", l1, self.display_address)
                 self.lcd.lcd_string("NUEVO INGRESO", l2, self.display_address)
+                if nloops > 20:
+                    self.lcd.initDisplay(self.display_address)
+                    nloops = 0
+                    self.lcd.lcd_string("LCD init", l2, self.display_address)
+                
                 # bdirt = False
                 # code = None
 
