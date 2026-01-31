@@ -286,10 +286,10 @@ def enableGate():
     """
     if "tango" in platform.node() or "baliza" in platform.node() :
         print("Release RELAYS")
-        logmessage('info', 'Release RELAYS')
+        logmessage('info', 'RELEASE RELAYS')
         wiringpi.digitalWrite(GPIO_RELAY_OUT, wiringpi.GPIO.HIGH)
         if "baliza" in platform.node() or "vehiculos" in platform.node():
-            time.sleep(2)
+            time.sleep(1)
             bHole = False
         else:
             bHole = ISRSignal(1)
@@ -304,7 +304,7 @@ def enableGate():
             # raspberry box delay for commute from ON to OFF
             logmessage('info', 'RELEASE RELAYS')
             rasp_relay_out.on()
-            time.sleep(2)
+            time.sleep(1)
             rasp_relay_out.off()
             logmessage('info', 'ACTIVATE RELAYS')
             return True
