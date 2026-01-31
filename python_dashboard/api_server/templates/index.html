@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <ul id='turnstile_list' style="display: block;">
+    </ul>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io();
+        socket.on('connect', function() {
+            socket.emit('my event', {data: 'I\'m connected!'});
+        });
+    </script>
+    <script>
+        const url = '/fps';
+        
+        setInterval(() => {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                const list = document.getElementById('turnstile_list');
+                list.innerHTML = '';
+                data.forEach(moli => {
+                    const li = document.createElement('li');
+                    li.textContent = `${moli.name} Status - ${moli.status} - Pistol: ${moli.pistol} - Codes: ${moli.codes}`;
+                    list.appendChild(li);
+                });
+                })
+                .catch(error => console.error('Error:', error));
+        }, 1000);
+    </script>    
+</body>
+</html>
