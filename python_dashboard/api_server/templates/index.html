@@ -2,13 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=2">
 </head>
 <body>
-    <h1>{{ title }}</h1>
-    <ul id='turnstile_list' style="display: block;">
-    </ul>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">{{ title }}</h1>
+            <div class="live-indicator">
+                <span class="live-dot"></span>
+                <span class="live-text">Live</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <section class="stats-bar">
+        <div class="stat-card">
+            <span class="stat-value" id="stat-total">0</span>
+            <span class="stat-label">Total Devices</span>
+        </div>
+        <div class="stat-card stat-unlocked">
+            <span class="stat-value" id="stat-unlocked">0</span>
+            <span class="stat-label">Unlocked</span>
+        </div>
+        <div class="stat-card stat-locked">
+            <span class="stat-value" id="stat-locked">0</span>
+            <span class="stat-label">Locked</span>
+        </div>
+        <div class="stat-card stat-pistol">
+            <span class="stat-value" id="stat-pistols">0</span>
+            <span class="stat-label">Active Pistols</span>
+        </div>
+        <div class="stat-card stat-codes">
+            <span class="stat-value" id="stat-codes">0</span>
+            <span class="stat-label">Total Codes</span>
+        </div>
+    </section>
+
+    <!-- Main Grid -->
+    <main class="main-container">
+        <div id="turnstile-grid" class="turnstile-grid"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="connection-status" id="connection-status">
+            <span class="connection-dot connected"></span>
+            <span class="connection-text">Connected</span>
+        </div>
+        <span class="footer-info">Polling every 1s</span>
+    </footer>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
     <script type="text/javascript" charset="utf-8">
         var socket = io();
@@ -18,21 +68,111 @@
     </script>
     <script>
         const url = '/fps';
-        
-        setInterval(() => {
+        let previousState = {};
+
+        // Update summary statistics
+        function updateStats(data) {
+            const total = data.length;
+            const unlocked = data.filter(t => t.status === 'unlocked').length;
+            const locked = data.filter(t => t.status === 'locked').length;
+            const pistols = data.filter(t => t.pistol === 'On').length;
+            const codes = data.reduce((sum, t) => sum + (parseInt(t.codes) || 0), 0);
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-unlocked').textContent = unlocked;
+            document.getElementById('stat-locked').textContent = locked;
+            document.getElementById('stat-pistols').textContent = pistols;
+            document.getElementById('stat-codes').textContent = codes.toLocaleString();
+        }
+
+        // Create turnstile card element
+        function createTurnstileCard(moli) {
+            const card = document.createElement('div');
+            const statusClass = moli.status === 'locked' ? 'locked' : 'unlocked';
+            const pistolActive = moli.pistol === 'On';
+
+            // Check for state change
+            const prevState = previousState[moli.name];
+            const hasChanged = prevState && (
+                prevState.status !== moli.status ||
+                prevState.pistol !== moli.pistol ||
+                prevState.codes !== moli.codes
+            );
+
+            card.className = `turnstile-card ${statusClass}${hasChanged ? ' state-changed' : ''}`;
+            card.innerHTML = `
+                <div class="card-header">
+                    <h3 class="card-title">${moli.name}</h3>
+                    <span class="status-badge ${statusClass}">${moli.status}</span>
+                </div>
+                <div class="card-body">
+                    <div class="card-row">
+                        <span class="card-label">Pistol</span>
+                        <span class="pistol-indicator ${pistolActive ? 'active' : ''}">
+                            <span class="pistol-dot"></span>
+                            ${moli.pistol}
+                        </span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Codes</span>
+                        <span class="codes-value">${moli.codes}</span>
+                    </div>
+                </div>
+            `;
+
+            // Store current state
+            previousState[moli.name] = {
+                status: moli.status,
+                pistol: moli.pistol,
+                codes: moli.codes
+            };
+
+            return card;
+        }
+
+        // Update connection status
+        function setConnectionStatus(connected, message = '') {
+            const statusEl = document.getElementById('connection-status');
+            const dot = statusEl.querySelector('.connection-dot');
+            const text = statusEl.querySelector('.connection-text');
+
+            if (connected) {
+                dot.className = 'connection-dot connected';
+                text.textContent = 'Connected';
+            } else {
+                dot.className = 'connection-dot disconnected';
+                text.textContent = message || 'Disconnected';
+            }
+        }
+
+        // Fetch and render data
+        function fetchData() {
             fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                const list = document.getElementById('turnstile_list');
-                list.innerHTML = '';
-                data.forEach(moli => {
-                    const li = document.createElement('li');
-                    li.textContent = `${moli.name} Status - ${moli.status} - Pistol: ${moli.pistol} - Codes: ${moli.codes}`;
-                    list.appendChild(li);
-                });
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
                 })
-                .catch(error => console.error('Error:', error));
-        }, 1000);
-    </script>    
+                .then(data => {
+                    setConnectionStatus(true);
+                    updateStats(data);
+
+                    const grid = document.getElementById('turnstile-grid');
+                    grid.innerHTML = '';
+
+                    data.forEach(moli => {
+                        const card = createTurnstileCard(moli);
+                        grid.appendChild(card);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    setConnectionStatus(false, 'Connection Error');
+                });
+        }
+
+        // Initial fetch and start polling
+        fetchData();
+        setInterval(fetchData, 1000);
+    </script>
 </body>
 </html>
