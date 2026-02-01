@@ -31,11 +31,24 @@ namespace Carnavacs.Api.Infrastructure
 
         public async Task<IReadOnlyList<AccessDevice>> GetAllDevicesAsync()
         {
+            var eventRepo = new EventRepository(Transaction);
+            var currentEvent = await eventRepo.GetCurrentAsync();
+            if (currentEvent == null)
+                return new List<AccessDevice>();
 
-            string query = @"select DISTINCT ad.* from [dbo].[AccesosDispositivos] ad INNER JOIN QREntradasLecturas l  ON l.AccesoDispositivoFk = ad.Id
-                             WHERE l.QREntradaFk>=414647 and PuertaIngresoId is not null order by ad.nroserie";
+            string query = @"
+                SELECT DISTINCT ad.*
+                FROM [dbo].[AccesosDispositivos] ad
+                INNER JOIN QREntradasLecturas l ON l.AccesoDispositivoFk = ad.Id
+                WHERE CAST(l.Fecha AS DATE) = CAST(@eventDate AS DATE)
+                  AND l.EstadoQrFk = 5
+                  AND ad.PuertaIngresoId IS NOT NULL
+                ORDER BY ad.nroserie";
 
-            var devices = await Connection.QueryAsync<AccessDevice>(query,null, Transaction);
+            var devices = await Connection.QueryAsync<AccessDevice>(
+                query,
+                new { eventDate = currentEvent.Fecha },
+                Transaction);
             return devices.ToList();
         }
 

@@ -13,7 +13,10 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <h1 class="header-title">{{ title }}</h1>
+            <div class="event-info">
+                <h1 class="header-title" id="event-name">Loading...</h1>
+                <span class="event-date" id="event-date"></span>
+            </div>
             <div class="live-indicator">
                 <span class="live-dot"></span>
                 <span class="live-text">Live</span>
@@ -25,23 +28,19 @@
     <section class="stats-bar">
         <div class="stat-card">
             <span class="stat-value" id="stat-total">0</span>
-            <span class="stat-label">Total Devices</span>
+            <span class="stat-label">Total Tickets</span>
         </div>
         <div class="stat-card stat-unlocked">
-            <span class="stat-value" id="stat-unlocked">0</span>
-            <span class="stat-label">Unlocked</span>
+            <span class="stat-value" id="stat-used">0</span>
+            <span class="stat-label">Used</span>
         </div>
         <div class="stat-card stat-locked">
-            <span class="stat-value" id="stat-locked">0</span>
-            <span class="stat-label">Locked</span>
+            <span class="stat-value" id="stat-remaining">0</span>
+            <span class="stat-label">Remaining</span>
         </div>
         <div class="stat-card stat-pistol">
             <span class="stat-value" id="stat-pistols">0</span>
             <span class="stat-label">Active Pistols</span>
-        </div>
-        <div class="stat-card stat-codes">
-            <span class="stat-value" id="stat-codes">0</span>
-            <span class="stat-label">Total Codes</span>
         </div>
     </section>
 
@@ -67,22 +66,25 @@
         });
     </script>
     <script>
-        const url = '/fps';
+        const url = '/dashboard-data';
         let previousState = {};
 
         // Update summary statistics
         function updateStats(data) {
-            const total = data.length;
-            const unlocked = data.filter(t => t.status === 'unlocked').length;
-            const locked = data.filter(t => t.status === 'locked').length;
-            const pistols = data.filter(t => t.pistol === 'On').length;
-            const codes = data.reduce((sum, t) => sum + (parseInt(t.codes) || 0), 0);
+            // Event stats from API
+            document.getElementById('stat-total').textContent = data.stats.totalTickets.toLocaleString();
+            document.getElementById('stat-used').textContent = data.stats.usedTickets.toLocaleString();
+            document.getElementById('stat-remaining').textContent = data.stats.remainingTickets.toLocaleString();
 
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-unlocked').textContent = unlocked;
-            document.getElementById('stat-locked').textContent = locked;
+            // Local stats
+            const pistols = data.turnstiles.filter(t => t.pistol === 'On').length;
             document.getElementById('stat-pistols').textContent = pistols;
-            document.getElementById('stat-codes').textContent = codes.toLocaleString();
+
+            // Update event info
+            if (data.event) {
+                document.getElementById('event-name').textContent = data.event.showName || data.event.nombre;
+                document.getElementById('event-date').textContent = new Date(data.event.fecha).toLocaleDateString();
+            }
         }
 
         // Create turnstile card element
@@ -115,7 +117,7 @@
                     </div>
                     <div class="card-row">
                         <span class="card-label">Codes</span>
-                        <span class="codes-value">${moli.codes}</span>
+                        <span class="codes-value">${moli.codes.toLocaleString()}</span>
                     </div>
                 </div>
             `;
@@ -131,14 +133,14 @@
         }
 
         // Update connection status
-        function setConnectionStatus(connected, message = '') {
+        function setConnectionStatus(connected, apiOnline, message = '') {
             const statusEl = document.getElementById('connection-status');
             const dot = statusEl.querySelector('.connection-dot');
             const text = statusEl.querySelector('.connection-text');
 
             if (connected) {
                 dot.className = 'connection-dot connected';
-                text.textContent = 'Connected';
+                text.textContent = apiOnline ? 'Connected' : 'API Offline';
             } else {
                 dot.className = 'connection-dot disconnected';
                 text.textContent = message || 'Disconnected';
@@ -153,20 +155,20 @@
                     return response.json();
                 })
                 .then(data => {
-                    setConnectionStatus(true);
+                    setConnectionStatus(true, data.apiOnline);
                     updateStats(data);
 
                     const grid = document.getElementById('turnstile-grid');
                     grid.innerHTML = '';
 
-                    data.forEach(moli => {
+                    data.turnstiles.forEach(moli => {
                         const card = createTurnstileCard(moli);
                         grid.appendChild(card);
                     });
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    setConnectionStatus(false, 'Connection Error');
+                    setConnectionStatus(false, false, 'Connection Error');
                 });
         }
 

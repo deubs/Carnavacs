@@ -1,6 +1,11 @@
 from flask import Flask, jsonify, request, render_template
 from flask_socketio import SocketIO, emit
+import requests
+import os
 # import cli_api_status
+
+CARNAVAL_API_URL = os.environ.get('CARNAVAL_API_URL', 'http://192.168.40.100')
+API_TIMEOUT = 5
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -28,8 +33,45 @@ turnstiles = [
     {'id': 19, 'name': 'Tango19', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 20, 'name': 'Tango20', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 21, 'name': 'Baliza-Disca', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 22, 'name': 'Vehiculos', 'status': 'locked', 'pistol': 'Off', 'codes': 0}, 
+    {'id': 22, 'name': 'Vehiculos', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
 ]
+
+# C# API Helper Functions
+def fetch_current_event():
+    """GET /Events/Current"""
+    try:
+        resp = requests.get(f"{CARNAVAL_API_URL}/Events/Current", timeout=API_TIMEOUT)
+        data = resp.json()
+        return data.get('result') if data.get('success') else None
+    except:
+        return None
+
+def fetch_event_stats():
+    """GET /Events/Stats"""
+    try:
+        resp = requests.get(f"{CARNAVAL_API_URL}/Events/Stats", timeout=API_TIMEOUT)
+        data = resp.json()
+        return data.get('result') if data.get('success') else None
+    except:
+        return None
+
+def fetch_gates():
+    """GET /Gates/Gates"""
+    try:
+        resp = requests.get(f"{CARNAVAL_API_URL}/Gates/Gates", timeout=API_TIMEOUT)
+        data = resp.json()
+        return data.get('result', []) if data.get('success') else []
+    except:
+        return []
+
+def fetch_devices():
+    """GET /Gates/Devices"""
+    try:
+        resp = requests.get(f"{CARNAVAL_API_URL}/Gates/Devices", timeout=API_TIMEOUT)
+        data = resp.json()
+        return data.get('result', []) if data.get('success') else []
+    except:
+        return []
 
 def decode_turnstile_status(element):
     tsid = int(element[0].split('.')[3]) - 200
@@ -56,6 +98,48 @@ def home():
 def fps():
     # Pass a variable to the HTML template
     return turnstiles
+
+@app.route('/dashboard-data')
+def dashboard_data():
+    # Fetch from C# API
+    event = fetch_current_event()
+    stats = fetch_event_stats()
+
+    # Build device-to-peopleCount map from stats
+    device_counts = {}
+    if stats and stats.get('gates'):
+        for gate in stats['gates']:
+            for device in gate.get('accessDevices', []):
+                device_counts[device['deviceName']] = {
+                    'peopleCount': device['peopleCount'],
+                    'gateName': gate['gateName'],
+                    'gateNickName': device.get('gateNickName', '')
+                }
+
+    # Merge with local turnstile state
+    merged = []
+    for ts in turnstiles:
+        api_data = device_counts.get(ts['name'], {})
+        merged.append({
+            'id': ts['id'],
+            'name': ts['name'],
+            'status': ts['status'],
+            'pistol': ts['pistol'],
+            'codes': api_data.get('peopleCount', 0),
+            'gate': api_data.get('gateName', ''),
+            'gateNickName': api_data.get('gateNickName', '')
+        })
+
+    return {
+        'event': event,
+        'stats': {
+            'totalTickets': stats.get('totalTickets', 0) if stats else 0,
+            'usedTickets': stats.get('usedTickets', 0) if stats else 0,
+            'remainingTickets': stats.get('remainingTickets', 0) if stats else 0
+        },
+        'turnstiles': merged,
+        'apiOnline': stats is not None
+    }
 
 @app.route('/api/hello', methods=['GET'])
 def hello():

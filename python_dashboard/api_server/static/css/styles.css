@@ -91,6 +91,18 @@ body {
     letter-spacing: -0.02em;
 }
 
+.event-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.event-date {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
 .live-indicator {
     display: flex;
     align-items: center;
