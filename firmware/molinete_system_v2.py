@@ -12,8 +12,9 @@ import threading
 import queue
 import time
 # import checklan
-from requests import post, exceptions, Session
+from requests import post, get, exceptions, Session
 from datetime import datetime, date
+import socket
 from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import platform
@@ -25,6 +26,13 @@ import logging.handlers
 from json import dumps
 import smbus2 as smbus
 import structlog
+
+# Optional: psutil for system metrics (graceful fallback if not available)
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 print("importing gpiozero")
 rasp_button_restart = Button(4, pull_up=True) # PIN 7
@@ -69,6 +77,12 @@ BJET = False
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
+
+# Dashboard server URL for health reporting and remote commands
+DASHBOARD_URL = os.environ.get('DASHBOARD_URL', 'http://192.168.40.251:5000')
+DEVICE_NAME = platform.node()
+HEALTH_REPORT_INTERVAL = 30  # seconds
+COMMAND_POLL_INTERVAL = 10   # seconds
 
 # threading_event = threading.Event()
 scancodes = {
@@ -396,6 +410,168 @@ import pdb
 
 from multiprocessing import Process
 
+# ============================================
+# Health Reporting & Remote Command System
+# ============================================
+
+def get_local_ip():
+    """Get the local IP address of the device"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except:
+        return "unknown"
+
+def check_server_reachable():
+    """Check if dashboard server is reachable"""
+    try:
+        get(f"{DASHBOARD_URL}/", timeout=2)
+        return True
+    except:
+        return False
+
+def check_i2c_display(address):
+    """Check if I2C display is responding"""
+    try:
+        bus.read_byte(address)
+        return True
+    except:
+        return False
+
+def get_system_temperature():
+    """Get CPU temperature (Raspberry Pi / Orange Pi)"""
+    try:
+        with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+            temp = float(f.read()) / 1000.0
+            return round(temp, 1)
+    except:
+        return None
+
+def get_device_health(scanner_threads_active=True, display_addresses=None):
+    """Collect device health metrics"""
+    health = {
+        "device": DEVICE_NAME,
+        "ip": get_local_ip(),
+        "timestamp": datetime.now().isoformat(),
+        "network": {
+            "connected": True,  # If we're reporting, network is up
+            "server_reachable": check_server_reachable(),
+            "ip_address": get_local_ip()
+        },
+        "scanner": {
+            "connected": scanner_threads_active,
+            "device_name": "IMAGER 2D"
+        },
+        "display": {
+            "connected": False,
+            "i2c_addresses": []
+        },
+        "system": {}
+    }
+
+    # Check displays
+    if display_addresses:
+        connected_displays = []
+        for addr in display_addresses:
+            if check_i2c_display(addr):
+                connected_displays.append(hex(addr))
+        health["display"]["connected"] = len(connected_displays) > 0
+        health["display"]["i2c_addresses"] = connected_displays
+
+    # System metrics (if psutil available)
+    if PSUTIL_AVAILABLE:
+        health["system"]["cpu_percent"] = psutil.cpu_percent(interval=0.1)
+        health["system"]["memory_percent"] = psutil.virtual_memory().percent
+        health["system"]["disk_percent"] = psutil.disk_usage('/').percent
+
+    # Temperature
+    temp = get_system_temperature()
+    if temp:
+        health["system"]["temperature"] = temp
+
+    # Uptime
+    try:
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.read().split()[0])
+            health["uptime_seconds"] = int(uptime_seconds)
+    except:
+        pass
+
+    return health
+
+def health_reporter_thread(interval=HEALTH_REPORT_INTERVAL, scanner_threads_ref=None, display_addresses=None):
+    """Background thread that reports health every N seconds"""
+    logger.info("health_reporter_started", interval=interval)
+    while True:
+        try:
+            # Check if scanner threads are still active
+            scanner_active = True
+            if scanner_threads_ref:
+                current_threads = [t.name for t in threading.enumerate()]
+                scanner_active = any('readBarCodes' in name or 'Thread' in name for name in current_threads)
+
+            health = get_device_health(
+                scanner_threads_active=scanner_active,
+                display_addresses=display_addresses
+            )
+            post(f"{DASHBOARD_URL}/api/health", json=health, timeout=5)
+            logger.info("health_reported", device=DEVICE_NAME, cpu=health["system"].get("cpu_percent"))
+        except Exception as e:
+            logger.warning("health_report_failed", error=str(e))
+        time.sleep(interval)
+
+def execute_remote_command(command, lcd=None, display_address=None):
+    """Execute a remote command received from dashboard"""
+    logger.info("remote_command_received", command=command)
+
+    if lcd and display_address:
+        lcd.lcd_string(f"CMD: {command.upper()}", l1, display_address)
+
+    if command == 'reboot':
+        if lcd and display_address:
+            lcd.lcd_string("REBOOTING...", l2, display_address)
+        logger.info("remote_command_executing", command="reboot")
+        time.sleep(2)
+        os.system('reboot')
+    elif command == 'shutdown':
+        if lcd and display_address:
+            lcd.lcd_string("SHUTTING DOWN", l2, display_address)
+        logger.info("remote_command_executing", command="shutdown")
+        time.sleep(2)
+        os.system('systemctl poweroff')
+    elif command == 'restart_service':
+        if lcd and display_address:
+            lcd.lcd_string("RESTARTING SVC", l2, display_address)
+        logger.info("remote_command_executing", command="restart_service")
+        time.sleep(2)
+        os.system('systemctl restart molinete')
+    elif command == 'lcd_init':
+        if lcd and display_address:
+            lcd.initDisplay(display_address)
+            lcd.lcd_string("LCD REINIT", l2, display_address)
+        logger.info("remote_command_executing", command="lcd_init")
+    else:
+        logger.warning("unknown_remote_command", command=command)
+
+def command_poller_thread(interval=COMMAND_POLL_INTERVAL, lcd=None, display_address=None):
+    """Background thread that polls for remote commands"""
+    logger.info("command_poller_started", interval=interval)
+    while True:
+        try:
+            resp = get(f"{DASHBOARD_URL}/api/commands/{DEVICE_NAME}", timeout=5)
+            data = resp.json()
+            cmd = data.get('command')
+            if cmd:
+                execute_remote_command(cmd, lcd=lcd, display_address=display_address)
+        except Exception as e:
+            # Silent fail - server might be unreachable
+            pass
+        time.sleep(interval)
+
+
 if __name__ == '__main__':
 
     display_addressa = 0x26
@@ -409,6 +585,25 @@ if __name__ == '__main__':
     
     lcd.lcd_string("LCD INIT", l1, display_addressb)
     lcd.lcd_string(platform.node(), l2, display_addressb)
+
+    # Start health reporter thread
+    display_addresses_list = [display_addressa, display_addressb]
+    threading.Thread(
+        target=health_reporter_thread,
+        args=(HEALTH_REPORT_INTERVAL, None, display_addresses_list),
+        daemon=True,
+        name="HealthReporter"
+    ).start()
+
+    # Start command poller thread (uses display_addressa for messages)
+    threading.Thread(
+        target=command_poller_thread,
+        args=(COMMAND_POLL_INTERVAL, lcd, display_addressa),
+        daemon=True,
+        name="CommandPoller"
+    ).start()
+
+    logger.info("monitoring_threads_started", health_interval=HEALTH_REPORT_INTERVAL, command_interval=COMMAND_POLL_INTERVAL)
 
     idevs = getInputDevices() 
     if len(idevs) > 1:

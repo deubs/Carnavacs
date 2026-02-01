@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request, render_template
 from flask_socketio import SocketIO, emit
 import requests
 import os
+from datetime import datetime
+import threading
 # import cli_api_status
 
 CARNAVAL_API_URL = os.environ.get('CARNAVAL_API_URL', 'http://192.168.40.100')
@@ -35,6 +37,26 @@ turnstiles = [
     {'id': 21, 'name': 'Baliza-Disca', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 22, 'name': 'Vehiculos', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
 ]
+
+# Device health tracking - stores health data from devices
+device_health = {}  # device_name -> health_data with last_seen
+
+# Pending commands queue - stores commands waiting for device pickup
+pending_commands = {}  # device_name -> {'command': 'reboot', 'issued_at': ...}
+
+# Timeout for considering a device offline (seconds)
+DEVICE_TIMEOUT_SECONDS = 60
+
+def is_device_online(device_name):
+    """Check if device has reported health within timeout period"""
+    health = device_health.get(device_name)
+    if not health or 'last_seen' not in health:
+        return False
+    try:
+        last_seen = datetime.fromisoformat(health['last_seen'])
+        return (datetime.now() - last_seen).total_seconds() < DEVICE_TIMEOUT_SECONDS
+    except:
+        return False
 
 # C# API Helper Functions
 def fetch_current_event():
@@ -116,10 +138,13 @@ def dashboard_data():
                     'gateNickName': device.get('gateNickName', '')
                 }
 
-    # Merge with local turnstile state
+    # Merge with local turnstile state and health info
     merged = []
     for ts in turnstiles:
         api_data = device_counts.get(ts['name'], {})
+        health = device_health.get(ts['name'], {})
+        online = is_device_online(ts['name'])
+
         merged.append({
             'id': ts['id'],
             'name': ts['name'],
@@ -127,7 +152,18 @@ def dashboard_data():
             'pistol': ts['pistol'],
             'codes': api_data.get('peopleCount', 0),
             'gate': api_data.get('gateName', ''),
-            'gateNickName': api_data.get('gateNickName', '')
+            'gateNickName': api_data.get('gateNickName', ''),
+            'online': online,
+            'health': {
+                'scanner': health.get('scanner', {}).get('connected', False) if health else False,
+                'display': health.get('display', {}).get('connected', False) if health else False,
+                'network': health.get('network', {}).get('connected', False) if health else False,
+                'cpu': health.get('system', {}).get('cpu_percent', 0) if health else 0,
+                'memory': health.get('system', {}).get('memory_percent', 0) if health else 0,
+                'temperature': health.get('system', {}).get('temperature') if health else None,
+                'last_seen': health.get('last_seen') if health else None,
+                'ip': health.get('ip') if health else None
+            }
         })
 
     return {
@@ -170,6 +206,106 @@ def code():
     ip = request.args.get('ip', default='localhost')
     decode_turnstile_code([ip, 'code'])
     return jsonify({"message": f"New Code @ IP:{ip}!"})
+
+# ============================================
+# Device Health Monitoring Endpoints
+# ============================================
+
+@app.route('/api/health', methods=['POST'])
+def report_health():
+    """Receive health report from device"""
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    device_name = data.get('device')
+    if not device_name:
+        return jsonify({'error': 'Device name required'}), 400
+
+    # Store health data with server-side timestamp
+    device_health[device_name] = {
+        **data,
+        'last_seen': datetime.now().isoformat()
+    }
+
+    # Update turnstile online status in the local list
+    for ts in turnstiles:
+        if ts['name'] == device_name:
+            ts['online'] = True
+            break
+
+    print(f"Health report from {device_name}: CPU={data.get('system', {}).get('cpu_percent', 'N/A')}%")
+    return jsonify({'success': True})
+
+@app.route('/api/health/<device_name>', methods=['GET'])
+def get_health(device_name):
+    """Get health data for a specific device"""
+    health = device_health.get(device_name)
+    if not health:
+        return jsonify({'error': 'Device not found'}), 404
+    return jsonify({
+        **health,
+        'online': is_device_online(device_name)
+    })
+
+@app.route('/api/health', methods=['GET'])
+def get_all_health():
+    """Get health data for all devices"""
+    result = {}
+    for name, health in device_health.items():
+        result[name] = {
+            **health,
+            'online': is_device_online(name)
+        }
+    return jsonify(result)
+
+# ============================================
+# Remote Command Endpoints
+# ============================================
+
+@app.route('/api/commands/<device_name>', methods=['GET'])
+def get_command(device_name):
+    """Device polls for pending commands - returns and clears pending command"""
+    cmd_data = pending_commands.pop(device_name, None)
+    if cmd_data:
+        print(f"Command '{cmd_data['command']}' picked up by {device_name}")
+        return jsonify({'command': cmd_data['command']})
+    return jsonify({'command': None})
+
+@app.route('/api/commands/<device_name>', methods=['POST'])
+def issue_command(device_name):
+    """Admin issues a command to a device"""
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    command = data.get('command')
+    valid_commands = ['reboot', 'shutdown', 'restart_service', 'lcd_init']
+
+    if command not in valid_commands:
+        return jsonify({'error': f'Invalid command. Valid commands: {valid_commands}'}), 400
+
+    # Check if device exists in our list
+    device_exists = any(ts['name'] == device_name for ts in turnstiles)
+    if not device_exists:
+        return jsonify({'error': f'Unknown device: {device_name}'}), 404
+
+    # Queue the command
+    pending_commands[device_name] = {
+        'command': command,
+        'issued_at': datetime.now().isoformat()
+    }
+
+    print(f"Command '{command}' queued for {device_name}")
+    return jsonify({
+        'success': True,
+        'message': f'{command} queued for {device_name}'
+    })
+
+@app.route('/api/commands', methods=['GET'])
+def get_pending_commands():
+    """Get all pending commands (admin view)"""
+    return jsonify(pending_commands)
 
 @socketio.on('my event')
 def handle_my_custom_event(json):

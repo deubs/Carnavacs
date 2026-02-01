@@ -42,6 +42,10 @@
             <span class="stat-value" id="stat-pistols">0</span>
             <span class="stat-label">Active Pistols</span>
         </div>
+        <div class="stat-card stat-online">
+            <span class="stat-value" id="stat-online">0</span>
+            <span class="stat-label">Online</span>
+        </div>
     </section>
 
     <!-- Main Grid -->
@@ -80,6 +84,10 @@
             const pistols = data.turnstiles.filter(t => t.pistol === 'On').length;
             document.getElementById('stat-pistols').textContent = pistols;
 
+            // Online devices count
+            const online = data.turnstiles.filter(t => t.online).length;
+            document.getElementById('stat-online').textContent = online;
+
             // Update event info
             if (data.event) {
                 document.getElementById('event-name').textContent = data.event.showName || data.event.nombre;
@@ -87,11 +95,53 @@
             }
         }
 
+        // Format last seen time
+        function formatLastSeen(isoString) {
+            if (!isoString) return 'Never';
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+
+            if (diffSec < 60) return `${diffSec}s ago`;
+            if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+            if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+            return date.toLocaleDateString();
+        }
+
+        // Send remote command to device
+        function sendCommand(device, command) {
+            const cmdNames = {
+                'reboot': 'REBOOT',
+                'shutdown': 'SHUTDOWN',
+                'restart_service': 'RESTART SERVICE',
+                'lcd_init': 'REINIT LCD'
+            };
+            if (!confirm(`Send ${cmdNames[command] || command} to ${device}?`)) return;
+
+            fetch(`/api/commands/${device}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({command})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(err => alert('Failed to send command: ' + err));
+        }
+
         // Create turnstile card element
         function createTurnstileCard(moli) {
             const card = document.createElement('div');
             const statusClass = moli.status === 'locked' ? 'locked' : 'unlocked';
             const pistolActive = moli.pistol === 'On';
+            const isOnline = moli.online;
+            const health = moli.health || {};
 
             // Check for state change
             const prevState = previousState[moli.name];
@@ -101,7 +151,7 @@
                 prevState.codes !== moli.codes
             );
 
-            card.className = `turnstile-card ${statusClass}${hasChanged ? ' state-changed' : ''}`;
+            card.className = `turnstile-card ${statusClass}${hasChanged ? ' state-changed' : ''}${isOnline ? '' : ' offline'}`;
             card.innerHTML = `
                 <div class="card-header">
                     <h3 class="card-title">${moli.name}</h3>
@@ -119,6 +169,20 @@
                         <span class="card-label">Codes</span>
                         <span class="codes-value">${moli.codes.toLocaleString()}</span>
                     </div>
+                    <div class="health-indicators">
+                        <span class="health-icon ${health.scanner ? 'ok' : 'error'}" title="Scanner ${health.scanner ? 'Connected' : 'Disconnected'}">&#128247;</span>
+                        <span class="health-icon ${health.display ? 'ok' : 'error'}" title="Display ${health.display ? 'Connected' : 'Disconnected'}">&#128421;</span>
+                        <span class="health-icon ${health.network ? 'ok' : 'error'}" title="Network ${health.network ? 'OK' : 'Error'}">&#128246;</span>
+                        ${health.cpu !== undefined ? `<span class="health-cpu" title="CPU Usage">${Math.round(health.cpu)}%</span>` : ''}
+                        ${health.temperature ? `<span class="health-temp" title="Temperature">${health.temperature}&deg;C</span>` : ''}
+                    </div>
+                    ${health.last_seen ? `<div class="last-seen">Last seen: ${formatLastSeen(health.last_seen)}</div>` : ''}
+                </div>
+                <div class="card-actions">
+                    <button onclick="sendCommand('${moli.name}', 'reboot')" title="Reboot Device">&#128260;</button>
+                    <button onclick="sendCommand('${moli.name}', 'restart_service')" title="Restart Service">&#9654;</button>
+                    <button onclick="sendCommand('${moli.name}', 'lcd_init')" title="Reinit LCD">&#128421;</button>
+                    <button onclick="sendCommand('${moli.name}', 'shutdown')" class="btn-danger" title="Shutdown">&#9632;</button>
                 </div>
             `;
 
