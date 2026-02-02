@@ -106,14 +106,199 @@ l2 = LCDI2Cv2.LCD_LINE_2
 class PauseDeviceTOKEN:
     def __init__(self):
         self.is_paused = False
-    
+
     def pauseDevice(self):
         self.is_paused = True
-    
+
     def resumeDevice(self):
         self.is_paused = False
 
 pauseDevice = PauseDeviceTOKEN()
+
+# Scanner watchdog settings
+SCANNER_WATCHDOG_INTERVAL = 5  # Check scanner every 5 seconds
+SCANNER_RECONNECT_DELAY = 3    # Wait 3 seconds between reconnect attempts
+
+# Global registry of scanner managers for health reporting
+scanner_managers = {}
+
+
+class ScannerManager:
+    """Manages USB scanner connection with auto-reconnect capability"""
+
+    KNOWN_SCANNERS = [
+        "IMAGER 2D", "BF SCAN SCAN KEYBOARD", "NT USB Keyboard",
+        "TMS HIDKeyBoard", "ZKRFID R400", "BARCODE SCANNER"
+    ]
+
+    def __init__(self, name, code_queue, pause_token, lcd=None, display_address=None, initial_device=None):
+        self.name = name
+        self.code_queue = code_queue
+        self.pause_token = pause_token
+        self.lcd = lcd
+        self.display_address = display_address
+        self.device = None
+        self.device_path = None
+        self.device_name = None
+        self.reader_thread = None
+        self.connected = False
+        self.running = True
+
+        # Stats for health reporting
+        self.disconnect_count = 0
+        self.reconnect_count = 0
+        self.last_disconnect_time = None
+        self.last_reconnect_time = None
+
+        self._lock = threading.Lock()
+
+        # If initial device provided, use it
+        if initial_device:
+            self.device = initial_device
+            self.device_path = initial_device.path
+            self.device_name = initial_device.name
+            self.connected = True
+
+        # Register globally for health reporting
+        scanner_managers[name] = self
+
+    def detect_scanner(self, exclude_paths=None):
+        """Detect available scanner device not in exclude list"""
+        exclude_paths = exclude_paths or []
+        try:
+            devices = [InputDevice(path) for path in list_devices()]
+            for device in devices:
+                if device.path in exclude_paths:
+                    continue
+                if any(name in device.name for name in self.KNOWN_SCANNERS):
+                    return device
+        except Exception as e:
+            logger.warning("scanner_detect_error", manager=self.name, error=str(e))
+        return None
+
+    def connect(self, device=None):
+        """Connect to scanner device"""
+        with self._lock:
+            try:
+                if device:
+                    self.device = device
+                else:
+                    # Get paths of other connected scanners to avoid conflicts
+                    exclude = [m.device_path for n, m in scanner_managers.items()
+                              if n != self.name and m.device_path]
+                    self.device = self.detect_scanner(exclude_paths=exclude)
+
+                if self.device is None:
+                    logger.warning("scanner_not_found", manager=self.name)
+                    self.connected = False
+                    return False
+
+                self.device_path = self.device.path
+                self.device_name = self.device.name
+                self.connected = True
+                logger.info("scanner_connected", manager=self.name,
+                           path=self.device_path, name=self.device_name)
+                return True
+            except Exception as e:
+                logger.error("scanner_connect_error", manager=self.name, error=str(e))
+                self.connected = False
+                return False
+
+    def disconnect(self):
+        """Handle scanner disconnection"""
+        with self._lock:
+            self.connected = False
+            self.disconnect_count += 1
+            self.last_disconnect_time = datetime.now().isoformat()
+            logger.warning("scanner_disconnected", manager=self.name,
+                          disconnect_count=self.disconnect_count,
+                          device=self.device_name)
+
+    def read_loop(self):
+        """Read barcodes from scanner - runs in thread"""
+        barcode = ''
+        while self.running:
+            if not self.connected or self.device is None:
+                time.sleep(0.5)
+                continue
+
+            try:
+                for event in self.device.read_loop():
+                    if not self.running:
+                        break
+                    if not self.pause_token.is_paused:
+                        if event.type == ecodes.EV_KEY:
+                            eventdata = categorize(event)
+                            if eventdata.keystate == 1:  # Keydown
+                                scancode = eventdata.scancode
+                                if scancode == 28:  # Enter
+                                    if barcode:
+                                        self.code_queue.put(barcode)
+                                    barcode = ''
+                                else:
+                                    key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
+                                    barcode = barcode + key
+            except OSError as e:
+                logger.error("scanner_read_error", manager=self.name,
+                            error=str(e), errno=e.errno)
+                self.disconnect()
+                barcode = ''
+            except Exception as e:
+                logger.error("scanner_unexpected_error", manager=self.name, error=str(e))
+                self.disconnect()
+                barcode = ''
+
+    def start_reader(self):
+        """Start the barcode reader thread"""
+        if self.reader_thread is None or not self.reader_thread.is_alive():
+            self.reader_thread = threading.Thread(
+                target=self.read_loop,
+                daemon=True,
+                name=f"ScannerReader-{self.name}"
+            )
+            self.reader_thread.start()
+            logger.info("scanner_reader_started", manager=self.name)
+
+    def attempt_reconnect(self):
+        """Attempt to reconnect to scanner"""
+        if self.connected:
+            return True
+
+        logger.info("scanner_reconnect_attempt", manager=self.name,
+                   attempt=self.reconnect_count + 1)
+
+        # Need to re-create InputDevice object
+        self.device = None
+        if self.connect():
+            self.reconnect_count += 1
+            self.last_reconnect_time = datetime.now().isoformat()
+            logger.info("scanner_reconnected", manager=self.name,
+                       reconnect_count=self.reconnect_count,
+                       device=self.device_name)
+            return True
+        return False
+
+    def get_status(self):
+        """Get scanner status for health reporting"""
+        return {
+            "connected": self.connected,
+            "device_name": self.device_name or "unknown",
+            "device_path": self.device_path,
+            "disconnect_count": self.disconnect_count,
+            "reconnect_count": self.reconnect_count,
+            "last_disconnect": self.last_disconnect_time,
+            "last_reconnect": self.last_reconnect_time
+        }
+
+    def show_status(self, message1, message2):
+        """Show status on LCD if available"""
+        if self.lcd and self.display_address:
+            self.lcd.lcd_string(message1, l1, self.display_address)
+            self.lcd.lcd_string(message2, l2, self.display_address)
+
+    def stop(self):
+        """Stop the scanner manager"""
+        self.running = False
 
 logger.info(
         "device_status",
@@ -178,65 +363,25 @@ class baseAccessSystem():
             return {'apistatus': False, 'code': False, 'm1': 'BIENVENIDO', 'm2': 'ADELANTE'}    
 
 class AccessSystem(baseAccessSystem):
-    def __init__(self, 
-                 i2cdisplayaddress, 
-                 inputsystem,
+    def __init__(self,
+                 i2cdisplayaddress,
+                 inputdevice,
                  gpioout,
                  name):
 
         self.display_address = i2cdisplayaddress
-        self.inputsystem = inputsystem
+        self.input_device = inputdevice  # Now receives InputDevice object directly
         self.gpio_out = gpioout
         self.lcd = None
         self.name = name
         self.logger = logger
         self.bus = bus
-        # self.main()
-
-
-    def connectInputDevice(self):
-        try:           
-            device = InputDevice(self.inputsystem) # Replace with your device
-        except Exception as e:
-            self.logmessage('error', e)
-            return None
-        else:
-            self.logmessage('info', device.name)
-            return device
-
-
-    def readBarCodes(self, device, q: queue, pause: PauseDeviceTOKEN):
-        print('begin reading...')
-        barcode = ''
-        while True:
-            try:
-                for event in device.read_loop():
-                    if not pause.is_paused:
-                        if event.type == ecodes.EV_KEY:
-                            eventdata = categorize(event)
-                            if eventdata.keystate == 1: # Keydown
-                                scancode = eventdata.scancode
-                                if scancode == 28: # Enter
-                                    q.put(barcode)
-                                    barcode = ''
-                                else:
-                                    key = scancodes.get(scancode, NOT_RECOGNIZED_KEY)
-                                    barcode = barcode + key
-                                    if key == NOT_RECOGNIZED_KEY:
-                                        print('unknown key, scancode=' + str(scancode))
-            except Exception as e:
-                print(e)
-                idev = None
-                exit()
-
+        self.scanner_manager = None
 
     def logmessage(self, level, message):
-        """
-        logs messages to file
-        """
+        """logs messages to file"""
         log = getattr(logger, level)
         log(message)
-
 
     def enableGate(self):
         self.gpio_out.on()
@@ -244,22 +389,8 @@ class AccessSystem(baseAccessSystem):
         self.gpio_out.off()
         return True
 
-
-    def initInputDevice(self, queue):
-        """
-        """
-        if self.inputsystem is not None:
-            dev = self.connectInputDevice()
-            threading.Thread(target = self.readBarCodes, args = (dev, queue, pauseDevice, ), daemon = True).start()
-            self.logmessage('info', 'input device connected')
-            BJET = True
-        return dev
-
-
-    def checkCode(self, code:str):
-        """
-            Reboot and Shutdown codes
-        """
+    def checkCode(self, code: str):
+        """Reboot and Shutdown codes"""
         if code == '00000000000100000000000':
             self.logmessage('info', 'REBOOT REQUIRED BY QR')
             self.lcd.lcd_string("REBOOT BY QR", l1, self.display_address)
@@ -277,74 +408,79 @@ class AccessSystem(baseAccessSystem):
             self.lcd.lcd_string("LCD RESTART BY QR", l1, self.display_address)
             self.lcd.lcd_string("LCD RESTART BY QR", l2, self.display_address)
             self.lcd.initDisplay(self.display_address)
-            
 
     def main(self, lcd):
-        """
-            Main function
-        """
+        """Main function"""
         ncodes = 0
-        bdirt = False
         self.lcd = lcd
         print(self.lcd)
         print(self.display_address)
-        fhandler = self.createFile(workingdir = workingdir, sysname = self.name)
-        jet111q = queue.Queue(maxsize = 1)
-        idev = self.initInputDevice(jet111q)
-        if idev is not None:
-            self.lcd.lcd_string("INPUT DEV ON", l2, self.display_address)
-            self.logmessage('info', "INPUT DEV ON")
+        fhandler = self.createFile(workingdir=workingdir, sysname=self.name)
+
+        # Initialize scanner manager with auto-reconnect
+        code_queue = queue.Queue(maxsize=1)
+        self.scanner_manager = ScannerManager(
+            name=self.name,
+            code_queue=code_queue,
+            pause_token=pauseDevice,
+            lcd=lcd,
+            display_address=self.display_address,
+            initial_device=self.input_device if self.input_device else None
+        )
+
+        # If no initial device, try to connect
+        if not self.scanner_manager.connected:
+            self.scanner_manager.connect()
+
+        if self.scanner_manager.connected:
+            self.lcd.lcd_string("PISTOLA OK", l2, self.display_address)
+            self.logmessage('info', f"SCANNER CONNECTED: {self.scanner_manager.device_name}")
         else:
-            self.lcd.lcd_string("INPUT DEV OFF", l2, self.display_address)
-            self.logmessage('error', "INPUT DEV OFF")
+            self.lcd.lcd_string("PISTOLA OFF", l2, self.display_address)
+            self.logmessage('error', "SCANNER NOT FOUND")
+
+        # Start scanner reader thread
+        self.scanner_manager.start_reader()
 
         time.sleep(1)
-        nthreads =  threading.enumerate()
         code = None
-        bdirt = True
         nloops = 0
+        FAILURE_COUNT = 5
+
         while True:
             jet111data = None
             marked = False
-            brestart = 1
+
+            # Check hardware restart button
             brestart = rasp_button_restart.pin.state
-
-            if nthreads != threading.enumerate():
-                brestart = 0
-                self.logmessage('critical', 'INPUT DEVICE IS DISCONNECTED. INFORM')
-                self.lcd.lcd_string("PISTOLA", l1, self.display_address)
-                self.lcd.lcd_string("DESCONECTADA", l1, self.display_address)
-
             if brestart == 0:
                 self.lcd.lcd_string("REINICIANDO", l1, self.display_address)
-                self.lcd.lcd_string("YA VOlVEMOS", l2, self.display_address)
+                self.lcd.lcd_string("YA VOLVEMOS", l2, self.display_address)
                 if fhandler is not None:
                     fhandler.close()
-                self.logmessage('error', 'RESTART REQUIRED')
+                self.logmessage('error', 'RESTART REQUIRED BY BUTTON')
+                self.scanner_manager.stop()
                 exit()
-            nloops += 1
-            if code is None:
-                FAILURE_COUNT = 5
-                if idev is not None:
-                    if not jet111q.empty():
-                        # print("reading queue...jet111")
-                        jet111data = jet111q.get()
-                        if jet111data is not None:
-                            self.lcd.lcd_string(f'{jet111data}', l1, self.display_address)
-                            code = jet111data
-                            # time.sleep(0.5)
-                else:
-                    self.lcd.lcd_string("PISTOLA", l1, self.display_address)
-                    self.lcd.lcd_string("DESCONECTADA", l1, self.display_address)
 
+            nloops += 1
+
+            # Read from scanner queue
+            if code is None:
+                if not code_queue.empty():
+                    jet111data = code_queue.get()
+                    if jet111data is not None:
+                        self.lcd.lcd_string(f'{jet111data}', l1, self.display_address)
+                        code = jet111data
+
+            # Process scanned code
             bfinalize_job = False
-            if (code is not None):
+            if code is not None:
                 ncodes += 1
                 pauseDevice.pauseDevice()
                 self.checkCode(code)
                 result = self.apicall(code)
-                # result = {'apistatus': True, 'code': code, 'm1': 'holis', 'm2': 'troesma'}
                 self.logmessage('info', f'{code} - {dumps(result)}')
+
                 if result['apistatus'] == True:
                     self.lcd.lcd_string(f'{result["m1"]}', l1, self.display_address)
                     self.lcd.lcd_string(f'{result["m2"]}', l2, self.display_address)
@@ -353,11 +489,10 @@ class AccessSystem(baseAccessSystem):
                     else:
                         marked = self.enableGate()
                         if marked:
-                            self.logmessage('info', 'CODIGO MARCADO {code}')
-                            # self.lcd.lcd_string(f'CODIGO MARCADO', l1, self.display_address)
-                            # self.lcd.lcd_string(f'BIENVENIDO', l2, self.display_address)
+                            self.logmessage('info', f'CODIGO MARCADO {code}')
                     ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
                     bfinalize_job = True
+                    FAILURE_COUNT = 5
                 else:
                     self.lcd.lcd_string("FALLA DE SISTEMA", l1, self.display_address)
                     self.lcd.lcd_string("REINTENTANDO", l2, self.display_address)
@@ -368,29 +503,29 @@ class AccessSystem(baseAccessSystem):
                         self.lcd.lcd_string("INFORME PROBLEMA", l2, self.display_address)
                         time.sleep(2)
                         ticket_string = f'code: {code}, status: api failed permanent, timestamp: {datetime.now()} \n'
-                        bfinalize_job = True                   
+                        bfinalize_job = True
+                        FAILURE_COUNT = 5
+
                 if bfinalize_job:
-                    bdirt = True
                     code = None
                     pauseDevice.resumeDevice()
                     if ncodes > 5:
                         self.lcd.initDisplay(self.display_address)
-                        ncodes = 0 
+                        ncodes = 0
                 if fhandler is not None:
                     fhandler.write(ticket_string)
                     fhandler.flush()
             else:
-                # if bdirt:
-                self.lcd.lcd_string("CARNAVAL 2026", l1, self.display_address)
-                self.lcd.lcd_string("NUEVO INGRESO", l2, self.display_address)
+                # Idle state - show status based on scanner connection
+                if self.scanner_manager.connected:
+                    self.lcd.lcd_string("CARNAVAL 2026", l1, self.display_address)
+                    self.lcd.lcd_string("NUEVO INGRESO", l2, self.display_address)
+                # Watchdog handles "DESCONECTADA" display
+
                 if nloops > 20:
                     self.lcd.initDisplay(self.display_address)
                     nloops = 0
                     ncodes = 0
-                    # self.lcd.lcd_string("LCD init", l2, self.display_address)
-                
-                # bdirt = False
-                # code = None
 
 def getInputDevices():
     devices = [InputDevice(path) for path in list_devices()]
@@ -450,20 +585,41 @@ def get_system_temperature():
     except:
         return None
 
-def get_device_health(scanner_threads_active=True, display_addresses=None):
+def get_device_health(display_addresses=None):
     """Collect device health metrics"""
+    # Aggregate scanner stats from all managers
+    total_disconnects = 0
+    total_reconnects = 0
+    all_connected = True
+    scanner_details = []
+
+    for name, manager in scanner_managers.items():
+        status = manager.get_status()
+        total_disconnects += status.get('disconnect_count', 0)
+        total_reconnects += status.get('reconnect_count', 0)
+        if not status.get('connected', False):
+            all_connected = False
+        scanner_details.append({
+            'name': name,
+            'connected': status.get('connected', False),
+            'device': status.get('device_name', 'unknown')
+        })
+
     health = {
         "device": DEVICE_NAME,
         "ip": get_local_ip(),
         "timestamp": datetime.now().isoformat(),
         "network": {
-            "connected": True,  # If we're reporting, network is up
+            "connected": True,
             "server_reachable": check_server_reachable(),
             "ip_address": get_local_ip()
         },
         "scanner": {
-            "connected": scanner_threads_active,
-            "device_name": "IMAGER 2D"
+            "connected": all_connected,
+            "device_name": "dual scanners",
+            "disconnect_count": total_disconnects,
+            "reconnect_count": total_reconnects,
+            "scanners": scanner_details
         },
         "display": {
             "connected": False,
@@ -502,23 +658,51 @@ def get_device_health(scanner_threads_active=True, display_addresses=None):
 
     return health
 
-def health_reporter_thread(interval=HEALTH_REPORT_INTERVAL, scanner_threads_ref=None, display_addresses=None):
+def scanner_watchdog_thread():
+    """Monitor all scanner connections and auto-reconnect on disconnect"""
+    logger.info("scanner_watchdog_started", interval=SCANNER_WATCHDOG_INTERVAL)
+
+    was_connected = {}  # Track previous state per scanner
+
+    while True:
+        try:
+            for name, manager in scanner_managers.items():
+                is_connected = manager.connected
+                prev_connected = was_connected.get(name, True)
+
+                # Detect disconnection
+                if prev_connected and not is_connected:
+                    logger.warning("scanner_watchdog_detected_disconnect", scanner=name)
+                    manager.show_status("PISTOLA", "RECONECTANDO...")
+
+                # Attempt reconnection if disconnected
+                if not is_connected:
+                    logger.info("scanner_watchdog_attempting_reconnect", scanner=name)
+                    time.sleep(SCANNER_RECONNECT_DELAY)
+
+                    if manager.attempt_reconnect():
+                        manager.show_status("PISTOLA", "RECONECTADA OK")
+                        time.sleep(2)
+                    else:
+                        manager.show_status("PISTOLA", "NO DETECTADA")
+
+                was_connected[name] = manager.connected
+
+        except Exception as e:
+            logger.error("scanner_watchdog_error", error=str(e))
+
+        time.sleep(SCANNER_WATCHDOG_INTERVAL)
+
+def health_reporter_thread(interval=HEALTH_REPORT_INTERVAL, display_addresses=None):
     """Background thread that reports health every N seconds"""
     logger.info("health_reporter_started", interval=interval)
     while True:
         try:
-            # Check if scanner threads are still active
-            scanner_active = True
-            if scanner_threads_ref:
-                current_threads = [t.name for t in threading.enumerate()]
-                scanner_active = any('readBarCodes' in name or 'Thread' in name for name in current_threads)
-
-            health = get_device_health(
-                scanner_threads_active=scanner_active,
-                display_addresses=display_addresses
-            )
+            health = get_device_health(display_addresses=display_addresses)
             post(f"{DASHBOARD_URL}/api/health", json=health, timeout=5)
-            logger.info("health_reported", device=DEVICE_NAME, cpu=health["system"].get("cpu_percent"))
+            logger.info("health_reported", device=DEVICE_NAME,
+                       cpu=health["system"].get("cpu_percent"),
+                       scanners_connected=health["scanner"].get("connected"))
         except Exception as e:
             logger.warning("health_report_failed", error=str(e))
         time.sleep(interval)
@@ -579,18 +763,25 @@ if __name__ == '__main__':
 
     lcd = LCDI2Cv2.LCD()
     lcd.lcd_init(display_addressa, display_addressb)
-    
+
     lcd.lcd_string("LCD INIT", l1, display_addressa)
     lcd.lcd_string(platform.node(), l2, display_addressa)
-    
+
     lcd.lcd_string("LCD INIT", l1, display_addressb)
     lcd.lcd_string(platform.node(), l2, display_addressb)
+
+    # Start scanner watchdog thread (monitors all scanners)
+    threading.Thread(
+        target=scanner_watchdog_thread,
+        daemon=True,
+        name="ScannerWatchdog"
+    ).start()
 
     # Start health reporter thread
     display_addresses_list = [display_addressa, display_addressb]
     threading.Thread(
         target=health_reporter_thread,
-        args=(HEALTH_REPORT_INTERVAL, None, display_addresses_list),
+        args=(HEALTH_REPORT_INTERVAL, display_addresses_list),
         daemon=True,
         name="HealthReporter"
     ).start()
@@ -603,40 +794,57 @@ if __name__ == '__main__':
         name="CommandPoller"
     ).start()
 
-    logger.info("monitoring_threads_started", health_interval=HEALTH_REPORT_INTERVAL, command_interval=COMMAND_POLL_INTERVAL)
+    logger.info("monitoring_threads_started",
+               health_interval=HEALTH_REPORT_INTERVAL,
+               command_interval=COMMAND_POLL_INTERVAL,
+               watchdog_interval=SCANNER_WATCHDOG_INTERVAL)
 
-    idevs = getInputDevices() 
-    if len(idevs) > 1:
-        asys = {"Proveedores1":{"gpio_out": relay_outa, "display_i2caddress": 0x27, "input_device": idevs[0]}, 
-                "Proveedores2":{"gpio_out": relay_outb, "display_i2caddress": 0x26, "input_device": idevs[1]}}
+    # Detect available scanners
+    idevs = getInputDevices()
+    logger.info("scanners_detected", count=len(idevs),
+               devices=[d.name for d in idevs])
 
+    # Setup dual access systems
+    if len(idevs) >= 2:
+        asys = {
+            "Proveedores1": {"gpio_out": relay_outa, "display_i2caddress": 0x27, "input_device": idevs[0]},
+            "Proveedores2": {"gpio_out": relay_outb, "display_i2caddress": 0x26, "input_device": idevs[1]}
+        }
+    elif len(idevs) == 1:
+        logger.warning("only_one_scanner_detected")
+        lcd.lcd_string("SOLO 1 PISTOLA", l1, display_addressa)
+        asys = {
+            "Proveedores1": {"gpio_out": relay_outa, "display_i2caddress": 0x27, "input_device": idevs[0]},
+            "Proveedores2": {"gpio_out": relay_outb, "display_i2caddress": 0x26, "input_device": None}
+        }
+    else:
+        logger.error("no_scanners_detected")
+        lcd.lcd_string("NO PISTOLAS", l1, display_addressa)
+        lcd.lcd_string("VERIFICAR USB", l2, display_addressa)
+        asys = {
+            "Proveedores1": {"gpio_out": relay_outa, "display_i2caddress": 0x27, "input_device": None},
+            "Proveedores2": {"gpio_out": relay_outb, "display_i2caddress": 0x26, "input_device": None}
+        }
 
-    asA = AccessSystem(name = "Proveedores1",
-                    i2cdisplayaddress = asys['Proveedores1']["display_i2caddress"],
-                    inputsystem = asys['Proveedores1']["input_device"], 
-                    gpioout = asys['Proveedores1']['gpio_out'])
-    
-    threading.Thread(target = asA.main, args = (lcd, ), daemon = True).start()
-    # pa = Process(target= asA.main, args=(lcd, ))
-    # pa.start()
-    asB = AccessSystem(name = "Proveedores2",
-                        i2cdisplayaddress = asys['Proveedores2']["display_i2caddress"],
-                        inputsystem = asys['Proveedores2']["input_device"], 
-                        gpioout = asys['Proveedores2']['gpio_out'])
-    # pb = Process(target= asB.main, args=(lcd, ))
-    threading.Thread(target = asB.main, args = (lcd, ), daemon = True).start()
-    # pb.start()
+    # Create and start access systems
+    asA = AccessSystem(
+        name="Proveedores1",
+        i2cdisplayaddress=asys['Proveedores1']["display_i2caddress"],
+        inputdevice=asys['Proveedores1']["input_device"],
+        gpioout=asys['Proveedores1']['gpio_out']
+    )
+    threading.Thread(target=asA.main, args=(lcd,), daemon=True).start()
 
-    # nthreads = threading.enumerate()
+    asB = AccessSystem(
+        name="Proveedores2",
+        i2cdisplayaddress=asys['Proveedores2']["display_i2caddress"],
+        inputdevice=asys['Proveedores2']["input_device"],
+        gpioout=asys['Proveedores2']['gpio_out']
+    )
+    threading.Thread(target=asB.main, args=(lcd,), daemon=True).start()
+
+    logger.info("access_systems_started", systems=["Proveedores1", "Proveedores2"])
+
+    # Main loop - keep alive
     while True:
         time.sleep(10)
-        continue
-    
-
-    lcd.lcd_string("EXIT", l1, display_addressa)
-    lcd.lcd_string(platform.node(), l2, display_addressa)
-    
-    lcd.lcd_string("EXIT", l1, display_addressb)
-    lcd.lcd_string(platform.node(), l2, display_addressb)
-
-    exit()
