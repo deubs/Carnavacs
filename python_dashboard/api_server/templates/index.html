@@ -171,6 +171,7 @@
                     </div>
                     <div class="health-indicators">
                         <span class="health-icon ${health.scanner ? 'ok' : 'error'}" title="Scanner ${health.scanner ? 'Connected' : 'Disconnected'}">&#128247;</span>
+                        ${health.scanner_disconnects > 0 ? `<span class="health-warn" title="Disconnects: ${health.scanner_disconnects}, Reconnects: ${health.scanner_reconnects}">&#9888; ${health.scanner_disconnects}</span>` : ''}
                         <span class="health-icon ${health.display ? 'ok' : 'error'}" title="Display ${health.display ? 'Connected' : 'Disconnected'}">&#128421;</span>
                         <span class="health-icon ${health.network ? 'ok' : 'error'}" title="Network ${health.network ? 'OK' : 'Error'}">&#128246;</span>
                         ${health.cpu !== undefined ? `<span class="health-cpu" title="CPU Usage">${Math.round(health.cpu)}%</span>` : ''}

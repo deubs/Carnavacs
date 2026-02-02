@@ -156,6 +156,8 @@ def dashboard_data():
             'online': online,
             'health': {
                 'scanner': health.get('scanner', {}).get('connected', False) if health else False,
+                'scanner_disconnects': health.get('scanner', {}).get('disconnect_count', 0) if health else 0,
+                'scanner_reconnects': health.get('scanner', {}).get('reconnect_count', 0) if health else 0,
                 'display': health.get('display', {}).get('connected', False) if health else False,
                 'network': health.get('network', {}).get('connected', False) if health else False,
                 'cpu': health.get('system', {}).get('cpu_percent', 0) if health else 0,
