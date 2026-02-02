@@ -12,8 +12,9 @@ import threading
 import queue
 import time
 import checklan
-from requests import post, exceptions, Session
+from requests import post, get, exceptions, Session
 from datetime import datetime, date
+import os
 from apikeys import keys
 from evdev import InputDevice, categorize, ecodes, list_devices
 import calendar
@@ -27,6 +28,13 @@ import logging.handlers
 import structlog
 import sys
 import random
+
+# Optional: psutil for system metrics (graceful fallback if not available)
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 if "tango" in platform.node() or "baliza" in platform.node():
     import wiringpi
@@ -79,6 +87,12 @@ BGM65 = False
 
 apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
+
+# Dashboard server URL for health reporting and remote commands
+DASHBOARD_URL = os.environ.get('DASHBOARD_URL', 'http://192.168.40.251:5000')
+DEVICE_NAME = platform.node()
+HEALTH_REPORT_INTERVAL = 30  # seconds
+COMMAND_POLL_INTERVAL = 10   # seconds
 
 # threading_event = threading.Event()
 # scancodes = {
@@ -428,7 +442,6 @@ def initSerialDevice(queue):
         time.sleep(2)
     return sp
 
-import os
 def checkCode(code:str, lcd):
     """
         Reboot and Shutdown codes
@@ -445,6 +458,133 @@ def checkCode(code:str, lcd):
         lcd.lcd_string("SHUTDOWN BY QR", l2)
         os.system('systemctl poweroff')
         time.sleep(5)
+
+
+# ============================================
+# Health Reporting & Remote Command System
+# ============================================
+
+def get_system_temperature():
+    """Get CPU temperature (Raspberry Pi / Orange Pi)"""
+    try:
+        with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+            temp = float(f.read()) / 1000.0
+            return round(temp, 1)
+    except:
+        return None
+
+def get_device_health(scanner_threads_active=True, display_ok=False):
+    """Collect device health metrics - reuses checklan module"""
+    # Use checklan's ipADDRESS (already set during startup)
+    ip = getattr(checklan, 'ipADDRESS', 'unknown')
+
+    # Check server reachability using existing checklan function
+    server_ok, _ = checklan.checkLAN(checklan.target, 2)
+
+    health = {
+        "device": DEVICE_NAME,
+        "ip": ip,
+        "timestamp": datetime.now().isoformat(),
+        "network": {
+            "connected": True,
+            "server_reachable": server_ok,
+            "ip_address": ip
+        },
+        "scanner": {
+            "connected": scanner_threads_active,
+            "device_name": "IMAGER 2D"
+        },
+        "display": {
+            "connected": display_ok,
+            "i2c_address": "0x27"
+        },
+        "system": {}
+    }
+
+    # System metrics (if psutil available)
+    if PSUTIL_AVAILABLE:
+        health["system"]["cpu_percent"] = psutil.cpu_percent(interval=0.1)
+        health["system"]["memory_percent"] = psutil.virtual_memory().percent
+        health["system"]["disk_percent"] = psutil.disk_usage('/').percent
+
+    # Temperature
+    temp = get_system_temperature()
+    if temp:
+        health["system"]["temperature"] = temp
+
+    # Uptime
+    try:
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.read().split()[0])
+            health["uptime_seconds"] = int(uptime_seconds)
+    except:
+        pass
+
+    return health
+
+def health_reporter_thread(interval=HEALTH_REPORT_INTERVAL, display_ok=False):
+    """Background thread that reports health every N seconds"""
+    logger.info("health_reporter_started", interval=interval)
+    while True:
+        try:
+            # Check if scanner threads are still active
+            current_threads = [t.name for t in threading.enumerate()]
+            scanner_active = any('readBarCodes' in name or 'Thread' in name for name in current_threads)
+
+            health = get_device_health(scanner_threads_active=scanner_active, display_ok=display_ok)
+            post(f"{DASHBOARD_URL}/api/health", json=health, timeout=5)
+            logger.info("health_reported", device=DEVICE_NAME, cpu=health["system"].get("cpu_percent"))
+        except Exception as e:
+            logger.warning("health_report_failed", error=str(e))
+        time.sleep(interval)
+
+def execute_remote_command(command, lcd=None):
+    """Execute a remote command received from dashboard"""
+    logger.info("remote_command_received", command=command)
+
+    if lcd:
+        lcd.lcd_string(f"CMD: {command.upper()}", l1)
+
+    if command == 'reboot':
+        if lcd:
+            lcd.lcd_string("REBOOTING...", l2)
+        logger.info("remote_command_executing", command="reboot")
+        time.sleep(2)
+        os.system('reboot')
+    elif command == 'shutdown':
+        if lcd:
+            lcd.lcd_string("SHUTTING DOWN", l2)
+        logger.info("remote_command_executing", command="shutdown")
+        time.sleep(2)
+        os.system('systemctl poweroff')
+    elif command == 'restart_service':
+        if lcd:
+            lcd.lcd_string("RESTARTING SVC", l2)
+        logger.info("remote_command_executing", command="restart_service")
+        time.sleep(2)
+        os.system('systemctl restart molinete')
+    elif command == 'lcd_init':
+        if lcd:
+            lcd.lcd_init()
+            lcd.lcd_string("LCD REINIT", l2)
+        logger.info("remote_command_executing", command="lcd_init")
+    else:
+        logger.warning("unknown_remote_command", command=command)
+
+def command_poller_thread(interval=COMMAND_POLL_INTERVAL, lcd=None):
+    """Background thread that polls for remote commands"""
+    logger.info("command_poller_started", interval=interval)
+    while True:
+        try:
+            resp = get(f"{DASHBOARD_URL}/api/commands/{DEVICE_NAME}", timeout=5)
+            data = resp.json()
+            cmd = data.get('command')
+            if cmd:
+                execute_remote_command(cmd, lcd=lcd)
+        except Exception as e:
+            # Silent fail - server might be unreachable
+            pass
+        time.sleep(interval)
 
 
 def main():
@@ -467,8 +607,26 @@ def main():
         logmessage('error', f'LAN NOT DETECTED')
         time.sleep(2)
 
+    # Start health reporter thread (pass LCD status)
+    threading.Thread(
+        target=health_reporter_thread,
+        args=(HEALTH_REPORT_INTERVAL, lcd is not None),
+        daemon=True,
+        name="HealthReporter"
+    ).start()
+
+    # Start command poller thread
+    threading.Thread(
+        target=command_poller_thread,
+        args=(COMMAND_POLL_INTERVAL, lcd),
+        daemon=True,
+        name="CommandPoller"
+    ).start()
+
+    logger.info("monitoring_threads_started", health_interval=HEALTH_REPORT_INTERVAL, command_interval=COMMAND_POLL_INTERVAL)
+
     jet111q = queue.Queue(maxsize = 1)
-    
+
     initGPIO()
     # if not bgpio:
     #     logmessage('critical', 'GPIO NOT INITIATED')
