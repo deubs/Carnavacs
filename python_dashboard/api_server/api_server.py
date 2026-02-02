@@ -210,6 +210,30 @@ def code():
     return jsonify({"message": f"New Code @ IP:{ip}!"})
 
 # ============================================
+# Ticket Event Notification Endpoint
+# ============================================
+
+@app.route('/api/ticket-event', methods=['POST'])
+def ticket_event():
+    """Receive ticket validation event from C# API and broadcast to clients"""
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    # Broadcast to all connected Socket.IO clients
+    socketio.emit('ticket_validated', {
+        'code': data.get('code'),
+        'device': data.get('device'),
+        'deviceName': data.get('deviceName'),
+        'gateName': data.get('gateName'),
+        'status': data.get('status'),  # 'success', 'already_used', 'invalid', 'wrong_event'
+        'message': data.get('message'),
+        'timestamp': data.get('timestamp') or datetime.now().isoformat()
+    })
+
+    return jsonify({'success': True})
+
+# ============================================
 # Device Health Monitoring Endpoints
 # ============================================
 

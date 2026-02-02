@@ -8,6 +8,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Serilog.Core;
 using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
 
 namespace Carnavacs.Api.Controllers
 {
@@ -17,12 +19,15 @@ namespace Carnavacs.Api.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<TicketController> _logger;
         private readonly IConfiguration _configuration;
+        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly string _dashboardUrl;
 
         public TicketController(IUnitOfWork unitOfWork, ILogger<TicketController> logger, IConfiguration configuration)
         {
             this._unitOfWork = unitOfWork;
             this._logger = logger;
             _configuration = configuration;
+            _dashboardUrl = Environment.GetEnvironmentVariable("DASHBOARD_URL") ?? "http://192.168.40.251:5000";
         }
 
 
@@ -43,7 +48,7 @@ namespace Carnavacs.Api.Controllers
             {
                 // readOnly: false - this burns the ticket in Quentro API
                 apiResponse.Result = await _unitOfWork.Tickets.ValidateAsync(code, readOnly: false, deviceId: clientIP);
-                
+
                 if (apiResponse.Result.Persist && persist)
                 {
                     if (apiResponse.Result.IsQuentro)
@@ -58,6 +63,9 @@ namespace Carnavacs.Api.Controllers
                     }
                     _unitOfWork.Commit();
                 }
+
+                // Notify dashboard (fire-and-forget, don't block validation response)
+                _ = NotifyDashboardAsync(code, clientIP, apiResponse.Result);
             }
             catch (Exception ex)
             {
@@ -93,6 +101,42 @@ namespace Carnavacs.Api.Controllers
             return apiResponse;
         }
 
+        private async Task NotifyDashboardAsync(string code, string? deviceIP, TicketValidationResult result)
+        {
+            try
+            {
+                // Map TicketStatus to dashboard status
+                var status = result.TicketStatus.Name switch
+                {
+                    "OK" or "Emmited" => "success",
+                    "Used" => "already_used",
+                    _ => "invalid"
+                };
+
+                var payload = new
+                {
+                    code = code,
+                    device = deviceIP,
+                    deviceName = deviceIP,  // Dashboard will map IP to device name
+                    gateName = result.Gate ?? "",
+                    status = status,
+                    message = result.M1 ?? result.TicketStatus.Name,
+                    timestamp = DateTime.UtcNow.ToString("o")
+                };
+
+                var content = new StringContent(
+                    JsonSerializer.Serialize(payload),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                await _httpClient.PostAsync($"{_dashboardUrl}/api/ticket-event", content);
+            }
+            catch
+            {
+                // Don't fail validation if dashboard notification fails
+            }
+        }
 
     }
 }
