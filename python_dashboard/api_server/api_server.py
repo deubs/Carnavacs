@@ -7,45 +7,47 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 socketio = SocketIO(app)
 
 turnstiles = [
-    {'id': 1, 'name': 'Tango01', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 2, 'name': 'Tango02', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 3, 'name': 'Tango03', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 4, 'name': 'Tango04', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 5, 'name': 'Tango05', 'status': 'locked', 'pistol': 'Off',  'codes': 0},
-    {'id': 6, 'name': 'Tango06', 'status': 'locked', 'pistol': 'Off' , 'codes': 0},
-    {'id': 7, 'name': 'Tango07', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 8, 'name': 'Tango08', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 9, 'name': 'Tango09', 'status': 'locked', 'pistol': 'Off',  'codes': 0},
-    {'id': 10, 'name': 'Tango10', 'status': 'locked', 'pistol': 'Off','codes': 0},
-    {'id': 11, 'name': 'Tango11', 'status': 'locked', 'pistol': 'Off','codes': 0},
-    {'id': 12, 'name': 'Tango12', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 13, 'name': 'Tango13', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 14, 'name': 'Baliza-Proveedores', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 15, 'name': 'Tango15', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 16, 'name': 'Raspi16', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 17, 'name': 'Raspi17', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 18, 'name': 'Tango18', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 19, 'name': 'Tango19', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 20, 'name': 'Tango20', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 21, 'name': 'Baliza-Disca', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 22, 'name': 'Vehiculos', 'status': 'locked', 'pistol': 'Off', 'codes': 0}, 
+    {'id': 1, 'name': 'Tango01', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None },
+    {'id': 2, 'name': 'Tango02', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None },
+    {'id': 3, 'name': 'Tango03', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None },
+    {'id': 4, 'name': 'Tango04', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None },
+    {'id': 5, 'name': 'Tango05', 'status': 'locked', 'pistol': 'Off',  'codes': 0, 'code':None, 'code_response':None},
+    {'id': 6, 'name': 'Tango06', 'status': 'locked', 'pistol': 'Off' , 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 7, 'name': 'Tango07', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 8, 'name': 'Tango08', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 9, 'name': 'Tango09', 'status': 'locked', 'pistol': 'Off',  'codes': 0, 'code':None, 'code_response':None},
+    {'id': 10, 'name': 'Tango10', 'status': 'locked', 'pistol': 'Off','codes': 0, 'code':None, 'code_response':None},
+    {'id': 11, 'name': 'Tango11', 'status': 'locked', 'pistol': 'Off','codes': 0, 'code':None, 'code_response':None},
+    {'id': 12, 'name': 'Tango12', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 13, 'name': 'Tango13', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 14, 'name': 'Baliza-Proveedores', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 15, 'name': 'Tango15', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 16, 'name': 'Raspi16', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 17, 'name': 'Raspi17', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 18, 'name': 'Tango18', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 19, 'name': 'Tango19', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 20, 'name': 'Tango20', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 21, 'name': 'Baliza-Disca', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None},
+    {'id': 22, 'name': 'Vehiculos', 'status': 'locked', 'pistol': 'Off', 'codes': 0, 'code':None, 'code_response':None}, 
 ]
+
 
 def decode_turnstile_status(element):
     tsid = int(element[0].split('.')[3]) - 200
     turnstiles[tsid - 1]['status'] = element[1]
-    # cli_api_status.explore(turnstiles)
-    # return home()
+
 
 def decode_turnstile_pistol(element):
     tsid = int(element[0].split('.')[3]) - 200
     turnstiles[tsid - 1]['pistol'] = element[1]
-    # return home()
+
 
 def decode_turnstile_code(element):
     tsid = int(element[0].split('.')[3]) - 200
+    code = element[1]
+    code_response = element[2]
     turnstiles[tsid - 1]['codes'] += 1
-    # return home()
+
 
 @app.route('/')
 def home():
@@ -81,10 +83,12 @@ def status():
     print(f"IP:{ip}, STATUS:{status}")
     return jsonify({"message": f"Status, {status} @ IP:{ip}!"})
 
-@app.route('/api/code', methods=['GET'])
+@app.route('/api/code', methods=['POST'])
 def code():
     ip = request.args.get('ip', default='localhost')
-    decode_turnstile_code([ip, 'code'])
+    code = request.args.get('code', default='None')
+    code_response = request.args.get('res', default='True')
+    decode_turnstile_code([ip, code, code_response])
     return jsonify({"message": f"New Code @ IP:{ip}!"})
 
 @socketio.on('my event')
