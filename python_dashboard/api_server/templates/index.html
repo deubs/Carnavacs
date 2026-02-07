@@ -27,6 +27,20 @@
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="ticket-search" 
+                class="search-input" 
+                placeholder="Search or validate ticket..."
+                autocomplete="off"
+            >
+            <button id="search-btn" class="search-button" title="Search">🔍</button>
+        </div>
+    </section>
+
     <!-- Stats Bar -->
     <section class="stats-bar">
         <div class="stat-card">
@@ -288,6 +302,43 @@
         // Initial fetch and start polling
         fetchData();
         setInterval(fetchData, 1000);
+    </script>
+    <script>
+        // Ticket search functionality
+        const ticketInput = document.getElementById('ticket-search');
+        const searchBtn = document.getElementById('search-btn');
+
+        function validateTicket() {
+            const ticketCode = ticketInput.value.trim();
+            if (!ticketCode) return;
+
+            fetch('/api/ticket', {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ticket: ticketCode})
+            })
+            .then(r => r.json())
+            .then(data => {
+                showTicketToast(data);
+                if (data.status === 'success') {
+                    flashDeviceCard(data.deviceName || data.device);
+                }
+                ticketInput.value = '';
+                ticketInput.focus();
+            })
+            .catch(err => {
+                showTicketToast({
+                    status: 'error',
+                    message: 'Failed to validate ticket',
+                    deviceName: 'System'
+                });
+            });
+        }
+
+        searchBtn.addEventListener('click', validateTicket);
+        ticketInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') validateTicket();
+        });
     </script>
 </body>
 </html>
