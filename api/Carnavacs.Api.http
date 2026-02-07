@@ -1,6 +1,30 @@
 @Carnavacs.Api_HostAddress = http://localhost:5119
 @prod = http://192.168.40.100
 
+# ============================================================================
+# AUTHENTICATION ENDPOINTS
+# ============================================================================
+
+# Login - Get authentication token
+POST {{Carnavacs.Api_HostAddress}}/Auth
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+
+###
+
+# Logout
+POST {{Carnavacs.Api_HostAddress}}/Auth/Logout?access_token=your_token_here
+
+###
+
+# ============================================================================
+# TICKET VALIDATION ENDPOINTS
+# ============================================================================
+
 # Validate ticket - marks as used (burns ticket in Quentro API)
 POST {{Carnavacs.Api_HostAddress}}/Ticket/Validate?code=38808543081136
 Accept: application/json
@@ -9,22 +33,66 @@ Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
 ###
 
 # Verify ticket - read-only check (uses /check in Quentro API, doesn't burn ticket)
-POST {{Carnavacs.Api_HostAddress}}/Ticket/Verify?code=56641331484102
+POST {{Carnavacs.Api_HostAddress}}/Ticket/Verify?code=1032008419631
+
+
+
 Accept: application/json
 Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
 
 ###
 
 # Verify ticket - production environment
-POST {{prod}}/Ticket/Verify?code=1031008419632
-
-
+POST {{prod}}/Ticket/Verify?code=41774648414531
 
 
 Accept: application/json
 Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
 
 ###
+
+# ============================================================================
+# EVENTS ENDPOINTS
+# ============================================================================
+
+# Get all events
+GET {{Carnavacs.Api_HostAddress}}/Events
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Get current event
+GET {{Carnavacs.Api_HostAddress}}/Events/Current
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Get event stats
+GET {{Carnavacs.Api_HostAddress}}/Events/Stats
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Get event stats by sector
+GET {{Carnavacs.Api_HostAddress}}/Events/SectorStats
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Get event by ID
+GET {{Carnavacs.Api_HostAddress}}/Events/1
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# ============================================================================
+# GATES ENDPOINTS
+# ============================================================================
 
 # Get all gates
 GET {{Carnavacs.Api_HostAddress}}/Gates/Gates
@@ -35,6 +103,63 @@ Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
 
 # Get all devices
 GET {{Carnavacs.Api_HostAddress}}/Gates/Devices
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Get gate by ID
+GET {{Carnavacs.Api_HostAddress}}/Gates/1
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# ============================================================================
+# NFC ENDPOINTS
+# ============================================================================
+
+# Get NFC ticket file
+GET {{Carnavacs.Api_HostAddress}}/NFC
+Accept: application/octet-stream
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# ============================================================================
+# PRODUCTION ENVIRONMENT REQUESTS
+# ============================================================================
+
+# Production - Validate ticket
+POST {{prod}}/Ticket/Validate?code=38808543081136
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Production - Get all events
+GET {{prod}}/Events
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Production - Get current event
+GET {{prod}}/Events/Current
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Production - Get all gates
+GET {{prod}}/Gates/Gates
+Accept: application/json
+Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
+
+###
+
+# Production - Get all devices
+GET {{prod}}/Gates/Devices
 Accept: application/json
 Authorization: 04577BA6-3E32-456C-B528-E41E20D28D78
 
