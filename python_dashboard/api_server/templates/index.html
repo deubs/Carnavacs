@@ -307,13 +307,13 @@
         // Ticket search functionality
         const ticketInput = document.getElementById('ticket-search');
         const searchBtn = document.getElementById('search-btn');
-
         function validateTicket() {
             const ticketCode = ticketInput.value.trim();
+            console.log(ticketCode);
             if (!ticketCode) return;
 
-            fetch('/api/ticket', {
-                method: 'GET',
+            fetch(`/api/ticket`, {
+                method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ticket: ticketCode})
             })
