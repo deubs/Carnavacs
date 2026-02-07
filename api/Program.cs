@@ -12,6 +12,7 @@ using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -85,6 +86,39 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
 });
 
+// Add traditional Swagger UI alongside Scalar
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Carnavacs API",
+        Version = "v1",
+        Description = "Carnaval ticket validation API"
+    });
+
+    // Add JWT Bearer token support
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Please enter JWT with Bearer into field",
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement {
+    {
+        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        {
+            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+            {
+                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                Id = "Bearer"
+            }
+        },
+        new string[] { }
+    }});
+});
+
 
 builder.Services.AddSingleton<INFCGenerator, NFCGenerator>();
 builder.Services.AddHttpClient();
@@ -97,6 +131,15 @@ var app = builder.Build();
 //if (app.Environment.IsDevelopment())
 //{
 app.UseCors(specificOrgins);
+
+// Add Swagger middleware
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Carnavacs API v1");
+    c.RoutePrefix = "swagger"; // This makes /swagger the URL
+});
+
 
 app.MapOpenApi()
 //.RequireAuthorization("ApiTesterPolicy");
