@@ -59,6 +59,16 @@ def is_device_online(device_name):
         return False
 
 # C# API Helper Functions
+def fetch_ticket():
+    """GET /Ticket/Validate"""
+    try:
+        resp = requests.get(f"{CARNAVAL_API_URL}/Ticket/Validate", timeout=API_TIMEOUT)
+        data = resp.json()
+        return data.get('result') if data.get('success') else None
+    except:
+        return None
+
+
 def fetch_current_event():
     """GET /Events/Current"""
     try:
@@ -208,6 +218,13 @@ def code():
     ip = request.args.get('ip', default='localhost')
     decode_turnstile_code([ip, 'code'])
     return jsonify({"message": f"New Code @ IP:{ip}!"})
+
+@app.route('/api/ticket', methods=['GET'])
+def ticket():
+    # This endpoint is just for testing - in real use, tickets come from C# API events
+    ticket = fetch_ticket()
+    print(f"Fetched ticket: {ticket}")
+    return jsonify({"ticket": ticket})
 
 # ============================================
 # Ticket Event Notification Endpoint
