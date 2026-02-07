@@ -47,4 +47,21 @@ namespace Carnavacs.Api.Domain.Entities
         /// </summary>
         public string? Code { get; set; }
     }
+
+    /// <summary>
+    /// Response model from Quentro API /sectors endpoint
+    /// </summary>
+    public class QuentroSectorsResponse
+    {
+        public List<QuentroSector>? Sectors { get; set; }
+    }
+
+    /// <summary>
+    /// Sector model from Quentro API
+    /// </summary>
+    public class QuentroSector
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+    }
 }

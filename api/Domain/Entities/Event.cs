@@ -8,5 +8,7 @@
         public  bool Habilitado { get; set; }
 
         public string ShowName { get; set; }
+        public string? QuentroEventId { get; set; }
+        public string? QuentroEventKey { get; set; }
     }
 }
