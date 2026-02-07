@@ -12,7 +12,7 @@ echo "🚀 Starting deployment..."
 # Build/prepare locally if needed
 echo "📦 Preparing deployment package..."
 
-# Sync code to server
+# Sync code to server (entire repository)
 echo "📤 Syncing code to server..."
 rsync -avz --delete \
     --exclude='.git' \
@@ -20,32 +20,37 @@ rsync -avz --delete \
     --exclude='*.pyc' \
     --exclude='.venv' \
     --exclude='node_modules' \
-    ../ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}/python_dashboard/
+    --exclude='.vscode' \
+    ../../ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}/
 
 # Run remote commands
 echo "🔧 Setting up on server..."
 ssh ${REMOTE_USER}@${REMOTE_HOST} << 'ENDSSH'
 set -e
 
-cd /var/www/carnaval/python_dashboard
+cd /var/www/carnaval
 
 # Create virtual environment if it doesn't exist
-if [ ! -d "../.venv" ]; then
+if [ ! -d ".venv" ]; then
     echo "Creating virtual environment..."
-    python3 -m venv ../.venv
+    python3 -m venv .venv
 fi
 
 # Activate and install dependencies
 echo "Installing dependencies..."
-source ../.venv/bin/activate
+source .venv/bin/activate
 pip install --upgrade pip
-pip install flask flask-socketio flask-cors requests python-dotenv
+if [ -f "python_dashboard/requirements.txt" ]; then
+    pip install -r python_dashboard/requirements.txt
+else
+    pip install flask flask-socketio flask-cors requests python-dotenv
+fi
 
 # Set correct permissions
 echo "Setting permissions..."
-sudo chown -R www-data:www-data /var/www/carnaval
-sudo chmod -R 755 /var/www/carnaval
-
+sudo chowpython_dashboard/deploy/dashboard.service" ]; then
+    echo "Installing systemd service..."
+    sudo cp python_dashboard/
 # Copy and enable systemd service
 if [ -f "deploy/dashboard.service" ]; then
     echo "Installing systemd service..."

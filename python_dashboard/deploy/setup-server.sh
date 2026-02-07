@@ -25,9 +25,20 @@ echo "📁 Creating application directory..."
 sudo mkdir -p /var/www/carnaval
 sudo chown -R $USER:$USER /var/www/carnaval
 
-# Clone repository (if using git)
-# cd /var/www/carnaval
-# git clone <your-repo-url> .
+# Clone repository
+echo "📥 Cloning repository..."
+cd /var/www
+if [ ! -d "carnaval/.git" ]; then
+    echo "Enter your git repository URL (or press Enter to skip):"
+    read REPO_URL
+    if [ -n "$REPO_URL" ]; then
+        git clone $REPO_URL carnaval
+    fi
+else
+    echo "Repository already exists, pulling latest changes..."
+    cd carnaval
+    git pull
+fi
 
 # Create virtual environment
 echo "🐍 Creating Python virtual environment..."
