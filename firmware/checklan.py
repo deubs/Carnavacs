@@ -9,7 +9,7 @@ import uuid
 # printing the value of unique MAC
 # address using uuid and getnode() function 
 
-target = "192.168.40.251"
+target = "192.168.40.100"
 timeout = 10
 hexMAX =  hex(uuid.getnode())
 print(hexMAX)
