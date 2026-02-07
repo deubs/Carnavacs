@@ -252,11 +252,9 @@ namespace Carnavacs.Api.Infrastructure
             // Capture ticket type/sector from Quentro response
             result.TicketType = quentroResponse.TicketType;
 
-            // Check if this is a VOID ticket that should be treated as valid
             var statusCode = quentroResponse.Status ?? quentroResponse.Code;
-            var isVoidTicket = statusCode?.ToUpperInvariant() == "VOID";
 
-            if (quentroResponse.Valid || isVoidTicket)
+            if (quentroResponse.Valid)
             {
                 result.TicketStatus = TicketStatus.OK;
                 result.M1 = quentroResponse.M1 ?? "BIENVENIDO";
@@ -280,7 +278,7 @@ namespace Carnavacs.Api.Infrastructure
                     }
 
                     // Build M2 message similar to old system: "USADA-17:36"
-                    string msg = TranslateToSpanish(quentroResponse.M2 ?? quentroResponse.Message ?? "USED");
+                    string msg = TranslateToSpanish(quentroResponse.M2 ?? quentroResponse.Message ?? "USADA");
                     if (!string.IsNullOrEmpty(result.UsedDate) && !msg.Contains(result.UsedDate))
                     {
                         msg += "-" + result.UsedDate;
@@ -349,7 +347,7 @@ namespace Carnavacs.Api.Infrastructure
                 "NOT_FOUND" => "NO ENCONTRADA",
                 "USED" => "USADA",
                 "VOIDED" => "ANULADA",
-                "VOID" => "ADELANTE",
+                "VOID" => "ANULADA",
                 "INVALID" => "INVALIDA",
                 "OK" => "ADELANTE",
                 "WELCOME" => "BIENVENIDO",
