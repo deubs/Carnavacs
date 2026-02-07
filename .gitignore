@@ -51,3 +51,7 @@ appSettings.json
 firmware/server/config.ini
 *~
 __pycache__
+api/.playwright-mcp
+scripts/Abonos
+scripts/Sectores
+"dashboard/.env.local"  
