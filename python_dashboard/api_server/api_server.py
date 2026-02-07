@@ -142,8 +142,22 @@ def dashboard_data():
     merged = []
     for ts in turnstiles:
         api_data = device_counts.get(ts['name'], {})
-        health = device_health.get(ts['name'], {})
-        online = is_device_online(ts['name'])
+        # Try case-insensitive match for health data
+        health = None
+        online = False
+        for device_name in device_health.keys():
+            if device_name.lower() == ts['name'].lower():
+                health = device_health[device_name]
+                online = is_device_online(device_name)
+                break
+        if not health:
+            health = {}
+            online = False
+
+        # Debug for Vehiculos
+        if ts['name'] == 'Vehiculos':
+            print(f"DEBUG Vehiculos: health={health}, online={online}")
+            print(f"  Scanner data: {health.get('scanner', {})}")
 
         merged.append({
             'id': ts['id'],
@@ -189,25 +203,68 @@ def hello():
 
 @app.route('/api/pistol', methods=['GET'])
 def pistol():
-    pistol = request.args.get('pistol', default='Off')
+    pistol_status = request.args.get('pistol', default='Off')
     ip = request.args.get('ip', default='localhost')
-    decode_turnstile_pistol([ip, pistol])
-    print(f"IP:{ip}, Pistol:{pistol}")
-    return jsonify({"message": f"Pistol, {pistol} @ IP:{ip}!"})
+    device_name = request.args.get('device', default=None)
+    
+    # Support both old IP-based and new device name-based updates
+    if device_name:
+        # Find turnstile by device name (case-insensitive)
+        for ts in turnstiles:
+            if ts['name'].lower() == device_name.lower():
+                ts['pistol'] = pistol_status
+                print(f"Device:{device_name}, Pistol:{pistol_status}")
+                return jsonify({"message": f"Pistol, {pistol_status} @ Device:{device_name}!"})
+    else:
+        # Legacy IP-based decoding
+        decode_turnstile_pistol([ip, pistol_status])
+        print(f"IP:{ip}, Pistol:{pistol_status}")
+        return jsonify({"message": f"Pistol, {pistol_status} @ IP:{ip}!"})
+    
+    return jsonify({"error": "Device not found"}), 404
 
 @app.route('/api/status', methods=['GET'])
 def status():
-    status = request.args.get('status', default='locked')
+    status_value = request.args.get('status', default='locked')
     ip = request.args.get('ip', default='localhost')
-    decode_turnstile_status([ip, status])
-    print(f"IP:{ip}, STATUS:{status}")
-    return jsonify({"message": f"Status, {status} @ IP:{ip}!"})
+    device_name = request.args.get('device', default=None)
+    
+    # Support both old IP-based and new device name-based updates
+    if device_name:
+        # Find turnstile by device name (case-insensitive)
+        for ts in turnstiles:
+            if ts['name'].lower() == device_name.lower():
+                ts['status'] = status_value
+                print(f"Device:{device_name}, STATUS:{status_value}")
+                return jsonify({"message": f"Status, {status_value} @ Device:{device_name}!"})
+    else:
+        # Legacy IP-based decoding
+        decode_turnstile_status([ip, status_value])
+        print(f"IP:{ip}, STATUS:{status_value}")
+        return jsonify({"message": f"Status, {status_value} @ IP:{ip}!"})
+    
+    return jsonify({"error": "Device not found"}), 404
 
 @app.route('/api/code', methods=['GET'])
 def code():
     ip = request.args.get('ip', default='localhost')
-    decode_turnstile_code([ip, 'code'])
-    return jsonify({"message": f"New Code @ IP:{ip}!"})
+    device_name = request.args.get('device', default=None)
+    
+    # Support both old IP-based and new device name-based updates
+    if device_name:
+        # Find turnstile by device name (case-insensitive)
+        for ts in turnstiles:
+            if ts['name'].lower() == device_name.lower():
+                ts['codes'] += 1
+                print(f"Device:{device_name}, New Code! Total:{ts['codes']}")
+                return jsonify({"message": f"New Code @ Device:{device_name}!"})
+    else:
+        # Legacy IP-based decoding
+        decode_turnstile_code([ip, 'code'])
+        print(f"New Code @ IP:{ip}!")
+        return jsonify({"message": f"New Code @ IP:{ip}!"})
+    
+    return jsonify({"error": "Device not found"}), 404
 
 # ============================================
 # Ticket Event Notification Endpoint
@@ -254,13 +311,16 @@ def report_health():
         'last_seen': datetime.now().isoformat()
     }
 
-    # Update turnstile online status in the local list
+    # Update turnstile status from health data (case-insensitive)
+    scanner_connected = data.get('scanner', {}).get('connected', False)
     for ts in turnstiles:
-        if ts['name'] == device_name:
+        if ts['name'].lower() == device_name.lower():
             ts['online'] = True
+            # Update pistol status based on scanner connection
+            ts['pistol'] = 'On' if scanner_connected else 'Off'
             break
 
-    print(f"Health report from {device_name}: CPU={data.get('system', {}).get('cpu_percent', 'N/A')}%")
+    print(f"Health report from {device_name}: CPU={data.get('system', {}).get('cpu_percent', 'N/A')}%, Scanner={scanner_connected}")
     return jsonify({'success': True})
 
 @app.route('/api/health/<device_name>', methods=['GET'])
@@ -338,4 +398,4 @@ def handle_my_custom_event(json):
     print('received json: ' + str(json))
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
