@@ -31,7 +31,7 @@ turnstiles = [
     {'id': 11, 'name': 'Tango11', 'status': 'locked', 'pistol': 'Off','codes': 0},
     {'id': 12, 'name': 'Tango12', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 13, 'name': 'Tango13', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 14, 'name': 'Baliza-Proveedores', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 14, 'name': 'raspibalizaproveedores', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 15, 'name': 'Tango15', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 16, 'name': 'Raspi16', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 17, 'name': 'Raspi17', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
