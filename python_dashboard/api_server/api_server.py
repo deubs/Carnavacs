@@ -6,6 +6,10 @@ from datetime import datetime
 import threading
 # import cli_api_status
 
+keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
+'key2': '840c53ea-0467-4b52-b083-2de869d939a8',
+'key3': '2329db1e-95e8-4265-986e-d02114dbf5dc'}
+
 CARNAVAL_API_URL = os.environ.get('CARNAVAL_API_URL', 'http://192.168.40.100')
 API_TIMEOUT = 5
 
@@ -27,7 +31,7 @@ turnstiles = [
     {'id': 11, 'name': 'Tango11', 'status': 'locked', 'pistol': 'Off','codes': 0},
     {'id': 12, 'name': 'Tango12', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 13, 'name': 'Tango13', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 14, 'name': 'Baliza-Proveedores', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 14, 'name': 'raspibalizaproveedores', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 15, 'name': 'Tango15', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 16, 'name': 'Raspi16', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 17, 'name': 'Raspi17', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
@@ -59,10 +63,20 @@ def is_device_online(device_name):
         return False
 
 # C# API Helper Functions
-def fetch_ticket():
+def fetch_ticket(ticket_code):
     """GET /Ticket/Validate"""
     try:
-        resp = requests.get(f"{CARNAVAL_API_URL}/Ticket/Validate", timeout=API_TIMEOUT)
+        apikey = keys['key1']
+        header = {
+            'X-API-Key': f'{apikey}',
+            'Content-Type': "application/json"
+        }
+        payload = {'code': ticket_code} 
+        print(payload)
+        resp = requests.post(f"{CARNAVAL_API_URL}/Ticket/Validate",
+                             params= payload, 
+                             headers= header, 
+                             timeout=API_TIMEOUT)
         data = resp.json()
         return data.get('result') if data.get('success') else None
     except:
@@ -276,13 +290,34 @@ def code():
     
     return jsonify({"error": "Device not found"}), 404
 
-@app.route('/api/ticket', methods=['GET'])
+@app.route('/api/ticket', methods=['POST'])
 def ticket():
-    # This endpoint is just for testing - in real use, tickets come from C# API events
-    ticket = fetch_ticket()
-    print(f"Fetched ticket: {ticket}")
-    return jsonify({"ticket": ticket})
-
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    ticket_code = data.get('ticket')
+    print(f"Validating ticket: {ticket_code}")
+    
+    if not ticket_code:
+        return jsonify({'error': 'Ticket code required', 'status': 'error'}), 400
+    
+    result = fetch_ticket(ticket_code)
+    print(f"Fetched ticket: {result}")
+    
+    if result:
+        return jsonify({
+            'status': 'success',
+            'message': f'Ticket {ticket_code} found {result.get("m1", "")} - {result.get("m2", "")}',
+            'deviceName': result.get('deviceName', 'Unknown'),
+            'data': result
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to validate ticket',
+            'deviceName': 'System'
+        })
 # ============================================
 # Ticket Event Notification Endpoint
 # ============================================
