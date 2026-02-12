@@ -450,4 +450,4 @@ def handle_my_custom_event(json):
     print('received json: ' + str(json))
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    socketio.run(app, host='127.0.0.1', port=5000, debug=False)
