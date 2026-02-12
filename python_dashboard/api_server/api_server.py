@@ -39,7 +39,7 @@ turnstiles = [
     {'id': 19, 'name': 'Tango19', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 20, 'name': 'Tango20', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 21, 'name': 'Baliza-Disca', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 22, 'name': 'Vehiculos', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 22, 'name': 'vehiculos', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
 ]
 
 # Device health tracking - stores health data from devices
