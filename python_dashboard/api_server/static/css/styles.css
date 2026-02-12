@@ -839,3 +839,87 @@ body {
 .search-button:active {
     transform: translateY(0);
 }
+
+.scan-button {
+    padding: 0.75rem 1.5rem;
+    background: var(--carnival-orange);
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.scan-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: #e55a2b;
+}
+
+.scan-button:active {
+    transform: translateY(0);
+}
+
+/* ============================================
+   Camera Scanner Overlay
+   ============================================ */
+.scanner-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+.scanner-overlay.hidden {
+    display: none;
+}
+
+.scanner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.scanner-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.scanner-close-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    line-height: 1;
+}
+
+.scanner-close-btn:hover {
+    color: var(--status-locked);
+}
+
+.scanner-reader {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scanner-reader video {
+    max-height: 70vh;
+}
+
+.scanner-hint {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}

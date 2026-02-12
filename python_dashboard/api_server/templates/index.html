@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=4">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=5">
 </head>
 <body>
     <!-- Header -->
@@ -30,16 +30,27 @@
     <!-- Search Section -->
     <section class="search-section">
         <div class="search-container">
-            <input 
-                type="text" 
-                id="ticket-search" 
-                class="search-input" 
+            <input
+                type="text"
+                id="ticket-search"
+                class="search-input"
                 placeholder="Search or validate ticket..."
                 autocomplete="off"
             >
             <button id="search-btn" class="search-button" title="Search">🔍</button>
+            <button id="scan-btn" class="scan-button" title="Scan barcode with camera">📷</button>
         </div>
     </section>
+
+    <!-- Camera Scanner Overlay -->
+    <div id="scanner-overlay" class="scanner-overlay hidden">
+        <div class="scanner-header">
+            <span class="scanner-title">Scan Barcode</span>
+            <button id="scanner-close" class="scanner-close-btn">&times;</button>
+        </div>
+        <div id="scanner-reader" class="scanner-reader"></div>
+        <div class="scanner-hint">Point the camera at a barcode</div>
+    </div>
 
     <!-- Device Status Panel (Network Switch View) -->
     <section class="device-panel">
@@ -89,6 +100,7 @@
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script type="text/javascript" charset="utf-8">
         var socket = io();
         socket.on('connect', function() {
@@ -349,6 +361,62 @@
         ticketInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') validateTicket();
         });
+    </script>
+    <script>
+        // Camera barcode scanner
+        const scanBtn = document.getElementById('scan-btn');
+        const scannerOverlay = document.getElementById('scanner-overlay');
+        const scannerClose = document.getElementById('scanner-close');
+        let html5QrCode = null;
+
+        function stopScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                }).catch(() => {});
+            }
+            scannerOverlay.classList.add('hidden');
+        }
+
+        function startScanner() {
+            scannerOverlay.classList.remove('hidden');
+            html5QrCode = new Html5Qrcode('scanner-reader');
+
+            html5QrCode.start(
+                { facingMode: 'environment' },
+                {
+                    fps: 10,
+                    qrbox: { width: 300, height: 150 },
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.UPC_E,
+                        Html5QrcodeSupportedFormats.QR_CODE,
+                        Html5QrcodeSupportedFormats.CODE_93,
+                        Html5QrcodeSupportedFormats.ITF,
+                    ]
+                },
+                (decodedText) => {
+                    stopScanner();
+                    ticketInput.value = decodedText;
+                    validateTicket();
+                },
+                () => {}
+            ).catch((err) => {
+                stopScanner();
+                showTicketToast({
+                    status: 'error',
+                    message: 'Camera access denied or not available',
+                    deviceName: 'Scanner'
+                });
+            });
+        }
+
+        scanBtn.addEventListener('click', startScanner);
+        scannerClose.addEventListener('click', stopScanner);
     </script>
 </body>
 </html>
