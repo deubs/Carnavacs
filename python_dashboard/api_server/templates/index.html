@@ -163,7 +163,7 @@
             document.getElementById('stat-remaining').textContent = data.stats.remainingTickets.toLocaleString();
 
             // Local stats
-            const pistols = data.turnstiles.filter(t => t.pistol === 'On').length;
+            const pistols = data.turnstiles.filter(t => t.pistol === 'On' && t.online).length;
             document.getElementById('stat-pistols').textContent = pistols;
 
             // Online devices count
