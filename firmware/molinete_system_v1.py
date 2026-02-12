@@ -792,6 +792,7 @@ def command_poller_thread(interval=COMMAND_POLL_INTERVAL, lcd=None):
             data = resp.json()
             cmd = data.get('command')
             if cmd:
+                logger.info(f"command received {cmd}", interval=interval)
                 execute_remote_command(cmd, lcd=lcd)
         except Exception as e:
             # Silent fail - server might be unreachable
