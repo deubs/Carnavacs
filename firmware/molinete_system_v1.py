@@ -89,7 +89,7 @@ apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
 
 # Dashboard server URL for health reporting and remote commands
-DASHBOARD_URL = os.environ.get('DASHBOARD_URL', 'http://192.168.40.244')
+DASHBOARD_URL = os.environ.get('DASHBOARD_URL', 'http://192.168.40.43:5000')
 DEVICE_NAME = platform.node()
 HEALTH_REPORT_INTERVAL = 15  # seconds
 COMMAND_POLL_INTERVAL = 10   # seconds
