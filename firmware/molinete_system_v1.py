@@ -89,9 +89,9 @@ apiurlb = "https://boleteria.carnavaldelpais.com.ar/api/Ticket/Validate"
 apiurl = "http://192.168.40.100/Ticket/Validate"
 
 # Dashboard server URL for health reporting and remote commands
-DASHBOARD_URL = os.environ.get('DASHBOARD_URL', 'http://192.168.40.244:5000')
+DASHBOARD_URL = os.environ.get('DASHBOARD_URL', 'http://192.168.40.244')
 DEVICE_NAME = platform.node()
-HEALTH_REPORT_INTERVAL = 30  # seconds
+HEALTH_REPORT_INTERVAL = 15  # seconds
 COMMAND_POLL_INTERVAL = 10   # seconds
 
 # threading_event = threading.Event()
@@ -792,6 +792,7 @@ def command_poller_thread(interval=COMMAND_POLL_INTERVAL, lcd=None):
             data = resp.json()
             cmd = data.get('command')
             if cmd:
+                logger.info(f"command received {cmd}", interval=interval)
                 execute_remote_command(cmd, lcd=lcd)
         except Exception as e:
             # Silent fail - server might be unreachable

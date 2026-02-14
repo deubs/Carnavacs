@@ -8,6 +8,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/carnaval/python_dashboard/api_server
 Environment="PATH=/var/www/carnaval/.venv/bin"
+Environment="CARNAVAL_API_URL=http://192.168.40.100"
 ExecStart=/var/www/carnaval/.venv/bin/python api_server.py
 Restart=always
 RestartSec=10
