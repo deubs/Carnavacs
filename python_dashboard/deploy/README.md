@@ -5,10 +5,10 @@ Server: 192.168.40.244 (Debian, nginx)
 ## Architecture
 
 ```
-client -> nginx (:80) -> gunicorn+eventlet (:5000) -> Flask+SocketIO
+client -> nginx (:80) -> eventlet (:5000) -> Flask+SocketIO
 ```
 
-gunicorn runs with `--worker-class eventlet -w 1` (single worker required by Flask-SocketIO).
+Flask-SocketIO auto-detects eventlet and uses its production WSGI server.
 
 ## Deploy
 
@@ -54,6 +54,6 @@ Config: `/etc/nginx/sites-available/dashboard`
 | File | Purpose |
 |------|---------|
 | `deploy.sh` | On-server deploy script |
-| `dashboard.service` | systemd unit (gunicorn) |
+| `dashboard.service` | systemd unit (eventlet) |
 | `nginx.conf` | nginx reverse proxy config |
 | `firewall-nftables.sh` | nftables firewall rules |
