@@ -1,5 +1,6 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from flask_socketio import SocketIO, emit
+from functools import wraps
 import requests
 import os
 from datetime import datetime
@@ -10,11 +11,11 @@ keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 'key2': '840c53ea-0467-4b52-b083-2de869d939a8',
 'key3': '2329db1e-95e8-4265-986e-d02114dbf5dc'}
 
-CARNAVAL_API_URL = os.environ.get('CARNAVAL_API_URL', 'http://192.168.40.100')
+CARNAVAL_API_URL = os.environ.get('CARNAVAL_API_URL', 'http://192.168.40.101')
 API_TIMEOUT = 5
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key')
 socketio = SocketIO(app)
 
 turnstiles = [
@@ -62,6 +63,18 @@ def is_device_online(device_name):
     except:
         return False
 
+# ============================================
+# Authentication
+# ============================================
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('user'):
+            return redirect(url_for('login_page'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # C# API Helper Functions
 def fetch_ticket(ticket_code):
     """GET /Ticket/Validate"""
@@ -71,11 +84,11 @@ def fetch_ticket(ticket_code):
             'X-API-Key': f'{apikey}',
             'Content-Type': "application/json"
         }
-        payload = {'code': ticket_code} 
+        payload = {'code': ticket_code}
         print(payload)
         resp = requests.post(f"{CARNAVAL_API_URL}/Ticket/Validate",
-                             params= payload, 
-                             headers= header, 
+                             params= payload,
+                             headers= header,
                              timeout=API_TIMEOUT)
         data = resp.json()
         return data.get('result') if data.get('success') else None
@@ -135,17 +148,65 @@ def decode_turnstile_code(element):
     turnstiles[tsid - 1]['codes'] += 1
     # return home()
 
+# ============================================
+# Login / Logout Routes
+# ============================================
+
+@app.route('/login', methods=['GET'])
+def login_page():
+    if session.get('user'):
+        return redirect(url_for('home'))
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def login_submit():
+    username = request.form.get('username', '')
+    password = request.form.get('password', '')
+
+    try:
+        resp = requests.post(
+            f"{CARNAVAL_API_URL}/Auth",
+            json={'username': username, 'password': password},
+            timeout=API_TIMEOUT
+        )
+        data = resp.json()
+
+        if resp.ok and data.get('success'):
+            result = data['result']
+            session['user'] = result['user']
+            session['token'] = result['token']
+            return redirect(url_for('home'))
+        else:
+            error = data.get('message', 'Invalid credentials')
+            return render_template('login.html', error=error)
+    except requests.exceptions.ConnectionError:
+        return render_template('login.html', error='Cannot connect to API server')
+    except Exception as e:
+        return render_template('login.html', error='Login failed')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
+
+# ============================================
+# Protected Dashboard Routes
+# ============================================
+
 @app.route('/')
+@login_required
 def home():
     # Pass a variable to the HTML template
     return render_template('index.html', title='TURNSTILE MONITOR 2026', data=turnstiles)
 
 @app.route('/fps')
+@login_required
 def fps():
     # Pass a variable to the HTML template
     return turnstiles
 
 @app.route('/dashboard-data')
+@login_required
 def dashboard_data():
     # Fetch from C# API
     event = fetch_current_event()
@@ -217,6 +278,10 @@ def dashboard_data():
         'apiOnline': stats is not None
     }
 
+# ============================================
+# Device API Routes (no login required)
+# ============================================
+
 @app.route('/api/hello', methods=['GET'])
 def hello():
     name = request.args.get('name', default='World')
@@ -230,7 +295,7 @@ def pistol():
     pistol_status = request.args.get('pistol', default='Off')
     ip = request.args.get('ip', default='localhost')
     device_name = request.args.get('device', default=None)
-    
+
     # Support both old IP-based and new device name-based updates
     if device_name:
         # Find turnstile by device name (case-insensitive)
@@ -244,7 +309,7 @@ def pistol():
         decode_turnstile_pistol([ip, pistol_status])
         print(f"IP:{ip}, Pistol:{pistol_status}")
         return jsonify({"message": f"Pistol, {pistol_status} @ IP:{ip}!"})
-    
+
     return jsonify({"error": "Device not found"}), 404
 
 @app.route('/api/status', methods=['GET'])
@@ -252,7 +317,7 @@ def status():
     status_value = request.args.get('status', default='locked')
     ip = request.args.get('ip', default='localhost')
     device_name = request.args.get('device', default=None)
-    
+
     # Support both old IP-based and new device name-based updates
     if device_name:
         # Find turnstile by device name (case-insensitive)
@@ -266,14 +331,14 @@ def status():
         decode_turnstile_status([ip, status_value])
         print(f"IP:{ip}, STATUS:{status_value}")
         return jsonify({"message": f"Status, {status_value} @ IP:{ip}!"})
-    
+
     return jsonify({"error": "Device not found"}), 404
 
 @app.route('/api/code', methods=['GET'])
 def code():
     ip = request.args.get('ip', default='localhost')
     device_name = request.args.get('device', default=None)
-    
+
     # Support both old IP-based and new device name-based updates
     if device_name:
         # Find turnstile by device name (case-insensitive)
@@ -287,7 +352,7 @@ def code():
         decode_turnstile_code([ip, 'code'])
         print(f"New Code @ IP:{ip}!")
         return jsonify({"message": f"New Code @ IP:{ip}!"})
-    
+
     return jsonify({"error": "Device not found"}), 404
 
 @app.route('/api/ticket', methods=['POST'])
@@ -295,16 +360,16 @@ def ticket():
     data = request.json
     if not data:
         return jsonify({'error': 'No data provided'}), 400
-    
+
     ticket_code = data.get('ticket')
     print(f"Validating ticket: {ticket_code}")
-    
+
     if not ticket_code:
         return jsonify({'error': 'Ticket code required', 'status': 'error'}), 400
-    
+
     result = fetch_ticket(ticket_code)
     print(f"Fetched ticket: {result}")
-    
+
     if result:
         return jsonify({
             'status': 'success',

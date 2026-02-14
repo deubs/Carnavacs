@@ -1,14 +1,8 @@
-﻿using Carnavacs.Api.Controllers.Helpers;
-using Carnavacs.Api.Domain;
+﻿using Carnavacs.Api.Domain;
 using Carnavacs.Api.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Localization;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Resources;
-using System.Text;
 
 namespace Carnavacs.Api.Controllers
 {
@@ -30,27 +24,28 @@ namespace Carnavacs.Api.Controllers
         {
             return Unauthorized();
         }
-    
+
         /// <summary>
-        /// User Login. Returns complete User Model with roles or metadata that specifies a 2fa method is required if .  
+        /// User Login. Returns JWT token and user info.
         /// </summary>
         /// <param name="login">LoginModel with username and password</param>
         /// <returns></returns>
         [HttpPost]
-        [ProducesResponseType<ApiResponse<Domain.Entities.User>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ApiResponse<LoginResponse>>(StatusCodes.Status200OK)]
         [ProducesErrorResponseType(typeof(BadRequest))]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginModel login)
         {
-            ApiResponse<Domain.Entities.User> response = new ApiResponse<Domain.Entities.User>();
+            var response = new ApiResponse<LoginResponse>();
             try
             {
-                response.Result = _loginManager.Login(login);
+                response.Result = await _loginManager.Login(login);
+                response.Success = true;
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new ApiResponse<LoginResponse> { Success = false, Message = ex.Message });
             }
         }
 

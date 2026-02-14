@@ -10,6 +10,7 @@ namespace Carnavacs.Api.Infrastructure
         public IEventRepository _eventRepository;
         public IGateRepository _gateRepository;
         public ITicketRepository _ticketRepository;
+        public IUserRepository _userRepository;
 
         private IDbConnection _connection;
         private IDbTransaction _transaction;
@@ -29,6 +30,8 @@ namespace Carnavacs.Api.Infrastructure
         public IGateRepository Gates => _gateRepository ?? (_gateRepository = new GateRepository(_transaction));
 
         public ITicketRepository Tickets => _ticketRepository ?? (_ticketRepository = new TicketRepository(_transaction, _quentroApiClient));
+
+        public IUserRepository Users => _userRepository ?? (_userRepository = new UserRepository(_transaction));
 
         public void Commit()
         {
@@ -54,6 +57,7 @@ namespace Carnavacs.Api.Infrastructure
             _eventRepository = null;
             _gateRepository = null;
             _ticketRepository = null;
+            _userRepository = null;
         }
 
         public void Dispose()

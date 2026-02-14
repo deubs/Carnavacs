@@ -33,9 +33,23 @@ namespace Carnavacs.Api.Infrastructure
             throw new NotImplementedException();
         }
 
-        public async Task<User> GetByUsernameAndPasswordAsync(string username, string password)
+        public async Task<User> GetByUsernameAsync(string username)
         {
-            var result = await Connection.QuerySingleOrDefaultAsync<User>("SELECT * FROM [Usuarios] (NOLOCK) WHERE [Id] = @Id", new { Username = username }, Transaction);
+            var sql = @"SELECT [Id], [Username] AS UserName, [FirstName] + ' ' + [LastName] AS Name,
+                         [Email], [Password]
+                         FROM [Usuarios] (NOLOCK)
+                         WHERE [Username] = @Username";
+            var result = await Connection.QuerySingleOrDefaultAsync<User>(sql, new { Username = username }, Transaction);
+            return result;
+        }
+
+        public async Task<IEnumerable<string>> GetRolesByUserIdAsync(int userId)
+        {
+            var sql = @"SELECT r.[Name]
+                         FROM [Usuarios_Roles] ur
+                         JOIN [Roles] r ON ur.[RoleFk] = r.[Id]
+                         WHERE ur.[UserFk] = @UserId";
+            var result = await Connection.QueryAsync<string>(sql, new { UserId = userId }, Transaction);
             return result;
         }
 

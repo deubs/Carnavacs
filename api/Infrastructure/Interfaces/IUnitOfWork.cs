@@ -8,6 +8,7 @@
 
         ITicketRepository Tickets { get; }
 
+        IUserRepository Users { get; }
 
         void Commit();
 
