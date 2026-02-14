@@ -29,7 +29,15 @@ namespace Carnavacs.Api.Infrastructure
 
         public async Task<Event> GetCurrentAsync()
         {
-            var result = await Connection.QuerySingleAsync<Event>("SELECT TOP 1 * FROM [Eventos] (NOLOCK) WHERE habilitado=1 AND FechaFin>@dt ORDER BY Fecha", new { dt = DateTime.Now }, Transaction);
+            // Get current event from the current enabled Espectaculos (show/edition)
+            var query = @"SELECT TOP 1 ev.* 
+                          FROM Eventos ev 
+                          INNER JOIN Espectaculos e ON ev.EspectaculoFk = e.id 
+                          WHERE ev.habilitado = 1 
+                            AND e.habilitado = 1 
+                            AND ev.FechaFin > @dt 
+                          ORDER BY ev.Fecha";
+            var result = await Connection.QuerySingleAsync<Event>(query, new { dt = DateTime.Now }, Transaction);
             return result;
         }
 
@@ -96,30 +104,32 @@ namespace Carnavacs.Api.Infrastructure
         {
             EventStats stats = new EventStats();
             Event ev = await GetEventByIdAsync(eventId);
-            eventId = ev.Id;
+            stats.EventId = ev.Id;
 
-            string query = @"SELECT count(*) as Total, EstadoQrFk StatusId, s.Nombre as StatusName 
-                                 FROM AccesosEntradasQR e 
-                                 INNER JOIN Ventas v ON e.VentaFk = v.Id
-                                 INNER JOIN EstadosQR s ON e.EstadoQrFk = s.Id
-                                 WHERE V.EstadoVentaFk = @Enabled AND v.eventofk = @EventFk
-                                 GROUP BY EstadoQrFk, s.Nombre";
-            var r = await Connection.QueryAsync<TicketStat>(query, new { Enabled = 1, EventFk = eventId }, Transaction);
+            // Single query from QREntradasLecturas - counts ALL tickets scanned on event date
+            // Includes old system, Quentro, and multi-pass tickets
+            string statsQuery = @"SELECT COUNT(*) as Total, qre.EstadoQrFk as StatusId, s.Nombre as StatusName 
+                                  FROM QREntradasLecturas qre
+                                  INNER JOIN EstadosQR s ON qre.EstadoQrFk = s.Id
+                                  WHERE CAST(qre.Fecha AS DATE) = CAST(@eventDate AS DATE)
+                                  GROUP BY qre.EstadoQrFk, s.Nombre";
 
+            var r = await Connection.QueryAsync<TicketStat>(statsQuery, new { eventDate = ev.Fecha }, Transaction);
             stats.TicketStats = r.ToList();
 
-            //gates
-            string gateQuery = @"SELECT  ad.id DeviceId, ad.NroSerie DeviceName, count(*) PeopleCount, pi.Id GateId, sobrenombre GateNickName
-                                FROM QREntradasLecturas qre
-                                INNER JOIN AccesosDispositivos ad on qre.AccesoDispositivoFk = ad.Id
-                                INNER JOIN puertaingreso pi on pi.id = ad.puertaingresoid 
-                                INNER JOIN AccesosEntradasQR e ON qre.QREntradaFk = e.Id
-                                INNER JOIN Ventas v ON e.ventaFk = v.id  
-                                WHERE qre.EstadoQrFk = 5 AND v.eventofk=@eventFk
-                                GROUP BY  pi.Id, ad.id, ad.NroSerie, sobrenombre";
+            // Single query for gates/devices - counts ALL scans per device on event date
+            string gateQuery = @"SELECT ad.Id DeviceId, ad.NroSerie DeviceName, COUNT(*) PeopleCount, 
+                                        pi.Id GateId, pi.SobreNombre GateNickName
+                                 FROM QREntradasLecturas qre
+                                 INNER JOIN AccesosDispositivos ad ON qre.AccesoDispositivoFk = ad.Id
+                                 INNER JOIN PuertaIngreso pi ON pi.Id = ad.PuertaIngresoId 
+                                 WHERE qre.EstadoQrFk = 5 
+                                   AND CAST(qre.Fecha AS DATE) >= CAST(@eventDate AS DATE)
+                                 GROUP BY pi.Id, ad.Id, ad.NroSerie, pi.SobreNombre";
 
-            var r2 = await Connection.QueryAsync<AccessDeviceInfo>(gateQuery, new { Enabled = 1, EventFk = ev.Id }, Transaction);
-            foreach (var res in r2)
+            var gateStats = await Connection.QueryAsync<AccessDeviceInfo>(gateQuery, new { eventDate = ev.Fecha }, Transaction);
+
+            foreach (var res in gateStats)
             {
                 var g = stats.Gates.FirstOrDefault(x => x.GateId == res.GateId);
                 if (g == null)
@@ -129,6 +139,7 @@ namespace Carnavacs.Api.Infrastructure
                 }
                 g.AccessDevices.Add(res);
             }
+            
             return stats;
         }
 
