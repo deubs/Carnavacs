@@ -45,7 +45,7 @@ namespace Carnavacs.Api.Infrastructure
 
         public async Task<IEnumerable<string>> GetRolesByUserIdAsync(int userId)
         {
-            var sql = @"SELECT r.[Name]
+            var sql = @"SELECT r.[Nombre]
                          FROM [Usuarios_Roles] ur
                          JOIN [Roles] r ON ur.[RoleFk] = r.[Id]
                          WHERE ur.[UserFk] = @UserId";
