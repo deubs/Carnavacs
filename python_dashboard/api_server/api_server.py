@@ -1,11 +1,14 @@
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from flask_socketio import SocketIO, emit
 from functools import wraps
+from dotenv import load_dotenv
 import requests
 import os
 from datetime import datetime
 import threading
 # import cli_api_status
+
+load_dotenv()
 
 keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 'key2': '840c53ea-0467-4b52-b083-2de869d939a8',
