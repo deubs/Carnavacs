@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=6">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=7">
 </head>
 <body>
     <!-- Header -->
@@ -26,6 +26,10 @@
             <div class="header-devices">
                 <div class="header-leds-label"><span id="panel-online">0</span>/<span id="panel-total">0</span></div>
                 <div id="device-leds" class="device-leds"></div>
+            </div>
+            <div class="header-servers">
+                <div class="header-servers-label">Servers</div>
+                <div id="server-leds" class="server-leds"></div>
             </div>
             <div class="header-actions">
                 <button id="search-toggle" class="header-btn" title="Search ticket">&#128269;</button>
@@ -209,6 +213,9 @@
             // Update device LED panel
             updateDevicePanel(data.turnstiles);
 
+            // Update server LED panel
+            updateServerPanel(data.servers);
+
             // Update event info
             if (data.event) {
                 document.getElementById('event-name').textContent = data.event.showName || data.event.nombre;
@@ -229,6 +236,41 @@
                     <span class="led-name">${t.name.replace('moli', '')}</span>
                 </div>
             `).join('');
+        }
+
+        // Update server LED panel
+        let prevServerState = {};
+        function updateServerPanel(servers) {
+            if (!servers) return;
+            const panel = document.getElementById('server-leds');
+            panel.innerHTML = servers.map(s => {
+                const m = s.metrics || {};
+                const hasMetrics = m.cpuPercent !== undefined;
+                let tooltip = `${s.name} (${s.ip}): ${s.online ? 'Online' : 'Offline'}`;
+                if (s.online) tooltip += `\nResponse: ${s.response_time_ms}ms`;
+                if (hasMetrics) tooltip += `\nCPU: ${Math.round(m.cpuPercent)}% | Mem: ${Math.round(m.memoryPercent)}% | Disk: ${Math.round(m.diskPercent)}%`;
+                return `<div class="server-led ${s.online ? 'online' : 'offline'}" title="${tooltip}">
+                    <span class="led-dot"></span>
+                    <span class="led-name">${s.name}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function checkServerAlerts(servers) {
+            if (!servers) return;
+            servers.forEach(s => {
+                const prev = prevServerState[s.name];
+                if (!prev) return;
+                if (prev.online && !s.online) {
+                    showAlertToast(s.name, 'Server OFFLINE', 'error');
+                }
+                if (!prev.online && s.online) {
+                    showAlertToast(s.name, 'Server back online', 'success');
+                }
+            });
+            servers.forEach(s => {
+                prevServerState[s.name] = { online: s.online };
+            });
         }
 
         // Format last seen time
@@ -304,6 +346,7 @@
                         <span class="health-chip ${health.network ? 'ok' : 'error'}" title="Network ${health.network ? 'OK' : 'Error'}">NET</span>
                         ${health.cpu !== undefined ? `<span class="health-cpu" title="CPU Usage">${Math.round(health.cpu)}%</span>` : ''}
                         ${health.temperature ? `<span class="health-temp" title="Temperature">${health.temperature}&deg;C</span>` : ''}
+                        <span class="health-time" title="Last update">${formatLastSeen(moli.last_seen)}</span>
                     </div>
                 </div>
                 <div class="card-actions">
@@ -343,6 +386,7 @@
                     setConnectionStatus(true, data.apiOnline);
                     updateStats(data);
                     checkDeviceAlerts(data.turnstiles);
+                    checkServerAlerts(data.servers);
 
                     const grid = document.getElementById('turnstile-grid');
                     grid.innerHTML = '';
