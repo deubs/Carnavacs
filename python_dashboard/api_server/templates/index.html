@@ -318,7 +318,19 @@
                         groups[gate].push(moli);
                     });
 
-                    Object.keys(groups).sort().forEach(gateName => {
+                    // Sort gates by total count descending
+                    const sorted = Object.keys(groups).sort((a, b) => {
+                        const countA = groups[a].reduce((sum, t) => sum + (t.codes || 0), 0);
+                        const countB = groups[b].reduce((sum, t) => sum + (t.codes || 0), 0);
+                        return countB - countA;
+                    });
+
+                    // Separate multi-device gates from single-device gates
+                    const multiGates = sorted.filter(g => groups[g].length > 1);
+                    const singleGates = sorted.filter(g => groups[g].length === 1);
+
+                    // Render multi-device gates as full sections
+                    multiGates.forEach(gateName => {
                         const gateCount = groups[gateName].reduce((sum, t) => sum + (t.codes || 0), 0);
                         const section = document.createElement('div');
                         section.className = 'gate-section';
@@ -334,6 +346,24 @@
                         section.appendChild(gateGrid);
                         grid.appendChild(section);
                     });
+
+                    // Render single-device gates together in one compact section
+                    if (singleGates.length > 0) {
+                        const section = document.createElement('div');
+                        section.className = 'gate-section';
+                        const gateGrid = document.createElement('div');
+                        gateGrid.className = 'turnstile-grid';
+                        singleGates.forEach(gateName => {
+                            const moli = groups[gateName][0];
+                            const card = createTurnstileCard(moli);
+                            // Add gate label to the card header
+                            const header = card.querySelector('.card-header');
+                            header.insertAdjacentHTML('afterbegin', `<span class="card-gate-label">${gateName}</span>`);
+                            gateGrid.appendChild(card);
+                        });
+                        section.appendChild(gateGrid);
+                        grid.appendChild(section);
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
