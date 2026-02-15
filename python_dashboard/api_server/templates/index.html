@@ -125,6 +125,71 @@
     </script>
     <script>
         const url = '/dashboard-data';
+        let prevState = {}; // Track previous device state for change detection
+
+        // Detect device state changes and show alerts
+        function checkDeviceAlerts(turnstiles) {
+            turnstiles.forEach(t => {
+                const prev = prevState[t.name];
+                if (!prev) return; // Skip first poll
+
+                const h = t.health || {};
+                const ph = prev.health || {};
+
+                // Device went offline
+                if (prev.online && !t.online) {
+                    showAlertToast(t.name, 'Device OFFLINE', 'error');
+                }
+                // Device came back online
+                if (!prev.online && t.online) {
+                    showAlertToast(t.name, 'Device back online', 'success');
+                }
+                // Scanner disconnected
+                if (ph.scanner && !h.scanner) {
+                    showAlertToast(t.name, 'Scanner disconnected', 'error');
+                }
+                // Scanner reconnected
+                if (!ph.scanner && h.scanner) {
+                    showAlertToast(t.name, 'Scanner reconnected', 'success');
+                }
+                // Display disconnected
+                if (ph.display && !h.display) {
+                    showAlertToast(t.name, 'Display disconnected', 'warning');
+                }
+                // Network error
+                if (ph.network && !h.network) {
+                    showAlertToast(t.name, 'Network error', 'error');
+                }
+            });
+
+            // Save current state
+            turnstiles.forEach(t => {
+                prevState[t.name] = { online: t.online, health: Object.assign({}, t.health || {}) };
+            });
+        }
+
+        function showAlertToast(device, message, level) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const cls = level === 'success' ? 'toast-success' : level === 'warning' ? 'toast-warning' : 'toast-error';
+            const icon = level === 'success' ? '&#10003;' : level === 'warning' ? '&#9888;' : '&#9888;';
+
+            toast.className = `toast ${cls}`;
+            toast.innerHTML = `
+                <span class="toast-icon">${icon}</span>
+                <div class="toast-content">
+                    <span class="toast-device">${device}</span>
+                    <span class="toast-message">${message}</span>
+                </div>
+            `;
+
+            container.appendChild(toast);
+            // Alert toasts stay longer (8s)
+            setTimeout(() => {
+                toast.classList.add('toast-fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 8000);
+        }
 
         // Update summary statistics
         function updateStats(data) {
@@ -277,6 +342,7 @@
                 .then(data => {
                     setConnectionStatus(true, data.apiOnline);
                     updateStats(data);
+                    checkDeviceAlerts(data.turnstiles);
 
                     const grid = document.getElementById('turnstile-grid');
                     grid.innerHTML = '';
