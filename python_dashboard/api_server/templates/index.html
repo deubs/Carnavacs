@@ -346,7 +346,7 @@
                         <span class="health-chip ${health.network ? 'ok' : 'error'}" title="Network ${health.network ? 'OK' : 'Error'}">NET</span>
                         ${health.cpu !== undefined ? `<span class="health-cpu" title="CPU Usage">${Math.round(health.cpu)}%</span>` : ''}
                         ${health.temperature ? `<span class="health-temp" title="Temperature">${health.temperature}&deg;C</span>` : ''}
-                        <span class="health-time" title="Last update">${formatLastSeen(moli.last_seen)}</span>
+                        <span class="health-time" title="Last update">${formatLastSeen(health.last_seen)}</span>
                     </div>
                 </div>
                 <div class="card-actions">
