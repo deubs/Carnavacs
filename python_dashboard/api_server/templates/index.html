@@ -7,40 +7,44 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=5">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=6">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
-        <div class="header-content">
+        <div class="header-row">
             <div class="event-info">
                 <h1 class="header-title" id="event-name">Loading...</h1>
                 <span class="event-date" id="event-date"></span>
             </div>
-            <div class="live-indicator">
-                <span class="live-dot"></span>
-                <span class="live-text">Live</span>
+            <div class="header-stats">
+                <div class="hstat"><span class="hstat-val" id="stat-total">0</span><span class="hstat-lbl">Total</span></div>
+                <div class="hstat hstat-used"><span class="hstat-val" id="stat-used">0</span><span class="hstat-lbl">Used</span></div>
+                <div class="hstat hstat-remaining"><span class="hstat-val" id="stat-remaining">0</span><span class="hstat-lbl">Rem</span></div>
+                <div class="hstat hstat-pistol"><span class="hstat-val" id="stat-pistols">0</span><span class="hstat-lbl">Pistols</span></div>
             </div>
+            <div class="header-devices">
+                <div class="header-leds-label"><span id="panel-online">0</span>/<span id="panel-total">0</span></div>
+                <div id="device-leds" class="device-leds"></div>
+            </div>
+            <div class="header-actions">
+                <button id="search-toggle" class="header-btn" title="Search ticket">&#128269;</button>
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    <span class="live-text">Live</span>
+                </div>
+            </div>
+        </div>
+        <!-- Collapsible search bar -->
+        <div id="search-bar" class="search-bar hidden">
+            <input type="text" id="ticket-search" class="search-input" placeholder="Search or validate ticket..." autocomplete="off">
+            <button id="search-btn" class="search-button" title="Search">&#128269;</button>
+            <button id="scan-btn" class="scan-button" title="Scan barcode with camera">&#128247;</button>
         </div>
     </header>
 
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
-
-    <!-- Search Section -->
-    <section class="search-section">
-        <div class="search-container">
-            <input
-                type="text"
-                id="ticket-search"
-                class="search-input"
-                placeholder="Search or validate ticket..."
-                autocomplete="off"
-            >
-            <button id="search-btn" class="search-button" title="Search">🔍</button>
-            <button id="scan-btn" class="scan-button" title="Scan barcode with camera">📷</button>
-        </div>
-    </section>
 
     <!-- Camera Scanner Overlay -->
     <div id="scanner-overlay" class="scanner-overlay hidden">
@@ -52,42 +56,9 @@
         <div class="scanner-hint">Point the camera at a barcode</div>
     </div>
 
-    <!-- Device Status Panel (Network Switch View) -->
-    <section class="device-panel">
-        <div class="device-panel-header">
-            <span class="panel-title">Devices</span>
-            <span class="panel-count"><span id="panel-online">0</span>/<span id="panel-total">0</span></span>
-        </div>
-        <div id="device-leds" class="device-leds"></div>
-    </section>
-
-    <!-- Stats Bar -->
-    <section class="stats-bar">
-        <div class="stat-card">
-            <span class="stat-value" id="stat-total">0</span>
-            <span class="stat-label">Total Tickets</span>
-        </div>
-        <div class="stat-card stat-unlocked">
-            <span class="stat-value" id="stat-used">0</span>
-            <span class="stat-label">Used</span>
-        </div>
-        <div class="stat-card stat-locked">
-            <span class="stat-value" id="stat-remaining">0</span>
-            <span class="stat-label">Remaining</span>
-        </div>
-        <div class="stat-card stat-pistol">
-            <span class="stat-value" id="stat-pistols">0</span>
-            <span class="stat-label">Active Pistols</span>
-        </div>
-        <div class="stat-card stat-online">
-            <span class="stat-value" id="stat-online">0</span>
-            <span class="stat-label">Online</span>
-        </div>
-    </section>
-
     <!-- Main Grid -->
     <main class="main-container">
-        <div id="turnstile-grid" class="turnstile-grid"></div>
+        <div id="turnstile-grid"></div>
     </main>
 
     <!-- Footer -->
@@ -96,7 +67,7 @@
             <span class="connection-dot connected"></span>
             <span class="connection-text">Connected</span>
         </div>
-        <span class="footer-info">Polling every 1s</span>
+        <span class="footer-info" id="stat-online">0 online</span>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
@@ -154,6 +125,71 @@
     </script>
     <script>
         const url = '/dashboard-data';
+        let prevState = {}; // Track previous device state for change detection
+
+        // Detect device state changes and show alerts
+        function checkDeviceAlerts(turnstiles) {
+            turnstiles.forEach(t => {
+                const prev = prevState[t.name];
+                if (!prev) return; // Skip first poll
+
+                const h = t.health || {};
+                const ph = prev.health || {};
+
+                // Device went offline
+                if (prev.online && !t.online) {
+                    showAlertToast(t.name, 'Device OFFLINE', 'error');
+                }
+                // Device came back online
+                if (!prev.online && t.online) {
+                    showAlertToast(t.name, 'Device back online', 'success');
+                }
+                // Scanner disconnected
+                if (ph.scanner && !h.scanner) {
+                    showAlertToast(t.name, 'Scanner disconnected', 'error');
+                }
+                // Scanner reconnected
+                if (!ph.scanner && h.scanner) {
+                    showAlertToast(t.name, 'Scanner reconnected', 'success');
+                }
+                // Display disconnected
+                if (ph.display && !h.display) {
+                    showAlertToast(t.name, 'Display disconnected', 'warning');
+                }
+                // Network error
+                if (ph.network && !h.network) {
+                    showAlertToast(t.name, 'Network error', 'error');
+                }
+            });
+
+            // Save current state
+            turnstiles.forEach(t => {
+                prevState[t.name] = { online: t.online, health: Object.assign({}, t.health || {}) };
+            });
+        }
+
+        function showAlertToast(device, message, level) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const cls = level === 'success' ? 'toast-success' : level === 'warning' ? 'toast-warning' : 'toast-error';
+            const icon = level === 'success' ? '&#10003;' : level === 'warning' ? '&#9888;' : '&#9888;';
+
+            toast.className = `toast ${cls}`;
+            toast.innerHTML = `
+                <span class="toast-icon">${icon}</span>
+                <div class="toast-content">
+                    <span class="toast-device">${device}</span>
+                    <span class="toast-message">${message}</span>
+                </div>
+            `;
+
+            container.appendChild(toast);
+            // Alert toasts stay longer (8s)
+            setTimeout(() => {
+                toast.classList.add('toast-fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 8000);
+        }
 
         // Update summary statistics
         function updateStats(data) {
@@ -168,7 +204,7 @@
 
             // Online devices count
             const online = data.turnstiles.filter(t => t.online).length;
-            document.getElementById('stat-online').textContent = online;
+            document.getElementById('stat-online').textContent = online + ' online';
 
             // Update device LED panel
             updateDevicePanel(data.turnstiles);
@@ -306,14 +342,65 @@
                 .then(data => {
                     setConnectionStatus(true, data.apiOnline);
                     updateStats(data);
+                    checkDeviceAlerts(data.turnstiles);
 
                     const grid = document.getElementById('turnstile-grid');
                     grid.innerHTML = '';
 
+                    // Group turnstiles by gate
+                    const groups = {};
                     data.turnstiles.forEach(moli => {
-                        const card = createTurnstileCard(moli);
-                        grid.appendChild(card);
+                        const gate = moli.gate || 'Sin Puerta';
+                        if (!groups[gate]) groups[gate] = [];
+                        groups[gate].push(moli);
                     });
+
+                    // Sort gates by total count descending
+                    const sorted = Object.keys(groups).sort((a, b) => {
+                        const countA = groups[a].reduce((sum, t) => sum + (t.codes || 0), 0);
+                        const countB = groups[b].reduce((sum, t) => sum + (t.codes || 0), 0);
+                        return countB - countA;
+                    });
+
+                    // Separate large gates from small gates (1-2 devices)
+                    const multiGates = sorted.filter(g => groups[g].length > 2);
+                    const singleGates = sorted.filter(g => groups[g].length <= 2);
+
+                    // Render multi-device gates as full sections
+                    multiGates.forEach(gateName => {
+                        const gateCount = groups[gateName].reduce((sum, t) => sum + (t.codes || 0), 0);
+                        const section = document.createElement('div');
+                        section.className = 'gate-section';
+                        section.innerHTML = `<div class="gate-header">
+                            <span class="gate-name">${gateName}</span>
+                            <span class="gate-count">${gateCount.toLocaleString()}</span>
+                        </div>`;
+                        const gateGrid = document.createElement('div');
+                        gateGrid.className = 'turnstile-grid';
+                        groups[gateName].forEach(moli => {
+                            gateGrid.appendChild(createTurnstileCard(moli));
+                        });
+                        section.appendChild(gateGrid);
+                        grid.appendChild(section);
+                    });
+
+                    // Render small gates together in one compact section
+                    if (singleGates.length > 0) {
+                        const section = document.createElement('div');
+                        section.className = 'gate-section';
+                        const gateGrid = document.createElement('div');
+                        gateGrid.className = 'turnstile-grid';
+                        singleGates.forEach(gateName => {
+                            groups[gateName].forEach(moli => {
+                                const card = createTurnstileCard(moli);
+                                const header = card.querySelector('.card-header');
+                                header.insertAdjacentHTML('afterbegin', `<span class="card-gate-label">${gateName}</span>`);
+                                gateGrid.appendChild(card);
+                            });
+                        });
+                        section.appendChild(gateGrid);
+                        grid.appendChild(section);
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -360,6 +447,15 @@
         searchBtn.addEventListener('click', validateTicket);
         ticketInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') validateTicket();
+        });
+
+        // Toggle search bar
+        document.getElementById('search-toggle').addEventListener('click', function() {
+            const bar = document.getElementById('search-bar');
+            bar.classList.toggle('hidden');
+            if (!bar.classList.contains('hidden')) {
+                document.getElementById('ticket-search').focus();
+            }
         });
     </script>
     <script>

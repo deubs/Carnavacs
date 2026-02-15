@@ -91,8 +91,8 @@ apiurl = "http://192.168.40.100/Ticket/Validate"
 # Dashboard server URL for health reporting and remote commands
 DASHBOARD_URL = os.environ.get('DASHBOARD_URL', 'http://192.168.40.244')
 DEVICE_NAME = platform.node()
-HEALTH_REPORT_INTERVAL = 15  # seconds
-COMMAND_POLL_INTERVAL = 10   # seconds
+HEALTH_REPORT_INTERVAL = 10  # seconds
+COMMAND_POLL_INTERVAL = 5   # seconds
 
 # threading_event = threading.Event()
 # scancodes = {

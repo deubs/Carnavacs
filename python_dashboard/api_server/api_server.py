@@ -22,28 +22,28 @@ app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key')
 socketio = SocketIO(app)
 
 turnstiles = [
-    {'id': 1, 'name': 'tango01', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 2, 'name': 'tango02', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 3, 'name': 'tango03', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 4, 'name': 'tango04', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 5, 'name': 'tango05', 'status': 'locked', 'pistol': 'Off',  'codes': 0},
-    {'id': 6, 'name': 'tango06', 'status': 'locked', 'pistol': 'Off' , 'codes': 0},
-    {'id': 7, 'name': 'tango07', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 8, 'name': 'tango08', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 9, 'name': 'tango09', 'status': 'locked', 'pistol': 'Off',  'codes': 0},
-    {'id': 10, 'name': 'tango10', 'status': 'locked', 'pistol': 'Off','codes': 0},
-    {'id': 11, 'name': 'tango11', 'status': 'locked', 'pistol': 'Off','codes': 0},
-    {'id': 12, 'name': 'tango12', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 13, 'name': 'tango13', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 14, 'name': 'raspibalizaproveedores', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 15, 'name': 'tango15', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 16, 'name': 'raspi16', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 17, 'name': 'raspi17', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 18, 'name': 'tango18', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 19, 'name': 'tango19', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 20, 'name': 'tango20', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 21, 'name': 'baliza-disca', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 22, 'name': 'vehiculos', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 1, 'name': 'tango01', 'ip': '192.168.40.201', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 2, 'name': 'tango02', 'ip': '192.168.40.202', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 3, 'name': 'tango03', 'ip': '192.168.40.203', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 4, 'name': 'tango04', 'ip': '192.168.40.204', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 5, 'name': 'tango05', 'ip': '192.168.40.205', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 6, 'name': 'tango06', 'ip': '192.168.40.206', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 7, 'name': 'tango07', 'ip': '192.168.40.207', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 8, 'name': 'tango08', 'ip': '192.168.40.208', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 9, 'name': 'tango09', 'ip': '192.168.40.209', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 10, 'name': 'tango10', 'ip': '192.168.40.210', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 11, 'name': 'tango11', 'ip': '192.168.40.211', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 12, 'name': 'tango12', 'ip': '192.168.40.212', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 13, 'name': 'tango13', 'ip': '192.168.40.213', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 14, 'name': 'raspibalizaproveedores', 'ip': '192.168.40.214', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 15, 'name': 'tango15', 'ip': '192.168.40.215', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 16, 'name': 'raspi16', 'ip': '192.168.40.216', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 17, 'name': 'raspi17', 'ip': '192.168.40.217', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 18, 'name': 'tango18', 'ip': '192.168.40.218', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 19, 'name': 'tango19', 'ip': '192.168.40.219', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 20, 'name': 'tango20', 'ip': '192.168.40.220', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 21, 'name': 'baliza-disca', 'ip': '192.168.40.221', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 22, 'name': 'vehiculos', 'ip': '192.168.40.222', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
 ]
 
 # Device health tracking - stores health data from devices
@@ -229,7 +229,7 @@ def dashboard_data():
     # Merge with local turnstile state and health info
     merged = []
     for ts in turnstiles:
-        api_data = device_counts.get(ts['name'], {})
+        api_data = device_counts.get(ts['ip'], {})
         # Try case-insensitive match for health data
         health = None
         online = False
