@@ -25,7 +25,7 @@ namespace Carnavacs.Api.Domain.Entities
                 int total = 0;
                 foreach (TicketStat stat in TicketStats)
                 {
-                    if (stat.StatusId == 2)
+                    if (stat.StatusId == 5)
                         total += stat.Total;
                 }
                 return total;
