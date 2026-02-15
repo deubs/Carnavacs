@@ -7,40 +7,44 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=5">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=6">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
-        <div class="header-content">
+        <div class="header-row">
             <div class="event-info">
                 <h1 class="header-title" id="event-name">Loading...</h1>
                 <span class="event-date" id="event-date"></span>
             </div>
-            <div class="live-indicator">
-                <span class="live-dot"></span>
-                <span class="live-text">Live</span>
+            <div class="header-stats">
+                <div class="hstat"><span class="hstat-val" id="stat-total">0</span><span class="hstat-lbl">Total</span></div>
+                <div class="hstat hstat-used"><span class="hstat-val" id="stat-used">0</span><span class="hstat-lbl">Used</span></div>
+                <div class="hstat hstat-remaining"><span class="hstat-val" id="stat-remaining">0</span><span class="hstat-lbl">Rem</span></div>
+                <div class="hstat hstat-pistol"><span class="hstat-val" id="stat-pistols">0</span><span class="hstat-lbl">Pistols</span></div>
             </div>
+            <div class="header-devices">
+                <div class="header-leds-label"><span id="panel-online">0</span>/<span id="panel-total">0</span></div>
+                <div id="device-leds" class="device-leds"></div>
+            </div>
+            <div class="header-actions">
+                <button id="search-toggle" class="header-btn" title="Search ticket">&#128269;</button>
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    <span class="live-text">Live</span>
+                </div>
+            </div>
+        </div>
+        <!-- Collapsible search bar -->
+        <div id="search-bar" class="search-bar hidden">
+            <input type="text" id="ticket-search" class="search-input" placeholder="Search or validate ticket..." autocomplete="off">
+            <button id="search-btn" class="search-button" title="Search">&#128269;</button>
+            <button id="scan-btn" class="scan-button" title="Scan barcode with camera">&#128247;</button>
         </div>
     </header>
 
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
-
-    <!-- Search Section -->
-    <section class="search-section">
-        <div class="search-container">
-            <input
-                type="text"
-                id="ticket-search"
-                class="search-input"
-                placeholder="Search or validate ticket..."
-                autocomplete="off"
-            >
-            <button id="search-btn" class="search-button" title="Search">🔍</button>
-            <button id="scan-btn" class="scan-button" title="Scan barcode with camera">📷</button>
-        </div>
-    </section>
 
     <!-- Camera Scanner Overlay -->
     <div id="scanner-overlay" class="scanner-overlay hidden">
@@ -51,39 +55,6 @@
         <div id="scanner-reader" class="scanner-reader"></div>
         <div class="scanner-hint">Point the camera at a barcode</div>
     </div>
-
-    <!-- Device Status Panel (Network Switch View) -->
-    <section class="device-panel">
-        <div class="device-panel-header">
-            <span class="panel-title">Devices</span>
-            <span class="panel-count"><span id="panel-online">0</span>/<span id="panel-total">0</span></span>
-        </div>
-        <div id="device-leds" class="device-leds"></div>
-    </section>
-
-    <!-- Stats Bar -->
-    <section class="stats-bar">
-        <div class="stat-card">
-            <span class="stat-value" id="stat-total">0</span>
-            <span class="stat-label">Total Tickets</span>
-        </div>
-        <div class="stat-card stat-unlocked">
-            <span class="stat-value" id="stat-used">0</span>
-            <span class="stat-label">Used</span>
-        </div>
-        <div class="stat-card stat-locked">
-            <span class="stat-value" id="stat-remaining">0</span>
-            <span class="stat-label">Remaining</span>
-        </div>
-        <div class="stat-card stat-pistol">
-            <span class="stat-value" id="stat-pistols">0</span>
-            <span class="stat-label">Active Pistols</span>
-        </div>
-        <div class="stat-card stat-online">
-            <span class="stat-value" id="stat-online">0</span>
-            <span class="stat-label">Online</span>
-        </div>
-    </section>
 
     <!-- Main Grid -->
     <main class="main-container">
@@ -96,7 +67,7 @@
             <span class="connection-dot connected"></span>
             <span class="connection-text">Connected</span>
         </div>
-        <span class="footer-info">Polling every 1s</span>
+        <span class="footer-info" id="stat-online">0 online</span>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
@@ -168,7 +139,7 @@
 
             // Online devices count
             const online = data.turnstiles.filter(t => t.online).length;
-            document.getElementById('stat-online').textContent = online;
+            document.getElementById('stat-online').textContent = online + ' online';
 
             // Update device LED panel
             updateDevicePanel(data.turnstiles);
@@ -410,6 +381,15 @@
         searchBtn.addEventListener('click', validateTicket);
         ticketInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') validateTicket();
+        });
+
+        // Toggle search bar
+        document.getElementById('search-toggle').addEventListener('click', function() {
+            const bar = document.getElementById('search-bar');
+            bar.classList.toggle('hidden');
+            if (!bar.classList.contains('hidden')) {
+                document.getElementById('ticket-search').focus();
+            }
         });
     </script>
     <script>
