@@ -18,23 +18,25 @@ namespace Carnavacs.Api.Domain.Entities
                 return total;
             }
         }
-        public int UsedTickets { get { 
-                return TotalTickets - RemainingTickets;
-            }
-        }
-        public int RemainingTickets
+        public int UsedTickets
         {
             get
             {
                 int total = 0;
                 foreach (TicketStat stat in TicketStats)
                 {
-                    if (stat.StatusName == "Habilitado")
+                    if (stat.StatusId == 5)
                         total += stat.Total;
                 }
                 return total;
             }
-
+        }
+        public int RemainingTickets
+        {
+            get
+            {
+                return TotalTickets - UsedTickets;
+            }
         }
 
         public int TotalGates { get; set; }
@@ -49,6 +51,7 @@ namespace Carnavacs.Api.Domain.Entities
     public class TicketStat
     {
         public int Total { get; set; }
+        public int StatusId { get; set; }
         public string StatusName { get; set; }
     }
 

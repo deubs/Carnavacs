@@ -48,6 +48,7 @@ bin
 debug
 obj
 appSettings.json
+appsettings.Production.json
 firmware/server/config.ini
 *~
 __pycache__
