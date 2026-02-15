@@ -77,7 +77,7 @@ def login_required(f):
 
 # C# API Helper Functions
 def fetch_ticket(ticket_code):
-    """GET /Ticket/Validate"""
+    """GET /Ticket/Verify"""
     try:
         apikey = keys['key1']
         header = {
@@ -86,7 +86,7 @@ def fetch_ticket(ticket_code):
         }
         payload = {'code': ticket_code}
         print(payload)
-        resp = requests.post(f"{CARNAVAL_API_URL}/Ticket/Validate",
+        resp = requests.post(f"{CARNAVAL_API_URL}/Ticket/Verify",
                              params= payload,
                              headers= header,
                              timeout=API_TIMEOUT)
@@ -371,10 +371,17 @@ def ticket():
     print(f"Fetched ticket: {result}")
 
     if result:
+        ticket_status = result.get('ticketStatus', {})
+        status_name = ticket_status.get('name', '')
+        is_valid = result.get('isValid', False)
+
         return jsonify({
-            'status': 'success',
-            'message': f'Ticket {ticket_code} found {result.get("m1", "")} - {result.get("m2", "")}',
-            'deviceName': result.get('deviceName', 'Unknown'),
+            'status': 'success' if is_valid else status_name.lower(),
+            'message': f'{result.get("m1", "")} - {result.get("m2", "")}',
+            'deviceName': result.get('gate', 'Unknown'),
+            'usedDate': result.get('usedDate'),
+            'gate': result.get('gate'),
+            'ticketStatus': status_name,
             'data': result
         })
     else:
