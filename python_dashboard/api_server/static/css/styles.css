@@ -275,6 +275,33 @@ body {
     padding: var(--spacing-md) var(--spacing-xl) var(--spacing-xl);
 }
 
+.gate-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.gate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-left: 3px solid var(--carnival-orange);
+}
+
+.gate-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.gate-count {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--carnival-gold);
+}
+
 .turnstile-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

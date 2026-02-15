@@ -87,7 +87,7 @@
 
     <!-- Main Grid -->
     <main class="main-container">
-        <div id="turnstile-grid" class="turnstile-grid"></div>
+        <div id="turnstile-grid"></div>
     </main>
 
     <!-- Footer -->
@@ -310,9 +310,29 @@
                     const grid = document.getElementById('turnstile-grid');
                     grid.innerHTML = '';
 
+                    // Group turnstiles by gate
+                    const groups = {};
                     data.turnstiles.forEach(moli => {
-                        const card = createTurnstileCard(moli);
-                        grid.appendChild(card);
+                        const gate = moli.gate || 'Sin Puerta';
+                        if (!groups[gate]) groups[gate] = [];
+                        groups[gate].push(moli);
+                    });
+
+                    Object.keys(groups).sort().forEach(gateName => {
+                        const gateCount = groups[gateName].reduce((sum, t) => sum + (t.codes || 0), 0);
+                        const section = document.createElement('div');
+                        section.className = 'gate-section';
+                        section.innerHTML = `<div class="gate-header">
+                            <span class="gate-name">${gateName}</span>
+                            <span class="gate-count">${gateCount.toLocaleString()}</span>
+                        </div>`;
+                        const gateGrid = document.createElement('div');
+                        gateGrid.className = 'turnstile-grid';
+                        groups[gateName].forEach(moli => {
+                            gateGrid.appendChild(createTurnstileCard(moli));
+                        });
+                        section.appendChild(gateGrid);
+                        grid.appendChild(section);
                     });
                 })
                 .catch(error => {
