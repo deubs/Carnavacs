@@ -53,7 +53,7 @@ device_health = {}  # device_name -> health_data with last_seen
 pending_commands = {}  # device_name -> {'command': 'reboot', 'issued_at': ...}
 
 # Timeout for considering a device offline (seconds)
-DEVICE_TIMEOUT_SECONDS = 60
+DEVICE_TIMEOUT_SECONDS = 15
 
 def is_device_online(device_name):
     """Check if device has reported health within timeout period"""

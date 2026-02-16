@@ -102,7 +102,8 @@ def apicallverify(code):
 
 
 if __name__ == "__main__":
-    code =  "01255360123658"
+    code =  "33365572834758" \
+    ""
     result = apicallverify(code)
     print(result)
     ticket_string = f'code: {code}, status: {result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'
