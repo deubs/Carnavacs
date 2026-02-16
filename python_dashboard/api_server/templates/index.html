@@ -164,11 +164,19 @@
                 if (ph.network && !h.network) {
                     showAlertToast(t.name, 'Network error', 'error');
                 }
+                // Blades unlocked
+                if (prev.status === 'locked' && t.status === 'unlocked') {
+                    showAlertToast(t.name, 'Blades UNLOCKED', 'success');
+                }
+                // Blades locked
+                if (prev.status === 'unlocked' && t.status === 'locked') {
+                    showAlertToast(t.name, 'Blades LOCKED', 'warning');
+                }
             });
 
             // Save current state
             turnstiles.forEach(t => {
-                prevState[t.name] = { online: t.online, health: Object.assign({}, t.health || {}) };
+                prevState[t.name] = { online: t.online, status: t.status, health: Object.assign({}, t.health || {}) };
             });
         }
 
