@@ -3,12 +3,13 @@ from flask_socketio import SocketIO, emit, join_room
 from functools import wraps
 from dotenv import load_dotenv
 import requests
+import json
 import os
 from datetime import datetime
 import threading
 import time
 import psutil
-import socketio as socketio_pkg
+import websocket as ws_client
 # import cli_api_status
 
 load_dotenv()
@@ -161,39 +162,58 @@ def get_quentro_show_id():
     return None
 
 def quentro_connection():
-    """Connect to Quentro Box Socket.IO and subscribe to show updates"""
+    """Connect to Quentro Box via raw WebSocket (Socket.IO v2 / Engine.IO v3 protocol).
+    python-socketio v5 is incompatible with Socket.IO v2 servers, so we use websocket-client directly."""
     while True:
         show_id = get_quentro_show_id()
         if not show_id:
-            print("No quentroEventId found, retrying in 30s...")
+            print("Quentro: no quentroEventId found, retrying in 30s...")
             time.sleep(30)
             continue
 
-        print(f"Quentro showId: {show_id}")
-        sio = socketio_pkg.Client(reconnection=True, reconnection_delay=5,
-                                  reconnection_delay_max=30, logger=False)
-
         event_name = f'show-update-{show_id}'
+        ws_url = QUENTRO_BOX_URL.replace('http://', 'ws://').replace('https://', 'wss://')
+        ws_url += '/socket.io/?EIO=3&transport=websocket'
 
-        @sio.on(event_name)
-        def on_show_update(data):
-            quentro_stats.update(data)
+        print(f"Quentro: connecting to {QUENTRO_BOX_URL} for showId={show_id}")
 
-        @sio.on('connect')
-        def on_connect():
-            print(f"Connected to Quentro Box ({QUENTRO_BOX_URL}), showId={show_id}")
-            sio.emit('update-request', {'showId': show_id})
+        def on_message(ws, message):
+            if message.startswith('0'):
+                # Engine.IO open packet - send Socket.IO connect to namespace /
+                ws.send('40')
+            elif message == '40':
+                # Socket.IO connected - send update-request event
+                req = json.dumps({"showId": show_id})
+                ws.send(f'42["update-request",{req}]')
+                print(f"Quentro: connected, listening for {event_name}")
+            elif message == '2':
+                # Engine.IO ping - respond with pong
+                ws.send('3')
+            elif message.startswith('42'):
+                try:
+                    payload = json.loads(message[2:])
+                    if len(payload) >= 2 and payload[0] == event_name:
+                        quentro_stats.update(payload[1])
+                except Exception:
+                    pass
 
-        @sio.on('disconnect')
-        def on_disconnect():
-            print("Disconnected from Quentro Box")
+        def on_error(ws, error):
+            print(f"Quentro: websocket error: {error}")
+
+        def on_close(ws, *args):
+            print("Quentro: disconnected")
 
         try:
-            sio.connect(QUENTRO_BOX_URL, transports=['websocket', 'polling'])
-            sio.wait()
+            ws = ws_client.WebSocketApp(
+                ws_url,
+                on_message=on_message,
+                on_error=on_error,
+                on_close=on_close
+            )
+            ws.run_forever(ping_interval=0)  # Socket.IO v2 handles its own ping/pong
         except Exception as e:
-            print(f"Quentro Box connection failed: {e}")
-            time.sleep(10)
+            print(f"Quentro: connection failed: {e}")
+        time.sleep(10)
 
 threading.Thread(target=quentro_connection, daemon=True, name="QuentroBox").start()
 
