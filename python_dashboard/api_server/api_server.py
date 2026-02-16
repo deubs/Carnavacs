@@ -771,6 +771,11 @@ def get_pending_commands():
 # Web Push Subscription Endpoints
 # ============================================
 
+@app.route('/sw.js')
+def service_worker():
+    """Serve service worker from root so its scope covers the whole site"""
+    return app.send_static_file('sw.js'), 200, {'Content-Type': 'application/javascript'}
+
 @app.route('/api/push/vapid-public-key', methods=['GET'])
 def push_vapid_key():
     """Return VAPID public key for client-side push subscription"""

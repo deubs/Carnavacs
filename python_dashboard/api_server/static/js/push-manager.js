@@ -13,7 +13,7 @@
     }
 
     // Register service worker
-    navigator.serviceWorker.register('/static/sw.js').then(function(reg) {
+    navigator.serviceWorker.register('/sw.js').then(function(reg) {
         console.log('[Push] Service worker registered, scope:', reg.scope);
         // Check existing subscription
         reg.pushManager.getSubscription().then(function(sub) {
