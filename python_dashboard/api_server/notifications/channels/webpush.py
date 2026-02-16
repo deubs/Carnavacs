@@ -1,4 +1,5 @@
 import json
+import os
 import threading
 
 from pywebpush import webpush, WebPushException
@@ -6,7 +7,12 @@ from pywebpush import webpush, WebPushException
 
 class WebPushChannel:
     def __init__(self, vapid_private_key, vapid_claims):
-        self.vapid_private_key = vapid_private_key
+        # If it's a file path, read the PEM content
+        if os.path.isfile(vapid_private_key):
+            with open(vapid_private_key, 'r') as f:
+                self.vapid_private_key = f.read()
+        else:
+            self.vapid_private_key = vapid_private_key
         self.vapid_claims = vapid_claims
         self.subscriptions = []  # list of subscription_info dicts
         self._lock = threading.Lock()

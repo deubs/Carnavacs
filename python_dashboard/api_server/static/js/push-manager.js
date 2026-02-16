@@ -8,18 +8,25 @@
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         bellBtn.title = 'Push notifications not supported in this browser';
         bellBtn.disabled = true;
+        console.warn('[Push] Not supported in this browser');
         return;
     }
 
     // Register service worker
     navigator.serviceWorker.register('/static/sw.js').then(function(reg) {
+        console.log('[Push] Service worker registered, scope:', reg.scope);
         // Check existing subscription
         reg.pushManager.getSubscription().then(function(sub) {
             if (sub) {
                 bellBtn.classList.add('subscribed');
                 bellBtn.title = 'Push notifications enabled (click to disable)';
+                console.log('[Push] Already subscribed:', sub.endpoint);
+            } else {
+                console.log('[Push] Not subscribed yet');
             }
         });
+    }).catch(function(err) {
+        console.error('[Push] Service worker registration failed:', err);
     });
 
     bellBtn.addEventListener('click', function() {
@@ -35,6 +42,7 @@
                         });
                         bellBtn.classList.remove('subscribed');
                         bellBtn.title = 'Enable push notifications';
+                        console.log('[Push] Unsubscribed');
                     });
                 } else {
                     // Subscribe
@@ -45,9 +53,11 @@
     });
 
     function subscribeToPush(reg) {
+        console.log('[Push] Starting subscription...');
         fetch('/api/push/vapid-public-key')
             .then(function(r) { return r.json(); })
             .then(function(data) {
+                console.log('[Push] Got public key:', data.publicKey ? data.publicKey.substring(0, 20) + '...' : 'EMPTY');
                 if (!data.publicKey) {
                     alert('Push notifications not configured on the server');
                     return;
@@ -60,6 +70,7 @@
             })
             .then(function(sub) {
                 if (!sub) return;
+                console.log('[Push] Browser subscribed:', sub.endpoint);
                 return fetch('/api/push/subscribe', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -70,10 +81,13 @@
                 if (resp && resp.ok) {
                     bellBtn.classList.add('subscribed');
                     bellBtn.title = 'Push notifications enabled (click to disable)';
+                    console.log('[Push] Server confirmed subscription');
+                } else if (resp) {
+                    console.error('[Push] Server rejected subscription:', resp.status);
                 }
             })
             .catch(function(err) {
-                console.error('Push subscription failed:', err);
+                console.error('[Push] Subscription failed:', err);
             });
     }
 
