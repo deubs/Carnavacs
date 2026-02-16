@@ -12,7 +12,37 @@ import psutil
 import websocket as ws_client
 # import cli_api_status
 
+from notifications import NotificationDispatcher
+from notifications.channels.telegram import TelegramChannel
+from notifications.channels.slack import SlackChannel
+from notifications.channels.webpush import WebPushChannel
+
 load_dotenv()
+
+# ============================================
+# External Notification Channels
+# ============================================
+
+_channels = []
+
+_tg_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+_tg_chat = os.environ.get('TELEGRAM_CHAT_ID')
+if _tg_token and _tg_chat:
+    _channels.append(TelegramChannel(_tg_token, _tg_chat))
+
+_slack_url = os.environ.get('SLACK_WEBHOOK_URL')
+if _slack_url:
+    _channels.append(SlackChannel(_slack_url))
+
+_vapid_private = os.environ.get('VAPID_PRIVATE_KEY')
+_vapid_public = os.environ.get('VAPID_PUBLIC_KEY', '')
+_vapid_mailto = os.environ.get('VAPID_MAILTO', 'mailto:admin@example.com')
+webpush_channel = None
+if _vapid_private:
+    webpush_channel = WebPushChannel(_vapid_private, {'sub': _vapid_mailto})
+    _channels.append(webpush_channel)
+
+notify_dispatcher = NotificationDispatcher(_channels)
 
 keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 'key2': '840c53ea-0467-4b52-b083-2de869d939a8',
@@ -135,6 +165,12 @@ def server_health_monitor():
     while True:
         for server in INFRASTRUCTURE_SERVERS:
             result = check_server_health(server)
+            prev = server_health.get(server['name'])
+            if prev is not None:
+                if prev['online'] and not result['online']:
+                    notify_dispatcher.queue_event('server_offline', server['name'])
+                elif not prev['online'] and result['online']:
+                    notify_dispatcher.queue_event('server_online', server['name'])
             server_health[server['name']] = result
         time.sleep(SERVER_CHECK_INTERVAL)
 
@@ -732,6 +768,40 @@ def get_pending_commands():
     return jsonify(pending_commands)
 
 # ============================================
+# Web Push Subscription Endpoints
+# ============================================
+
+@app.route('/api/push/vapid-public-key', methods=['GET'])
+def push_vapid_key():
+    """Return VAPID public key for client-side push subscription"""
+    return jsonify({'publicKey': _vapid_public})
+
+@app.route('/api/push/subscribe', methods=['POST'])
+@login_required
+def push_subscribe():
+    """Store a push subscription"""
+    if not webpush_channel:
+        return jsonify({'error': 'Web Push not configured'}), 501
+    sub = request.json
+    if not sub or not sub.get('endpoint'):
+        return jsonify({'error': 'Invalid subscription'}), 400
+    webpush_channel.add_subscription(sub)
+    return jsonify({'success': True})
+
+@app.route('/api/push/unsubscribe', methods=['POST'])
+@login_required
+def push_unsubscribe():
+    """Remove a push subscription"""
+    if not webpush_channel:
+        return jsonify({'error': 'Web Push not configured'}), 501
+    data = request.json
+    endpoint = data.get('endpoint') if data else None
+    if not endpoint:
+        return jsonify({'error': 'Endpoint required'}), 400
+    webpush_channel.remove_subscription(endpoint)
+    return jsonify({'success': True})
+
+# ============================================
 # Socket.IO Device Namespace (/devices)
 # ============================================
 
@@ -764,6 +834,7 @@ def device_register(data):
     print(f"Device registered: {device_name} (sid={request.sid}, ip={ip})")
     # Notify browser clients
     socketio.emit('device_online', {'device': device_name, 'ip': ip})
+    notify_dispatcher.queue_event('device_online', device_name)
 
 @socketio.on('disconnect', namespace='/devices')
 def device_disconnected():
@@ -780,6 +851,7 @@ def device_disconnected():
         print(f"Device disconnected: {device_name}")
         # Notify browser clients
         socketio.emit('device_offline', {'device': device_name})
+        notify_dispatcher.queue_event('device_offline', device_name)
 
 @socketio.on('health', namespace='/devices')
 def device_health_event(data):
@@ -788,6 +860,17 @@ def device_health_event(data):
     if not device_name:
         return
 
+    # Compare scanner state before overwriting
+    prev = device_health.get(device_name)
+    prev_scanner = prev.get('scanner', {}).get('connected', False) if prev else None
+    new_scanner = data.get('scanner', {}).get('connected', False)
+
+    if prev_scanner is not None and prev_scanner != new_scanner:
+        if not new_scanner:
+            notify_dispatcher.queue_event('scanner_disconnected', device_name)
+        else:
+            notify_dispatcher.queue_event('scanner_reconnected', device_name)
+
     # Store health data with server-side timestamp
     device_health[device_name] = {
         **data,
@@ -795,7 +878,7 @@ def device_health_event(data):
     }
 
     # Update turnstile status from health data
-    scanner_connected = data.get('scanner', {}).get('connected', False)
+    scanner_connected = new_scanner
     for ts in turnstiles:
         if ts['name'].lower() == device_name.lower():
             ts['online'] = True

@@ -34,6 +34,7 @@
                 <div id="server-leds" class="server-leds"></div>
             </div>
             <div class="header-actions">
+                <button id="notification-bell" class="header-btn" title="Enable push notifications">&#128276;</button>
                 <button id="search-toggle" class="header-btn" title="Search ticket">&#128269;</button>
                 <div class="live-indicator">
                     <span class="live-dot"></span>
@@ -618,5 +619,6 @@
         scanBtn.addEventListener('click', startScanner);
         scannerClose.addEventListener('click', stopScanner);
     </script>
+    <script src="{{ url_for('static', filename='js/push-manager.js') }}"></script>
 </body>
 </html>
