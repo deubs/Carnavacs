@@ -66,6 +66,7 @@ namespace Carnavacs.Api.Domain.Entities
     {
         public int DeviceId { get; set; }
         public string DeviceName { get; set; }
+        public string? FriendlyName { get; set; }
         public int PeopleCount { get; set; }
 
         [JsonIgnore]

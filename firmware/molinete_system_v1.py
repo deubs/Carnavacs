@@ -887,16 +887,26 @@ def main():
         logmessage('info', 'LCD init')
     fhandler = createFile()
 
-    BLAN, ip = checklan.checkLAN(checklan.target, checklan.timeout)
-    if BLAN:
-        lcd.lcd_string("LAN DETECTED", l1)
-        lcd.lcd_string(ip, l2)
-        logmessage('info', f'LAN DETECTED {ip}')
-        time.sleep(2)
-    else:
-        lcd.lcd_string("LAN NOT DETECTED", l1)
-        logmessage('error', f'LAN NOT DETECTED')
-        time.sleep(2)
+    # Retry LAN connection until successful
+    BLAN = False
+    ip = None
+    lan_attempt = 0
+    while not BLAN:
+        lan_attempt += 1
+        lcd.lcd_string("CONECTANDO RED", l1)
+        lcd.lcd_string(f"INTENTO {lan_attempt}...", l2)
+        logmessage('info', f'LAN connect attempt {lan_attempt}')
+        BLAN, ip = checklan.checkLAN(checklan.target, checklan.timeout)
+        if BLAN:
+            lcd.lcd_string("RED OK", l1)
+            lcd.lcd_string(ip, l2)
+            logmessage('info', f'LAN DETECTED {ip}')
+            time.sleep(2)
+        else:
+            lcd.lcd_string("SIN RED", l1)
+            lcd.lcd_string("REINTENTANDO...", l2)
+            logmessage('error', f'LAN NOT DETECTED attempt {lan_attempt}')
+            time.sleep(5)
 
     initGPIO()
 

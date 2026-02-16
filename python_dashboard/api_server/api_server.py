@@ -45,8 +45,8 @@ turnstiles = [
     {'id': 18, 'name': 'tango18', 'ip': '192.168.40.218', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 19, 'name': 'tango19', 'ip': '192.168.40.219', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
     {'id': 20, 'name': 'tango20', 'ip': '192.168.40.220', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 21, 'name': 'baliza-disca', 'ip': '192.168.40.221', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
-    {'id': 22, 'name': 'vehiculos', 'ip': '192.168.40.222', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 21, 'name': 'vehiculos', 'ip': '192.168.40.221', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
+    {'id': 22, 'name': 'baliza-disca', 'ip': '192.168.40.222', 'status': 'locked', 'pistol': 'Off', 'codes': 0},
 ]
 
 # Device health tracking - stores health data from devices
@@ -321,7 +321,7 @@ def dashboard_data():
     event = fetch_current_event()
     stats = fetch_event_stats()
 
-    # Build device-to-peopleCount map from stats
+    # Build device-to-peopleCount map from stats, keyed by IP (NroSerie)
     device_counts = {}
     if stats and stats.get('gates'):
         for gate in stats['gates']:
@@ -329,12 +329,14 @@ def dashboard_data():
                 device_counts[device['deviceName']] = {
                     'peopleCount': device['peopleCount'],
                     'gateName': gate['gateName'],
-                    'gateNickName': device.get('gateNickName', '')
+                    'gateNickName': device.get('gateNickName', ''),
+                    'friendlyName': device.get('friendlyName')
                 }
 
     # Merge with local turnstile state and health info
     merged = []
     for ts in turnstiles:
+        # Match by IP (deviceName = NroSerie from DB)
         api_data = device_counts.get(ts['ip'], {})
         # Try case-insensitive match for health data
         health = None
@@ -356,6 +358,7 @@ def dashboard_data():
         merged.append({
             'id': ts['id'],
             'name': ts['name'],
+            'friendlyName': api_data.get('friendlyName') or ts['name'],
             'status': ts['status'],
             'pistol': ts['pistol'],
             'codes': api_data.get('peopleCount', 0),

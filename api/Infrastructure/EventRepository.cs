@@ -123,15 +123,15 @@ namespace Carnavacs.Api.Infrastructure
             stats.TicketStats = r.ToList();
 
             // Single query for gates/devices - counts ALL successful entries per device during event
-            string gateQuery = @"SELECT ad.Id DeviceId, ad.NroSerie DeviceName, COUNT(*) PeopleCount, 
+            string gateQuery = @"SELECT ad.Id DeviceId, ad.NroSerie DeviceName, ad.NombreAmigable FriendlyName, COUNT(*) PeopleCount,
                                         pi.Id GateId, pi.SobreNombre GateNickName
                                  FROM QREntradasLecturas qre
                                  INNER JOIN AccesosDispositivos ad ON qre.AccesoDispositivoFk = ad.Id
-                                 INNER JOIN PuertaIngreso pi ON pi.Id = ad.PuertaIngresoId 
-                                 WHERE qre.EstadoQrFk = 5 
-                                   AND qre.Fecha >= @fechaInicio 
+                                 INNER JOIN PuertaIngreso pi ON pi.Id = ad.PuertaIngresoId
+                                 WHERE qre.EstadoQrFk = 5
+                                   AND qre.Fecha >= @fechaInicio
                                    AND qre.Fecha <= @fechaFin
-                                 GROUP BY pi.Id, ad.Id, ad.NroSerie, pi.SobreNombre";
+                                 GROUP BY pi.Id, ad.Id, ad.NroSerie, ad.NombreAmigable, pi.SobreNombre";
 
             var gateStats = await Connection.QueryAsync<AccessDeviceInfo>(gateQuery, new { fechaInicio = ev.Fecha.Subtract(TimeSpan.FromMinutes(600)), fechaFin = ev.FechaFin }, Transaction);
 

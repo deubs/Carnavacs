@@ -851,6 +851,27 @@ if __name__ == '__main__':
     lcd.lcd_string("LCD INIT", l1, display_addressb)
     lcd.lcd_string(platform.node(), l2, display_addressb)
 
+    # Retry LAN connection until successful
+    lan_ok = False
+    lan_attempt = 0
+    while not lan_ok:
+        lan_attempt += 1
+        lcd.lcd_string("CONECTANDO RED", l1, display_addressa)
+        lcd.lcd_string(f"INTENTO {lan_attempt}...", l2, display_addressa)
+        logger.info("lan_connect_attempt", attempt=lan_attempt)
+        lan_ok = check_server_reachable()
+        if lan_ok:
+            ip = get_local_ip()
+            lcd.lcd_string("RED OK", l1, display_addressa)
+            lcd.lcd_string(ip, l2, display_addressa)
+            logger.info("lan_detected", ip=ip)
+            time.sleep(2)
+        else:
+            lcd.lcd_string("SIN RED", l1, display_addressa)
+            lcd.lcd_string("REINTENTANDO...", l2, display_addressa)
+            logger.error("lan_not_detected", attempt=lan_attempt)
+            time.sleep(5)
+
     # Initialize Socket.IO connection to dashboard
     dashboard = DashboardConnection(DASHBOARD_URL, DEVICE_NAME, get_local_ip(),
                                      lcd=lcd, display_address=display_addressa)

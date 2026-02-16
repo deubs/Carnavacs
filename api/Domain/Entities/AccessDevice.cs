@@ -4,8 +4,9 @@
     {
         public int Id { get; set; }
         public  string NroSerie{ get; set; }
+        public string? NombreAmigable { get; set; }
         public int AccesoSectorFk { get; set; }
         public int PuertaIngresoId { get; set; }
-        
+
     }
 }

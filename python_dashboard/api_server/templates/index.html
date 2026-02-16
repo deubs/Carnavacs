@@ -90,6 +90,21 @@
             }
         });
 
+        // Listen for blade status changes via Socket.IO (instant update on card)
+        socket.on('turnstile_status', function(data) {
+            const cards = document.querySelectorAll('.turnstile-card');
+            cards.forEach(card => {
+                const title = card.querySelector('.card-title');
+                if (title && title.textContent === data.device) {
+                    const badge = card.querySelector('.status-badge');
+                    badge.textContent = data.status;
+                    badge.className = 'status-badge ' + data.status;
+                    card.classList.remove('locked', 'unlocked');
+                    card.classList.add(data.status);
+                }
+            });
+        });
+
         // Show toast notification for ticket events
         function showTicketToast(data) {
             const container = document.getElementById('toast-container');
@@ -164,14 +179,8 @@
                 if (ph.network && !h.network) {
                     showAlertToast(t.name, 'Network error', 'error');
                 }
-                // Blades unlocked
-                if (prev.status === 'locked' && t.status === 'unlocked') {
-                    showAlertToast(t.name, 'Blades UNLOCKED', 'success');
-                }
-                // Blades locked
-                if (prev.status === 'unlocked' && t.status === 'locked') {
-                    showAlertToast(t.name, 'Blades LOCKED', 'warning');
-                }
+                // Blades unlocked/locked - now handled via Socket.IO (turnstile_status event)
+                // Polling is too slow to catch the transient unlock/lock cycle
             });
 
             // Save current state
@@ -332,7 +341,7 @@
             card.className = `turnstile-card ${statusClass}${isOnline ? '' : ' offline'}`;
             card.innerHTML = `
                 <div class="card-header">
-                    <h3 class="card-title">${moli.name}</h3>
+                    <h3 class="card-title">${moli.friendlyName || moli.name}</h3>
                     <span class="status-badge ${statusClass}">${moli.status}</span>
                 </div>
                 <div class="card-body">
