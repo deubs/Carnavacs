@@ -18,9 +18,11 @@
                 <span class="event-date" id="event-date"></span>
             </div>
             <div class="header-stats">
-                <div class="hstat"><span class="hstat-val" id="stat-total">0</span><span class="hstat-lbl">Total</span></div>
-                <div class="hstat hstat-used"><span class="hstat-val" id="stat-used">0</span><span class="hstat-lbl">Used</span></div>
-                <div class="hstat hstat-remaining"><span class="hstat-val" id="stat-remaining">0</span><span class="hstat-lbl">Rem</span></div>
+                <div class="hstat"><span class="hstat-val" id="stat-issued">0</span><span class="hstat-lbl">Q.Issued</span></div>
+                <div class="hstat hstat-used"><span class="hstat-val" id="stat-q-used">0</span><span class="hstat-lbl">Q.Used</span></div>
+                <div class="hstat hstat-remaining"><span class="hstat-val" id="stat-q-rem">0</span><span class="hstat-lbl">Q.Rem</span></div>
+                <div class="hstat hstat-used"><span class="hstat-val" id="stat-c-used">0</span><span class="hstat-lbl">C.Used</span></div>
+                <div class="hstat hstat-remaining"><span class="hstat-val" id="stat-c-rem">0</span><span class="hstat-lbl">C.Rem</span></div>
                 <div class="hstat hstat-pistol"><span class="hstat-val" id="stat-pistols">0</span><span class="hstat-lbl">Pistols</span></div>
             </div>
             <div class="header-devices">
@@ -214,10 +216,17 @@
 
         // Update summary statistics
         function updateStats(data) {
-            // Event stats from API
-            document.getElementById('stat-total').textContent = data.stats.totalTickets.toLocaleString();
-            document.getElementById('stat-used').textContent = data.stats.usedTickets.toLocaleString();
-            document.getElementById('stat-remaining').textContent = data.stats.remainingTickets.toLocaleString();
+            // Quentro stats: issued from Socket.IO, used from API, remaining = issued - used
+            var qIssued = data.quentro ? Number(data.quentro.issued) : 0;
+            var qUsed = data.stats.quentroUsed || 0;
+            var qRem = qIssued - qUsed;
+            document.getElementById('stat-issued').textContent = qIssued.toLocaleString();
+            document.getElementById('stat-q-used').textContent = qUsed.toLocaleString();
+            document.getElementById('stat-q-rem').textContent = qRem.toLocaleString();
+
+            // Collaborator stats from API
+            document.getElementById('stat-c-used').textContent = (data.stats.collaboratorUsed || 0).toLocaleString();
+            document.getElementById('stat-c-rem').textContent = (data.stats.collaboratorRemaining || 0).toLocaleString();
 
             // Local stats
             const pistols = data.turnstiles.filter(t => t.pistol === 'On' && t.online).length;

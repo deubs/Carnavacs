@@ -110,14 +110,15 @@ namespace Carnavacs.Api.Infrastructure
             // Gates open 2-3 hours before Fecha and close at FechaFin
             // This prevents mixing tickets from consecutive events
 
-            // Single query from QREntradasLecturas - counts ALL tickets scanned during event
-            // Includes old system, Quentro, and multi-pass tickets
-            string statsQuery = @"SELECT COUNT(*) as Total, qre.EstadoQrFk as StatusId, s.Nombre as StatusName 
+            // Split counts by source: quentro (QuentroCode not null) vs collaborator (legacy)
+            string statsQuery = @"SELECT COUNT(*) as Total, qre.EstadoQrFk as StatusId, s.Nombre as StatusName,
+                                         CASE WHEN qre.QuentroCode IS NOT NULL THEN 'quentro' ELSE 'collaborator' END as Source
                                   FROM QREntradasLecturas qre
                                   INNER JOIN EstadosQR s ON qre.EstadoQrFk = s.Id
-                                  WHERE qre.Fecha >= @fechaInicio 
+                                  WHERE qre.Fecha >= @fechaInicio
                                     AND qre.Fecha <= @fechaFin
-                                  GROUP BY qre.EstadoQrFk, s.Nombre";
+                                  GROUP BY qre.EstadoQrFk, s.Nombre,
+                                           CASE WHEN qre.QuentroCode IS NOT NULL THEN 'quentro' ELSE 'collaborator' END";
 
             var r = await Connection.QueryAsync<TicketStat>(statsQuery, new { fechaInicio = ev.Fecha.Subtract(TimeSpan.FromMinutes(600)), fechaFin = ev.FechaFin }, Transaction);
             stats.TicketStats = r.ToList();

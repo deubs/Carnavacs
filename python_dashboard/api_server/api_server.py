@@ -8,6 +8,7 @@ from datetime import datetime
 import threading
 import time
 import psutil
+import socketio as socketio_pkg
 # import cli_api_status
 
 load_dotenv()
@@ -137,6 +138,64 @@ def server_health_monitor():
         time.sleep(SERVER_CHECK_INTERVAL)
 
 threading.Thread(target=server_health_monitor, daemon=True).start()
+
+# ============================================
+# Quentro Box Socket.IO Client
+# ============================================
+
+QUENTRO_BOX_URL = os.environ.get('QUENTRO_BOX_URL', 'http://192.168.40.102:8080')
+
+quentro_stats = {}  # {issued, used, void, enabled, reissued, newcode, all, ...}
+
+def get_quentro_show_id():
+    """Fetch the current event's quentroEventId from the C# API"""
+    try:
+        resp = requests.get(f"{CARNAVAL_API_URL}/Events/Current", timeout=API_TIMEOUT)
+        data = resp.json()
+        if data.get('success') and data.get('result'):
+            show_id = data['result'].get('quentroEventId')
+            if show_id:
+                return str(show_id)
+    except Exception as e:
+        print(f"Failed to fetch quentroEventId: {e}")
+    return None
+
+def quentro_connection():
+    """Connect to Quentro Box Socket.IO and subscribe to show updates"""
+    while True:
+        show_id = get_quentro_show_id()
+        if not show_id:
+            print("No quentroEventId found, retrying in 30s...")
+            time.sleep(30)
+            continue
+
+        print(f"Quentro showId: {show_id}")
+        sio = socketio_pkg.Client(reconnection=True, reconnection_delay=5,
+                                  reconnection_delay_max=30, logger=False)
+
+        event_name = f'show-update-{show_id}'
+
+        @sio.on(event_name)
+        def on_show_update(data):
+            quentro_stats.update(data)
+
+        @sio.on('connect')
+        def on_connect():
+            print(f"Connected to Quentro Box ({QUENTRO_BOX_URL}), showId={show_id}")
+            sio.emit('update-request', {'showId': show_id})
+
+        @sio.on('disconnect')
+        def on_disconnect():
+            print("Disconnected from Quentro Box")
+
+        try:
+            sio.connect(QUENTRO_BOX_URL, transports=['websocket', 'polling'])
+            sio.wait()
+        except Exception as e:
+            print(f"Quentro Box connection failed: {e}")
+            time.sleep(10)
+
+threading.Thread(target=quentro_connection, daemon=True, name="QuentroBox").start()
 
 # ============================================
 # Authentication
@@ -384,7 +443,17 @@ def dashboard_data():
         'stats': {
             'totalTickets': stats.get('totalTickets', 0) if stats else 0,
             'usedTickets': stats.get('usedTickets', 0) if stats else 0,
-            'remainingTickets': stats.get('remainingTickets', 0) if stats else 0
+            'remainingTickets': stats.get('remainingTickets', 0) if stats else 0,
+            'quentroUsed': stats.get('quentroUsed', 0) if stats else 0,
+            'collaboratorUsed': stats.get('collaboratorUsed', 0) if stats else 0,
+            'collaboratorRemaining': stats.get('collaboratorRemaining', 0) if stats else 0,
+        },
+        'quentro': {
+            'issued': quentro_stats.get('issued', 0),
+            'used': quentro_stats.get('used', 0),
+            'void': quentro_stats.get('void', 0),
+            'all': quentro_stats.get('all', 0),
+            'connected': bool(quentro_stats),
         },
         'turnstiles': merged,
         'servers': list(server_health.values()),

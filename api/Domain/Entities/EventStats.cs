@@ -6,38 +6,18 @@ namespace Carnavacs.Api.Domain.Entities
     {
         public int EventId { get; set; }
 
-        public int TotalTickets
-        {
-            get
-            {
-                int total = 0;
-                foreach (TicketStat stat in TicketStats)
-                {
-                    total += stat.Total;
-                }
-                return total;
-            }
-        }
-        public int UsedTickets
-        {
-            get
-            {
-                int total = 0;
-                foreach (TicketStat stat in TicketStats)
-                {
-                    if (stat.StatusId == 5)
-                        total += stat.Total;
-                }
-                return total;
-            }
-        }
-        public int RemainingTickets
-        {
-            get
-            {
-                return TotalTickets - UsedTickets;
-            }
-        }
+        public int TotalTickets => TicketStats.Sum(s => s.Total);
+
+        public int UsedTickets => TicketStats.Where(s => s.StatusId == 5).Sum(s => s.Total);
+
+        public int RemainingTickets => TotalTickets - UsedTickets;
+
+        // Quentro tickets (public sales)
+        public int QuentroUsed => TicketStats.Where(s => s.StatusId == 5 && s.Source == "quentro").Sum(s => s.Total);
+
+        // Collaborator tickets (legacy system)
+        public int CollaboratorUsed => TicketStats.Where(s => s.StatusId == 5 && s.Source == "collaborator").Sum(s => s.Total);
+        public int CollaboratorRemaining => TicketStats.Where(s => s.StatusId == 2 && s.Source == "collaborator").Sum(s => s.Total);
 
         public int TotalGates { get; set; }
         public int OpenGates { get; set; }
@@ -45,6 +25,7 @@ namespace Carnavacs.Api.Domain.Entities
 
         public List<GateInfo> Gates { get; set; } = new List<GateInfo>();
 
+        [JsonIgnore]
         public List<TicketStat> TicketStats { get; set; } = new List<TicketStat>();
     }
 
@@ -53,6 +34,7 @@ namespace Carnavacs.Api.Domain.Entities
         public int Total { get; set; }
         public int StatusId { get; set; }
         public string StatusName { get; set; }
+        public string Source { get; set; }
     }
 
     public class GateInfo
