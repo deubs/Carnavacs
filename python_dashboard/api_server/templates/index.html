@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=8">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=9">
 </head>
 <body>
     <!-- Header -->
@@ -25,15 +25,10 @@
                 <div class="hstat hstat-remaining"><span class="hstat-val" id="stat-c-rem">0</span><span class="hstat-lbl">C.Rem</span></div>
                 <div class="hstat hstat-pistol"><span class="hstat-val" id="stat-pistols">0</span><span class="hstat-lbl">Pistols</span></div>
             </div>
-            <div class="header-devices">
-                <div class="header-leds-label"><span id="panel-online">0</span>/<span id="panel-total">0</span></div>
-                <div id="device-leds" class="device-leds"></div>
-            </div>
-            <div class="header-servers">
-                <div class="header-servers-label">Servers</div>
-                <div id="server-leds" class="server-leds"></div>
-            </div>
             <div class="header-actions">
+                <button id="led-toggle" class="header-btn led-toggle-btn" title="Show device/server status">
+                    <span id="led-toggle-online">0</span>/<span id="led-toggle-total">0</span>
+                </button>
                 <button id="notification-bell" class="header-btn" title="Enable push notifications">&#128276;</button>
                 <button id="search-toggle" class="header-btn" title="Search ticket">&#128269;</button>
                 <div class="live-indicator">
@@ -47,6 +42,17 @@
             <input type="text" id="ticket-search" class="search-input" placeholder="Search or validate ticket..." autocomplete="off">
             <button id="search-btn" class="search-button" title="Search">&#128269;</button>
             <button id="scan-btn" class="scan-button" title="Scan barcode with camera">&#128247;</button>
+        </div>
+        <!-- Collapsible LED panel -->
+        <div id="led-panel" class="led-panel hidden">
+            <div class="led-panel-section">
+                <div class="led-panel-label">Devices <span id="panel-online">0</span>/<span id="panel-total">0</span></div>
+                <div id="device-leds" class="device-leds"></div>
+            </div>
+            <div class="led-panel-section">
+                <div class="led-panel-label">Servers</div>
+                <div id="server-leds" class="server-leds"></div>
+            </div>
         </div>
     </header>
 
@@ -241,12 +247,19 @@
             }
         }
 
+        // Toggle LED panel
+        document.getElementById('led-toggle').addEventListener('click', function() {
+            document.getElementById('led-panel').classList.toggle('hidden');
+        });
+
         // Update device LED panel
         function updateDevicePanel(turnstiles) {
             const panel = document.getElementById('device-leds');
             const onlineCount = turnstiles.filter(t => t.online).length;
             document.getElementById('panel-online').textContent = onlineCount;
             document.getElementById('panel-total').textContent = turnstiles.length;
+            document.getElementById('led-toggle-online').textContent = onlineCount;
+            document.getElementById('led-toggle-total').textContent = turnstiles.length;
 
             panel.innerHTML = turnstiles.map(t => `
                 <div class="device-led ${t.online ? 'online' : 'offline'}" title="${t.name}: ${t.online ? 'Online' : 'Offline'}">

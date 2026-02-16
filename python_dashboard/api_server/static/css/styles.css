@@ -137,20 +137,12 @@ body {
 .hstat-remaining .hstat-val { color: var(--status-locked); }
 .hstat-pistol .hstat-val { color: var(--status-pistol); }
 
-/* Header devices */
-.header-devices {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    flex: 1;
-    min-width: 0;
-}
-
-.header-leds-label {
-    font-size: 0.625rem;
+/* LED toggle button */
+.led-toggle-btn {
+    font-family: monospace;
+    font-size: 0.75rem !important;
     font-weight: 600;
-    color: var(--text-muted);
-    white-space: nowrap;
+    letter-spacing: 0.02em;
 }
 
 /* Header actions */
@@ -268,18 +260,29 @@ body {
 }
 
 /* ============================================
-   Server LED Panel (inline in header)
+   Collapsible LED Panel (below header row)
    ============================================ */
-.header-servers {
+.led-panel {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xs) 0;
+    margin-top: var(--spacing-xs);
+    border-top: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+}
+
+.led-panel.hidden {
+    display: none;
+}
+
+.led-panel-section {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-    flex-shrink: 0;
-    padding-left: var(--spacing-sm);
-    border-left: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
 }
 
-.header-servers-label {
+.led-panel-label {
     font-size: 0.625rem;
     font-weight: 600;
     color: var(--text-muted);
@@ -716,20 +719,6 @@ body {
 @media (max-width: 1024px) {
     .header-row {
         flex-wrap: wrap;
-    }
-
-    .header-devices {
-        order: 10;
-        width: 100%;
-    }
-
-    .header-servers {
-        order: 11;
-        border-left: none;
-        padding-left: 0;
-        border-top: 1px solid var(--border-subtle);
-        padding-top: var(--spacing-xs);
-        width: 100%;
     }
 
     .turnstile-grid {
