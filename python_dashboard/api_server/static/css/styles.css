@@ -274,6 +274,77 @@ body {
 }
 
 /* ============================================
+   Server LED Panel (inline in header)
+   ============================================ */
+.header-servers {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+    padding-left: var(--spacing-sm);
+    border-left: 1px solid var(--border-subtle);
+}
+
+.header-servers-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.server-leds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.server-led {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 4px;
+    background: var(--bg-card);
+    border-radius: 2px;
+    cursor: default;
+}
+
+.server-led .led-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.server-led.online .led-dot {
+    background: var(--carnival-purple);
+    box-shadow: 0 0 3px var(--carnival-purple);
+}
+
+.server-led.offline .led-dot {
+    background: var(--status-locked);
+    opacity: 0.6;
+}
+
+.server-led.offline {
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.server-led .led-name {
+    font-size: 0.5625rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.server-led.online .led-name {
+    color: var(--text-primary);
+}
+
+.server-led.offline .led-name {
+    color: var(--text-muted);
+}
+
+/* ============================================
    Main Container & Grid
    ============================================ */
 .main-container {
@@ -515,6 +586,13 @@ body {
     border-radius: 3px;
 }
 
+.health-time {
+    font-size: 0.5625rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
 .health-cpu {
     margin-left: auto;
 }
@@ -665,6 +743,15 @@ body {
 
     .header-devices {
         order: 10;
+        width: 100%;
+    }
+
+    .header-servers {
+        order: 11;
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--border-subtle);
+        padding-top: var(--spacing-xs);
         width: 100%;
     }
 

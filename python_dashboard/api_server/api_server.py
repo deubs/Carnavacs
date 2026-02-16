@@ -6,6 +6,8 @@ import requests
 import os
 from datetime import datetime
 import threading
+import time
+import psutil
 # import cli_api_status
 
 load_dotenv()
@@ -16,6 +18,7 @@ keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 
 CARNAVAL_API_URL = os.environ.get('CARNAVAL_API_URL', 'http://192.168.40.101')
 API_TIMEOUT = 5
+APP_START_TIME = datetime.now()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key')
@@ -65,6 +68,68 @@ def is_device_online(device_name):
         return (datetime.now() - last_seen).total_seconds() < DEVICE_TIMEOUT_SECONDS
     except:
         return False
+
+# ============================================
+# Infrastructure Server Health Monitoring
+# ============================================
+
+INFRASTRUCTURE_SERVERS = [
+    {'name': 'Server1', 'ip': '192.168.40.100', 'url': 'http://192.168.40.100/api/health'},
+    {'name': 'Server2', 'ip': '192.168.40.101', 'url': 'http://192.168.40.101/api/health'},
+    {'name': 'linjack',  'ip': '192.168.40.244', 'url': 'http://192.168.40.244/health'},
+    {'name': 'qbox1',   'ip': '192.168.40.102', 'url': 'http://192.168.40.102:8080/'},
+    {'name': 'qbox2',   'ip': '192.168.40.103', 'url': 'http://192.168.40.103:8080/'},
+]
+
+server_health = {}
+SERVER_CHECK_INTERVAL = 20
+SERVER_CHECK_TIMEOUT = 4
+
+def check_server_health(server):
+    try:
+        start = time.time()
+        r = requests.get(server['url'], timeout=SERVER_CHECK_TIMEOUT)
+        elapsed = int((time.time() - start) * 1000)
+        metrics = {}
+        try:
+            data = r.json()
+            sys_info = data.get('system') or data.get('result', {}).get('system')
+            if sys_info:
+                metrics = {
+                    'cpuPercent': sys_info.get('cpuPercent', 0),
+                    'memoryPercent': sys_info.get('memoryPercent', 0),
+                    'diskPercent': sys_info.get('diskPercent', 0),
+                }
+        except Exception:
+            pass
+        return {
+            'name': server['name'],
+            'ip': server['ip'],
+            'online': True,
+            'status_code': r.status_code,
+            'response_time_ms': elapsed,
+            'last_checked': datetime.now().isoformat(),
+            'metrics': metrics,
+        }
+    except Exception:
+        return {
+            'name': server['name'],
+            'ip': server['ip'],
+            'online': False,
+            'status_code': 0,
+            'response_time_ms': 0,
+            'last_checked': datetime.now().isoformat(),
+            'metrics': {},
+        }
+
+def server_health_monitor():
+    while True:
+        for server in INFRASTRUCTURE_SERVERS:
+            result = check_server_health(server)
+            server_health[server['name']] = result
+        time.sleep(SERVER_CHECK_INTERVAL)
+
+threading.Thread(target=server_health_monitor, daemon=True).start()
 
 # ============================================
 # Authentication
@@ -193,6 +258,40 @@ def logout():
     return redirect(url_for('login_page'))
 
 # ============================================
+# Server Health Endpoint (no login required)
+# ============================================
+
+@app.route('/health')
+def health():
+    cpu = psutil.cpu_percent(interval=0.1)
+    mem = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+
+    api_ok = False
+    try:
+        r = requests.get(f"{CARNAVAL_API_URL}/api/health", timeout=3)
+        api_ok = r.status_code == 200
+    except Exception:
+        pass
+
+    return jsonify({
+        'status': 'healthy' if api_ok else 'degraded',
+        'uptimeSeconds': int((datetime.now() - APP_START_TIME).total_seconds()),
+        'timestamp': datetime.now().isoformat(),
+        'system': {
+            'cpuPercent': cpu,
+            'memoryPercent': mem.percent,
+            'memoryUsedMb': mem.used // (1024 * 1024),
+            'memoryTotalMb': mem.total // (1024 * 1024),
+            'diskPercent': disk.percent,
+            'diskFreeMb': disk.free // (1024 * 1024),
+        },
+        'dependencies': {
+            'carnavalApi': api_ok
+        }
+    })
+
+# ============================================
 # Protected Dashboard Routes
 # ============================================
 
@@ -278,6 +377,7 @@ def dashboard_data():
             'remainingTickets': stats.get('remainingTickets', 0) if stats else 0
         },
         'turnstiles': merged,
+        'servers': list(server_health.values()),
         'apiOnline': stats is not None
     }
 

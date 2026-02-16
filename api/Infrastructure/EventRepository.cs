@@ -106,28 +106,34 @@ namespace Carnavacs.Api.Infrastructure
             Event ev = await GetEventByIdAsync(eventId);
             stats.EventId = ev.Id;
 
-            // Single query from QREntradasLecturas - counts ALL tickets scanned on event date
+            // Use date range from event start (Fecha) to event end (FechaFin)
+            // Gates open 2-3 hours before Fecha and close at FechaFin
+            // This prevents mixing tickets from consecutive events
+
+            // Single query from QREntradasLecturas - counts ALL tickets scanned during event
             // Includes old system, Quentro, and multi-pass tickets
             string statsQuery = @"SELECT COUNT(*) as Total, qre.EstadoQrFk as StatusId, s.Nombre as StatusName 
                                   FROM QREntradasLecturas qre
                                   INNER JOIN EstadosQR s ON qre.EstadoQrFk = s.Id
-                                  WHERE CAST(qre.Fecha AS DATE) = CAST(@eventDate AS DATE)
+                                  WHERE qre.Fecha >= @fechaInicio 
+                                    AND qre.Fecha <= @fechaFin
                                   GROUP BY qre.EstadoQrFk, s.Nombre";
 
-            var r = await Connection.QueryAsync<TicketStat>(statsQuery, new { eventDate = ev.Fecha }, Transaction);
+            var r = await Connection.QueryAsync<TicketStat>(statsQuery, new { fechaInicio = ev.Fecha.Subtract(TimeSpan.FromMinutes(600)), fechaFin = ev.FechaFin }, Transaction);
             stats.TicketStats = r.ToList();
 
-            // Single query for gates/devices - counts ALL scans per device on event date
+            // Single query for gates/devices - counts ALL successful entries per device during event
             string gateQuery = @"SELECT ad.Id DeviceId, ad.NroSerie DeviceName, COUNT(*) PeopleCount, 
                                         pi.Id GateId, pi.SobreNombre GateNickName
                                  FROM QREntradasLecturas qre
                                  INNER JOIN AccesosDispositivos ad ON qre.AccesoDispositivoFk = ad.Id
                                  INNER JOIN PuertaIngreso pi ON pi.Id = ad.PuertaIngresoId 
                                  WHERE qre.EstadoQrFk = 5 
-                                   AND CAST(qre.Fecha AS DATE) >= CAST(@eventDate AS DATE)
+                                   AND qre.Fecha >= @fechaInicio 
+                                   AND qre.Fecha <= @fechaFin
                                  GROUP BY pi.Id, ad.Id, ad.NroSerie, pi.SobreNombre";
 
-            var gateStats = await Connection.QueryAsync<AccessDeviceInfo>(gateQuery, new { eventDate = ev.Fecha }, Transaction);
+            var gateStats = await Connection.QueryAsync<AccessDeviceInfo>(gateQuery, new { fechaInicio = ev.Fecha.Subtract(TimeSpan.FromMinutes(600)), fechaFin = ev.FechaFin }, Transaction);
 
             foreach (var res in gateStats)
             {
@@ -139,7 +145,7 @@ namespace Carnavacs.Api.Infrastructure
                 }
                 g.AccessDevices.Add(res);
             }
-            
+
             return stats;
         }
 

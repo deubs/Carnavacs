@@ -108,7 +108,7 @@ namespace Carnavacs.Api.Infrastructure
             TicketLog log = new TicketLog
             {
                 AccesoDispositivoFk = device.Id,
-                EstadoQrFk = status.Id,
+                EstadoQrFk = status.Id == TicketStatus.OK.Id ? TicketStatus.Used.Id : TicketStatus.Retry.Id,
                 QrEntradaFk = null,
                 QuentroCode = code,
                 TicketType = ticketType
