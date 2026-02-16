@@ -32,6 +32,7 @@ EVENT_LABELS = {
 
 DEBOUNCE_SECONDS = 300  # 5 minutes
 FLUSH_INTERVAL = 5      # seconds
+STARTUP_GRACE_SECONDS = 60  # ignore events during startup
 
 
 class NotificationDispatcher:
@@ -40,6 +41,7 @@ class NotificationDispatcher:
         self._queue = []              # list of (event_type, target_name, timestamp)
         self._lock = threading.Lock()
         self._debounce = {}           # (event_type, target_name) -> last_sent datetime
+        self._started_at = datetime.now()
 
         if self.channels:
             t = threading.Thread(target=self._flush_loop, daemon=True,
@@ -51,6 +53,10 @@ class NotificationDispatcher:
             return
 
         now = datetime.now()
+
+        # Skip events during startup grace period
+        if (now - self._started_at).total_seconds() < STARTUP_GRACE_SECONDS:
+            return
         key = (event_type, target_name)
 
         with self._lock:
