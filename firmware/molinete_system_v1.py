@@ -28,6 +28,7 @@ import logging.handlers
 import structlog
 import sys
 import random
+import socketio as sio_client
 
 # Optional: psutil for system metrics (graceful fallback if not available)
 try:
@@ -737,12 +738,15 @@ def scanner_watchdog_thread(lcd=None):
         time.sleep(SCANNER_WATCHDOG_INTERVAL)
 
 def health_reporter_thread(interval=HEALTH_REPORT_INTERVAL, display_ok=False):
-    """Background thread that reports health every N seconds"""
+    """Background thread that reports health every N seconds via Socket.IO (HTTP fallback)"""
     logger.info("health_reporter_started", interval=interval)
     while True:
         try:
             health = get_device_health(display_ok=display_ok)
-            post(f"{DASHBOARD_URL}/api/health", json=health, timeout=5)
+            if dashboard:
+                dashboard.emit_health(health)
+            else:
+                post(f"{DASHBOARD_URL}/api/health", json=health, timeout=5)
             logger.info("health_reported", device=DEVICE_NAME,
                        cpu=health["system"].get("cpu_percent"),
                        scanner=health["scanner"].get("connected"))
@@ -800,11 +804,83 @@ def command_poller_thread(interval=COMMAND_POLL_INTERVAL, lcd=None):
         time.sleep(interval)
 
 
+# ============================================
+# Socket.IO Dashboard Connection
+# ============================================
+
+class DashboardConnection:
+    """Manages Socket.IO connection to the dashboard server"""
+
+    def __init__(self, url, device_name, ip, lcd=None):
+        self.url = url
+        self.device_name = device_name
+        self.ip = ip
+        self.lcd = lcd
+        self.sio = sio_client.Client(
+            reconnection=True,
+            reconnection_delay=5,
+            reconnection_delay_max=30,
+            logger=False,
+        )
+        self._setup_events()
+
+    def _setup_events(self):
+        @self.sio.on('connect', namespace='/devices')
+        def on_connect():
+            logger.info("dashboard_ws_connected")
+            self.sio.emit('register',
+                         {'device': self.device_name, 'ip': self.ip},
+                         namespace='/devices')
+
+        @self.sio.on('command', namespace='/devices')
+        def on_command(data):
+            cmd = data.get('command')
+            if cmd:
+                logger.info("command_via_socketio", command=cmd)
+                execute_remote_command(cmd, lcd=self.lcd)
+
+        @self.sio.on('disconnect', namespace='/devices')
+        def on_disconnect():
+            logger.warning("dashboard_ws_disconnected")
+
+    def connect(self):
+        try:
+            self.sio.connect(self.url, namespaces=['/devices'],
+                            transports=['websocket', 'polling'])
+        except Exception as e:
+            logger.warning("dashboard_ws_connect_failed", error=str(e))
+
+    def emit_health(self, health_data):
+        if self.sio.connected:
+            self.sio.emit('health', health_data, namespace='/devices')
+        else:
+            # Fallback to HTTP
+            try:
+                post(f"{self.url}/api/health", json=health_data, timeout=5)
+            except Exception:
+                pass
+
+    def emit_status(self, status):
+        if self.sio.connected:
+            self.sio.emit('status_change',
+                         {'device': self.device_name, 'status': status},
+                         namespace='/devices')
+
+    def emit_pistol(self, pistol):
+        if self.sio.connected:
+            self.sio.emit('pistol_change',
+                         {'device': self.device_name, 'pistol': pistol},
+                         namespace='/devices')
+
+# Global dashboard connection (initialized in main)
+dashboard = None
+
+
 def main():
     """
         Main function
     """
-    global scanner_manager
+    global scanner_manager, dashboard
 
     lcd = initLCD()
     if lcd is not None:
@@ -847,7 +923,11 @@ def main():
         name="ScannerWatchdog"
     ).start()
 
-    # Start health reporter thread
+    # Initialize Socket.IO connection to dashboard
+    dashboard = DashboardConnection(DASHBOARD_URL, DEVICE_NAME, ip, lcd)
+    threading.Thread(target=dashboard.connect, daemon=True, name="DashboardWS").start()
+
+    # Start health reporter thread (uses Socket.IO with HTTP fallback)
     threading.Thread(
         target=health_reporter_thread,
         args=(HEALTH_REPORT_INTERVAL, lcd is not None),
@@ -855,17 +935,19 @@ def main():
         name="HealthReporter"
     ).start()
 
-    # Start command poller thread
+    # Start command poller thread (HTTP fallback - commands arrive via Socket.IO primarily)
+    # Increased interval since Socket.IO delivers commands instantly
+    COMMAND_POLL_FALLBACK_INTERVAL = 30
     threading.Thread(
         target=command_poller_thread,
-        args=(COMMAND_POLL_INTERVAL, lcd),
+        args=(COMMAND_POLL_FALLBACK_INTERVAL, lcd),
         daemon=True,
         name="CommandPoller"
     ).start()
 
     logger.info("all_threads_started",
                health_interval=HEALTH_REPORT_INTERVAL,
-               command_interval=COMMAND_POLL_INTERVAL,
+               command_poll_fallback_interval=COMMAND_POLL_FALLBACK_INTERVAL,
                watchdog_interval=SCANNER_WATCHDOG_INTERVAL)
 
     # Initialize serial scanner (GM65) for Orange Pi devices
@@ -930,7 +1012,11 @@ def main():
                     time.sleep(3)
                 else:
                     logmessage('info', f"{code} {result['m1']} {result['m2']}")
+                    if dashboard:
+                        dashboard.emit_status('unlocked')
                     marked = enableGate()
+                    if dashboard:
+                        dashboard.emit_status('locked')
                     if marked:
                         logmessage('info', f'{code} marked')
                 ticket_string = f'code: {code}, status:{result["code"]}, timestamp: {datetime.now()}, burned: {result["apistatus"]} \n'

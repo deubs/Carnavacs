@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room
 from functools import wraps
 from dotenv import load_dotenv
 import requests
@@ -52,14 +52,21 @@ turnstiles = [
 # Device health tracking - stores health data from devices
 device_health = {}  # device_name -> health_data with last_seen
 
-# Pending commands queue - stores commands waiting for device pickup
+# Pending commands queue - stores commands waiting for device pickup (HTTP fallback)
 pending_commands = {}  # device_name -> {'command': 'reboot', 'issued_at': ...}
 
-# Timeout for considering a device offline (seconds)
+# Socket.IO device connection tracking
+connected_devices = {}  # device_name -> {'sid': sid, 'connected_at': iso_timestamp, 'ip': ip}
+
+# Timeout for considering a device offline (seconds) - used as HTTP fallback
 DEVICE_TIMEOUT_SECONDS = 15
 
 def is_device_online(device_name):
-    """Check if device has reported health within timeout period"""
+    """Check if device is connected via Socket.IO or has recent HTTP health"""
+    # Primary: check Socket.IO connection
+    if device_name in connected_devices:
+        return True
+    # Fallback: check HTTP health timeout (for devices not yet migrated)
     health = device_health.get(device_name)
     if not health or 'last_seen' not in health:
         return False
@@ -603,22 +610,151 @@ def issue_command(device_name):
     if not device_exists:
         return jsonify({'error': f'Unknown device: {device_name}'}), 404
 
-    # Queue the command
-    pending_commands[device_name] = {
-        'command': command,
-        'issued_at': datetime.now().isoformat()
-    }
-
-    print(f"Command '{command}' queued for {device_name}")
-    return jsonify({
-        'success': True,
-        'message': f'{command} queued for {device_name}'
-    })
+    # Try Socket.IO push first, fall back to HTTP polling queue
+    dev = connected_devices.get(device_name)
+    if dev:
+        socketio.emit('command', {'command': command},
+                      namespace='/devices', to=device_name)
+        print(f"Command '{command}' pushed to {device_name} via Socket.IO")
+        return jsonify({
+            'success': True,
+            'message': f'{command} sent to {device_name}',
+            'delivered': True
+        })
+    else:
+        # Fallback: queue command for HTTP polling pickup
+        pending_commands[device_name] = {
+            'command': command,
+            'issued_at': datetime.now().isoformat()
+        }
+        print(f"Command '{command}' queued for {device_name} (HTTP fallback)")
+        return jsonify({
+            'success': True,
+            'message': f'{command} queued for {device_name}',
+            'delivered': False
+        })
 
 @app.route('/api/commands', methods=['GET'])
 def get_pending_commands():
     """Get all pending commands (admin view)"""
     return jsonify(pending_commands)
+
+# ============================================
+# Socket.IO Device Namespace (/devices)
+# ============================================
+
+@socketio.on('connect', namespace='/devices')
+def device_connected():
+    """Device connected - wait for register event with device name"""
+    print(f"Device socket connected: {request.sid}")
+
+@socketio.on('register', namespace='/devices')
+def device_register(data):
+    """Device registers itself after connecting"""
+    device_name = data.get('device')
+    ip = data.get('ip', 'unknown')
+    if not device_name:
+        return
+
+    connected_devices[device_name] = {
+        'sid': request.sid,
+        'connected_at': datetime.now().isoformat(),
+        'ip': ip
+    }
+    join_room(device_name, namespace='/devices')
+
+    # Update turnstile online status
+    for ts in turnstiles:
+        if ts['name'].lower() == device_name.lower():
+            ts['online'] = True
+            break
+
+    print(f"Device registered: {device_name} (sid={request.sid}, ip={ip})")
+    # Notify browser clients
+    socketio.emit('device_online', {'device': device_name, 'ip': ip})
+
+@socketio.on('disconnect', namespace='/devices')
+def device_disconnected():
+    """Device disconnected - find by sid and mark offline"""
+    sid = request.sid
+    device_name = None
+    for name, info in list(connected_devices.items()):
+        if info['sid'] == sid:
+            device_name = name
+            del connected_devices[name]
+            break
+
+    if device_name:
+        print(f"Device disconnected: {device_name}")
+        # Notify browser clients
+        socketio.emit('device_offline', {'device': device_name})
+
+@socketio.on('health', namespace='/devices')
+def device_health_event(data):
+    """Receive health report via Socket.IO (same logic as POST /api/health)"""
+    device_name = data.get('device')
+    if not device_name:
+        return
+
+    # Store health data with server-side timestamp
+    device_health[device_name] = {
+        **data,
+        'last_seen': datetime.now().isoformat()
+    }
+
+    # Update turnstile status from health data
+    scanner_connected = data.get('scanner', {}).get('connected', False)
+    for ts in turnstiles:
+        if ts['name'].lower() == device_name.lower():
+            ts['online'] = True
+            ts['pistol'] = 'On' if scanner_connected else 'Off'
+            break
+
+@socketio.on('status_change', namespace='/devices')
+def device_status_change(data):
+    """Device reports status change (locked/unlocked)"""
+    device_name = data.get('device')
+    status_value = data.get('status', 'locked')
+    if not device_name:
+        return
+
+    for ts in turnstiles:
+        if ts['name'].lower() == device_name.lower():
+            ts['status'] = status_value
+            break
+
+    print(f"Device:{device_name}, STATUS:{status_value} (via Socket.IO)")
+    # Notify browser clients for toast
+    socketio.emit('turnstile_status', {'device': device_name, 'status': status_value})
+
+@socketio.on('pistol_change', namespace='/devices')
+def device_pistol_change(data):
+    """Device reports pistol (scanner) change"""
+    device_name = data.get('device')
+    pistol_value = data.get('pistol', 'Off')
+    if not device_name:
+        return
+
+    for ts in turnstiles:
+        if ts['name'].lower() == device_name.lower():
+            ts['pistol'] = pistol_value
+            break
+
+    print(f"Device:{device_name}, Pistol:{pistol_value} (via Socket.IO)")
+
+@socketio.on('code_scanned', namespace='/devices')
+def device_code_scanned(data):
+    """Device reports a code was scanned"""
+    device_name = data.get('device')
+    if not device_name:
+        return
+
+    for ts in turnstiles:
+        if ts['name'].lower() == device_name.lower():
+            ts['codes'] += 1
+            break
+
+    print(f"Device:{device_name}, New Code (via Socket.IO)")
 
 @socketio.on('my event')
 def handle_my_custom_event(json):

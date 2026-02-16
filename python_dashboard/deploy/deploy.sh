@@ -16,8 +16,8 @@ echo "Installing dependencies..."
 .venv/bin/pip install -r python_dashboard/requirements.txt
 
 echo "Updating systemd service..."
-sudo cp python_dashboard/deploy/dashboard.service /etc/systemd/system/
-sudo systemctl daemon-reload
+#sudo cp python_dashboard/deploy/dashboard.service /etc/systemd/system/
+#sudo systemctl daemon-reload
 
 echo "Restarting service..."
 sudo systemctl restart "$SERVICE"

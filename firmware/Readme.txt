@@ -13,7 +13,7 @@ python3-setuptools
 python3-requests
 python3-structlog
 swig
-
+pip install python-socketio[client] websocket-client
 Ir a /usr/src/wiringOP-Python
 sudo su
 python3 generate-bindings.py > bindings.i
