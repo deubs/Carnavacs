@@ -206,7 +206,6 @@ body {
     height: 6px;
     background: var(--status-unlocked);
     border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
 }
 
 .live-text {
@@ -215,11 +214,6 @@ body {
     color: var(--status-unlocked);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.2); }
 }
 
 /* ============================================
@@ -402,7 +396,6 @@ body {
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
-    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
 }
@@ -417,30 +410,20 @@ body {
     height: 3px;
     background: var(--carnival-purple);
     opacity: 0;
-    transition: opacity 0.3s ease;
 }
 
 .turnstile-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-card);
     background: var(--bg-card-hover);
-}
-
-.turnstile-card:hover::before {
-    opacity: 1;
 }
 
 /* Status-based styling */
 .turnstile-card.unlocked::before {
     background: linear-gradient(90deg, var(--status-unlocked), var(--carnival-gold));
+    opacity: 1;
 }
 
 .turnstile-card.locked::before {
     background: linear-gradient(90deg, var(--status-locked), var(--carnival-orange));
-}
-
-.turnstile-card.unlocked:hover::before,
-.turnstile-card.locked:hover::before {
     opacity: 1;
 }
 
@@ -712,12 +695,6 @@ body {
 
 .connection-dot.disconnected {
     background: var(--status-locked);
-    animation: blink 1s ease-in-out infinite;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
 }
 
 .connection-text {

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=7">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}?v=8">
 </head>
 <body>
     <!-- Header -->
@@ -132,17 +132,8 @@
             }, 4000);
         }
 
-        // Flash device card on successful validation
-        function flashDeviceCard(deviceName) {
-            const cards = document.querySelectorAll('.turnstile-card');
-            cards.forEach(card => {
-                const title = card.querySelector('.card-title');
-                if (title && title.textContent === deviceName) {
-                    card.classList.add('state-changed');
-                    setTimeout(() => card.classList.remove('state-changed'), 500);
-                }
-            });
-        }
+        // Flash device card on successful validation (no-op, blink effects removed)
+        function flashDeviceCard(deviceName) {}
     </script>
     <script>
         const url = '/dashboard-data';
@@ -340,8 +331,15 @@
         }
 
         // Create turnstile card element
-        function createTurnstileCard(moli) {
+        function createTurnstileCard(moli, gateLbl) {
             const card = document.createElement('div');
+            card.dataset.device = moli.name;
+            updateTurnstileCard(card, moli, gateLbl);
+            return card;
+        }
+
+        // Update an existing card's content without destroying it
+        function updateTurnstileCard(card, moli, gateLbl) {
             const statusClass = moli.status === 'locked' ? 'locked' : 'unlocked';
             const pistolActive = moli.pistol === 'On';
             const isOnline = moli.online;
@@ -349,6 +347,7 @@
 
             card.className = `turnstile-card ${statusClass}${isOnline ? '' : ' offline'}`;
             card.innerHTML = `
+                ${gateLbl ? `<span class="card-gate-label">${gateLbl}</span>` : ''}
                 <div class="card-header">
                     <h3 class="card-title">${moli.friendlyName || moli.name}</h3>
                     <span class="status-badge ${statusClass}">${moli.status}</span>
@@ -382,8 +381,6 @@
                     <button onclick="sendCommand('${moli.name}', 'shutdown')" class="btn-danger" title="Shutdown">OFF</button>
                 </div>
             `;
-
-            return card;
         }
 
         // Update connection status
@@ -401,6 +398,95 @@
             }
         }
 
+        let gridBuilt = false;
+
+        // Build grid layout once (first load)
+        function buildGrid(data) {
+            const grid = document.getElementById('turnstile-grid');
+            grid.innerHTML = '';
+
+            const groups = {};
+            data.turnstiles.forEach(moli => {
+                const gate = moli.gate || 'Sin Puerta';
+                if (!groups[gate]) groups[gate] = [];
+                groups[gate].push(moli);
+            });
+
+            const sorted = Object.keys(groups).sort((a, b) => {
+                const countA = groups[a].reduce((sum, t) => sum + (t.codes || 0), 0);
+                const countB = groups[b].reduce((sum, t) => sum + (t.codes || 0), 0);
+                return countB - countA;
+            });
+
+            const multiGates = sorted.filter(g => groups[g].length > 2);
+            const singleGates = sorted.filter(g => groups[g].length <= 2);
+
+            multiGates.forEach(gateName => {
+                const gateCount = groups[gateName].reduce((sum, t) => sum + (t.codes || 0), 0);
+                const section = document.createElement('div');
+                section.className = 'gate-section';
+                section.dataset.gate = gateName;
+                section.innerHTML = `<div class="gate-header">
+                    <span class="gate-name">${gateName}</span>
+                    <span class="gate-count">${gateCount.toLocaleString()}</span>
+                </div>`;
+                const gateGrid = document.createElement('div');
+                gateGrid.className = 'turnstile-grid';
+                groups[gateName].forEach(moli => {
+                    gateGrid.appendChild(createTurnstileCard(moli));
+                });
+                section.appendChild(gateGrid);
+                grid.appendChild(section);
+            });
+
+            if (singleGates.length > 0) {
+                const section = document.createElement('div');
+                section.className = 'gate-section';
+                const gateGrid = document.createElement('div');
+                gateGrid.className = 'turnstile-grid';
+                singleGates.forEach(gateName => {
+                    groups[gateName].forEach(moli => {
+                        gateGrid.appendChild(createTurnstileCard(moli, gateName));
+                    });
+                });
+                section.appendChild(gateGrid);
+                grid.appendChild(section);
+            }
+
+            gridBuilt = true;
+        }
+
+        // Update existing cards in-place (no DOM rebuild)
+        function updateGrid(data) {
+            // Update gate counts
+            const groups = {};
+            data.turnstiles.forEach(moli => {
+                const gate = moli.gate || 'Sin Puerta';
+                if (!groups[gate]) groups[gate] = [];
+                groups[gate].push(moli);
+            });
+
+            document.querySelectorAll('.gate-section[data-gate]').forEach(section => {
+                const gateName = section.dataset.gate;
+                if (groups[gateName]) {
+                    const countEl = section.querySelector('.gate-count');
+                    if (countEl) {
+                        const total = groups[gateName].reduce((sum, t) => sum + (t.codes || 0), 0);
+                        countEl.textContent = total.toLocaleString();
+                    }
+                }
+            });
+
+            // Update each card by data-device attribute
+            data.turnstiles.forEach(moli => {
+                const card = document.querySelector(`.turnstile-card[data-device="${moli.name}"]`);
+                if (card) {
+                    const gateLbl = card.querySelector('.card-gate-label');
+                    updateTurnstileCard(card, moli, gateLbl ? gateLbl.textContent : null);
+                }
+            });
+        }
+
         // Fetch and render data
         function fetchData() {
             fetch(url)
@@ -414,62 +500,10 @@
                     checkDeviceAlerts(data.turnstiles);
                     checkServerAlerts(data.servers);
 
-                    const grid = document.getElementById('turnstile-grid');
-                    grid.innerHTML = '';
-
-                    // Group turnstiles by gate
-                    const groups = {};
-                    data.turnstiles.forEach(moli => {
-                        const gate = moli.gate || 'Sin Puerta';
-                        if (!groups[gate]) groups[gate] = [];
-                        groups[gate].push(moli);
-                    });
-
-                    // Sort gates by total count descending
-                    const sorted = Object.keys(groups).sort((a, b) => {
-                        const countA = groups[a].reduce((sum, t) => sum + (t.codes || 0), 0);
-                        const countB = groups[b].reduce((sum, t) => sum + (t.codes || 0), 0);
-                        return countB - countA;
-                    });
-
-                    // Separate large gates from small gates (1-2 devices)
-                    const multiGates = sorted.filter(g => groups[g].length > 2);
-                    const singleGates = sorted.filter(g => groups[g].length <= 2);
-
-                    // Render multi-device gates as full sections
-                    multiGates.forEach(gateName => {
-                        const gateCount = groups[gateName].reduce((sum, t) => sum + (t.codes || 0), 0);
-                        const section = document.createElement('div');
-                        section.className = 'gate-section';
-                        section.innerHTML = `<div class="gate-header">
-                            <span class="gate-name">${gateName}</span>
-                            <span class="gate-count">${gateCount.toLocaleString()}</span>
-                        </div>`;
-                        const gateGrid = document.createElement('div');
-                        gateGrid.className = 'turnstile-grid';
-                        groups[gateName].forEach(moli => {
-                            gateGrid.appendChild(createTurnstileCard(moli));
-                        });
-                        section.appendChild(gateGrid);
-                        grid.appendChild(section);
-                    });
-
-                    // Render small gates together in one compact section
-                    if (singleGates.length > 0) {
-                        const section = document.createElement('div');
-                        section.className = 'gate-section';
-                        const gateGrid = document.createElement('div');
-                        gateGrid.className = 'turnstile-grid';
-                        singleGates.forEach(gateName => {
-                            groups[gateName].forEach(moli => {
-                                const card = createTurnstileCard(moli);
-                                const header = card.querySelector('.card-header');
-                                header.insertAdjacentHTML('afterbegin', `<span class="card-gate-label">${gateName}</span>`);
-                                gateGrid.appendChild(card);
-                            });
-                        });
-                        section.appendChild(gateGrid);
-                        grid.appendChild(section);
+                    if (!gridBuilt) {
+                        buildGrid(data);
+                    } else {
+                        updateGrid(data);
                     }
                 })
                 .catch(error => {
