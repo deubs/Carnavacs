@@ -54,9 +54,19 @@
 
     function subscribeToPush(reg) {
         console.log('[Push] Starting subscription...');
-        fetch('/api/push/vapid-public-key')
-            .then(function(r) { return r.json(); })
+        console.log('[Push] Current permission:', Notification.permission);
+        Notification.requestPermission()
+            .then(function(permission) {
+                console.log('[Push] Permission result:', permission);
+                if (permission !== 'granted') {
+                    alert('Notification permission denied');
+                    return;
+                }
+                return fetch('/api/push/vapid-public-key');
+            })
+            .then(function(r) { if (r) return r.json(); })
             .then(function(data) {
+                if (!data) return;
                 console.log('[Push] Got public key:', data.publicKey ? data.publicKey.substring(0, 20) + '...' : 'EMPTY');
                 if (!data.publicKey) {
                     alert('Push notifications not configured on the server');
