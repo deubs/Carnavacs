@@ -17,6 +17,20 @@ from notifications.channels.telegram import TelegramChannel
 from notifications.channels.slack import SlackChannel
 from notifications.channels.webpush import WebPushChannel
 
+import base64
+from webauthn import (
+    generate_registration_options,
+    verify_registration_response,
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json,
+)
+from webauthn.helpers.structs import (
+    PublicKeyCredentialDescriptor,
+    UserVerificationRequirement,
+)
+import webauthn_store
+
 load_dotenv()
 
 # ============================================
@@ -51,6 +65,10 @@ keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 CARNAVAL_API_URL = os.environ.get('CARNAVAL_API_URL', 'http://192.168.40.101')
 API_TIMEOUT = 5
 APP_START_TIME = datetime.now()
+
+WEBAUTHN_RP_ID = os.environ.get('WEBAUTHN_RP_ID', None)  # defaults to request host at runtime
+WEBAUTHN_RP_NAME = os.environ.get('WEBAUTHN_RP_NAME', 'Carnaval del Pais')
+WEBAUTHN_ORIGIN = os.environ.get('WEBAUTHN_ORIGIN', None)  # defaults to request origin at runtime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key')
@@ -378,6 +396,132 @@ def login_submit():
 def logout():
     session.clear()
     return redirect(url_for('login_page'))
+
+# ============================================
+# WebAuthn / Passkey Routes
+# ============================================
+
+def _get_rp_id():
+    return WEBAUTHN_RP_ID or request.host.split(':')[0]
+
+def _get_origin():
+    return WEBAUTHN_ORIGIN or request.origin or f"{request.scheme}://{request.host}"
+
+@app.route('/webauthn/register/options', methods=['POST'])
+@login_required
+def webauthn_register_options():
+    username = session['user']['UserName']
+    existing = webauthn_store.get_credentials_for_user(username)
+
+    # Reuse user_id if user already has credentials, otherwise generate new
+    if existing:
+        user_id = base64.urlsafe_b64decode(existing[0]['user_id'] + '==')
+    else:
+        user_id = os.urandom(32)
+
+    exclude = [
+        PublicKeyCredentialDescriptor(id=base64.urlsafe_b64decode(c['credential_id'] + '=='))
+        for c in existing
+    ]
+
+    options = generate_registration_options(
+        rp_id=_get_rp_id(),
+        rp_name=WEBAUTHN_RP_NAME,
+        user_id=user_id,
+        user_name=username,
+        user_display_name=session['user'].get('Name', username),
+        exclude_credentials=exclude,
+    )
+
+    session['webauthn_challenge'] = base64.urlsafe_b64encode(options.challenge).decode().rstrip('=')
+    session['webauthn_user_id'] = base64.urlsafe_b64encode(user_id).decode().rstrip('=')
+
+    return app.response_class(
+        response=options_to_json(options),
+        content_type='application/json',
+    )
+
+@app.route('/webauthn/register/verify', methods=['POST'])
+@login_required
+def webauthn_register_verify():
+    try:
+        challenge = base64.urlsafe_b64decode(session.pop('webauthn_challenge') + '==')
+        user_id_b64 = session.pop('webauthn_user_id')
+
+        verification = verify_registration_response(
+            credential=request.get_json(),
+            expected_challenge=challenge,
+            expected_rp_id=_get_rp_id(),
+            expected_origin=_get_origin(),
+        )
+
+        cred_id_b64 = base64.urlsafe_b64encode(verification.credential_id).decode().rstrip('=')
+        pub_key_b64 = base64.urlsafe_b64encode(verification.credential_public_key).decode().rstrip('=')
+
+        webauthn_store.save_credential(
+            credential_id=cred_id_b64,
+            public_key=pub_key_b64,
+            sign_count=verification.sign_count,
+            user_id=user_id_b64,
+            username=session['user']['UserName'],
+            user_data=session['user'],
+        )
+
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/webauthn/login/options', methods=['POST'])
+def webauthn_login_options():
+    all_creds = webauthn_store.get_all_credentials()
+    allow = [
+        PublicKeyCredentialDescriptor(id=base64.urlsafe_b64decode(c['credential_id'] + '=='))
+        for c in all_creds
+    ]
+
+    options = generate_authentication_options(
+        rp_id=_get_rp_id(),
+        allow_credentials=allow,
+        user_verification=UserVerificationRequirement.PREFERRED,
+    )
+
+    session['webauthn_challenge'] = base64.urlsafe_b64encode(options.challenge).decode().rstrip('=')
+
+    return app.response_class(
+        response=options_to_json(options),
+        content_type='application/json',
+    )
+
+@app.route('/webauthn/login/verify', methods=['POST'])
+def webauthn_login_verify():
+    try:
+        challenge = base64.urlsafe_b64decode(session.pop('webauthn_challenge') + '==')
+        body = request.get_json()
+
+        # Find credential by raw ID
+        raw_id_b64 = body.get('rawId', body.get('id', ''))
+        stored = webauthn_store.get_credential_by_id(raw_id_b64)
+        if not stored:
+            return jsonify({'success': False, 'error': 'Unknown credential'}), 400
+
+        pub_key = base64.urlsafe_b64decode(stored['public_key'] + '==')
+
+        verification = verify_authentication_response(
+            credential=body,
+            expected_challenge=challenge,
+            expected_rp_id=_get_rp_id(),
+            expected_origin=_get_origin(),
+            credential_public_key=pub_key,
+            credential_current_sign_count=stored['sign_count'],
+        )
+
+        webauthn_store.update_sign_count(raw_id_b64, verification.new_sign_count)
+
+        session['user'] = stored['user_data']
+
+        return jsonify({'success': True, 'redirect': url_for('home')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 # ============================================
 # Server Health Endpoint (no login required)

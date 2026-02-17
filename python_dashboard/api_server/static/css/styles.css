@@ -1065,3 +1065,33 @@ body {
 .login-button:hover {
     opacity: 0.9;
 }
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    margin: var(--spacing-md) 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+}
+
+.login-divider span {
+    padding: 0 var(--spacing-sm);
+}
+
+.passkey-btn {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
+
+.passkey-btn:hover {
+    background: var(--bg-card-hover);
+}

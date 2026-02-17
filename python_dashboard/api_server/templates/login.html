@@ -30,7 +30,12 @@
                 </div>
                 <button type="submit" class="login-button">Ingresar</button>
             </form>
+            <div class="login-divider"><span>o</span></div>
+            <button type="button" onclick="loginWithPasskey()" class="login-button passkey-btn">
+                Login with Passkey
+            </button>
         </div>
     </div>
+<script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
 </body>
 </html>

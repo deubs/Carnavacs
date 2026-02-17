@@ -29,6 +29,7 @@
                 <button id="led-toggle" class="header-btn led-toggle-btn" title="Show device/server status">
                     <span id="led-toggle-online">0</span>/<span id="led-toggle-total">0</span>
                 </button>
+                <button id="register-passkey" class="header-btn" title="Register passkey" onclick="registerPasskey()">&#128274;</button>
                 <button id="notification-bell" class="header-btn" title="Enable push notifications">&#128276;</button>
                 <button id="search-toggle" class="header-btn" title="Search ticket">&#128269;</button>
                 <div class="live-indicator">
@@ -632,6 +633,7 @@
         scanBtn.addEventListener('click', startScanner);
         scannerClose.addEventListener('click', stopScanner);
     </script>
+    <script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
     <script src="{{ url_for('static', filename='js/push-manager.js') }}"></script>
 </body>
 </html>
