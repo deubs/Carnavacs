@@ -147,6 +147,19 @@ namespace Carnavacs.Api.Infrastructure
                 g.AccessDevices.Add(res);
             }
 
+            // Count remaining enabled QR codes (estadoqrfk=2) from both tables.
+            // Includes QRs from past events that are still valid (not yet used).
+            string collaboratorRemainingQuery = @"SELECT COUNT(*) FROM (
+                                                    SELECT e.Id FROM AccesosEntradasQR e
+                                                    INNER JOIN Ventas v ON e.VentaFk = v.Id
+                                                    WHERE e.EstadoQrFk = 2 AND v.eventofk <= @eventFk
+                                                    UNION ALL
+                                                    SELECT e.Id FROM AccesosUbicacionesQR e
+                                                    INNER JOIN Ventas v ON e.VentaFk = v.Id
+                                                    WHERE e.EstadoQrFk = 2 AND v.eventofk <= @eventFk
+                                                  ) AS remaining";
+            stats.CollaboratorRemaining = await Connection.ExecuteScalarAsync<int>(collaboratorRemainingQuery, new { eventFk = ev.Id }, Transaction);
+
             return stats;
         }
 

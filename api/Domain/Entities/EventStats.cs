@@ -17,7 +17,7 @@ namespace Carnavacs.Api.Domain.Entities
 
         // Collaborator tickets (legacy system)
         public int CollaboratorUsed => TicketStats.Where(s => s.StatusId == 5 && s.Source == "collaborator").Sum(s => s.Total);
-        public int CollaboratorRemaining => TicketStats.Where(s => s.StatusId == 2 && s.Source == "collaborator").Sum(s => s.Total);
+        public int CollaboratorRemaining { get; set; }
 
         public int TotalGates { get; set; }
         public int OpenGates { get; set; }
