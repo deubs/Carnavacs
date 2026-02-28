@@ -137,20 +137,12 @@ body {
 .hstat-remaining .hstat-val { color: var(--status-locked); }
 .hstat-pistol .hstat-val { color: var(--status-pistol); }
 
-/* Header devices */
-.header-devices {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    flex: 1;
-    min-width: 0;
-}
-
-.header-leds-label {
-    font-size: 0.625rem;
+/* LED toggle button */
+.led-toggle-btn {
+    font-family: monospace;
+    font-size: 0.75rem !important;
     font-weight: 600;
-    color: var(--text-muted);
-    white-space: nowrap;
+    letter-spacing: 0.02em;
 }
 
 /* Header actions */
@@ -206,7 +198,6 @@ body {
     height: 6px;
     background: var(--status-unlocked);
     border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
 }
 
 .live-text {
@@ -215,11 +206,6 @@ body {
     color: var(--status-unlocked);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.2); }
 }
 
 /* ============================================
@@ -274,18 +260,29 @@ body {
 }
 
 /* ============================================
-   Server LED Panel (inline in header)
+   Collapsible LED Panel (below header row)
    ============================================ */
-.header-servers {
+.led-panel {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xs) 0;
+    margin-top: var(--spacing-xs);
+    border-top: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+}
+
+.led-panel.hidden {
+    display: none;
+}
+
+.led-panel-section {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-    flex-shrink: 0;
-    padding-left: var(--spacing-sm);
-    border-left: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
 }
 
-.header-servers-label {
+.led-panel-label {
     font-size: 0.625rem;
     font-weight: 600;
     color: var(--text-muted);
@@ -402,7 +399,6 @@ body {
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
-    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
 }
@@ -417,30 +413,20 @@ body {
     height: 3px;
     background: var(--carnival-purple);
     opacity: 0;
-    transition: opacity 0.3s ease;
 }
 
 .turnstile-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-card);
     background: var(--bg-card-hover);
-}
-
-.turnstile-card:hover::before {
-    opacity: 1;
 }
 
 /* Status-based styling */
 .turnstile-card.unlocked::before {
     background: linear-gradient(90deg, var(--status-unlocked), var(--carnival-gold));
+    opacity: 1;
 }
 
 .turnstile-card.locked::before {
     background: linear-gradient(90deg, var(--status-locked), var(--carnival-orange));
-}
-
-.turnstile-card.unlocked:hover::before,
-.turnstile-card.locked:hover::before {
     opacity: 1;
 }
 
@@ -712,12 +698,6 @@ body {
 
 .connection-dot.disconnected {
     background: var(--status-locked);
-    animation: blink 1s ease-in-out infinite;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
 }
 
 .connection-text {
@@ -739,20 +719,6 @@ body {
 @media (max-width: 1024px) {
     .header-row {
         flex-wrap: wrap;
-    }
-
-    .header-devices {
-        order: 10;
-        width: 100%;
-    }
-
-    .header-servers {
-        order: 11;
-        border-left: none;
-        padding-left: 0;
-        border-top: 1px solid var(--border-subtle);
-        padding-top: var(--spacing-xs);
-        width: 100%;
     }
 
     .turnstile-grid {
@@ -1098,4 +1064,34 @@ body {
 
 .login-button:hover {
     opacity: 0.9;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    margin: var(--spacing-md) 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+}
+
+.login-divider span {
+    padding: 0 var(--spacing-sm);
+}
+
+.passkey-btn {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
+
+.passkey-btn:hover {
+    background: var(--bg-card-hover);
 }

@@ -12,7 +12,51 @@ import psutil
 import websocket as ws_client
 # import cli_api_status
 
+from notifications import NotificationDispatcher
+from notifications.channels.telegram import TelegramChannel
+from notifications.channels.slack import SlackChannel
+from notifications.channels.webpush import WebPushChannel
+
+import base64
+from webauthn import (
+    generate_registration_options,
+    verify_registration_response,
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json,
+)
+from webauthn.helpers.structs import (
+    PublicKeyCredentialDescriptor,
+    UserVerificationRequirement,
+)
+import webauthn_store
+
 load_dotenv()
+
+# ============================================
+# External Notification Channels
+# ============================================
+
+_channels = []
+
+_tg_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+_tg_chat = os.environ.get('TELEGRAM_CHAT_ID')
+if _tg_token and _tg_chat:
+    _channels.append(TelegramChannel(_tg_token, _tg_chat))
+
+_slack_url = os.environ.get('SLACK_WEBHOOK_URL')
+if _slack_url:
+    _channels.append(SlackChannel(_slack_url))
+
+_vapid_private = os.environ.get('VAPID_PRIVATE_KEY')
+_vapid_public = os.environ.get('VAPID_PUBLIC_KEY', '')
+_vapid_mailto = os.environ.get('VAPID_MAILTO', 'mailto:admin@example.com')
+webpush_channel = None
+if _vapid_private:
+    webpush_channel = WebPushChannel(_vapid_private, {'sub': _vapid_mailto})
+    _channels.append(webpush_channel)
+
+notify_dispatcher = NotificationDispatcher(_channels)
 
 keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 'key2': '840c53ea-0467-4b52-b083-2de869d939a8',
@@ -21,6 +65,10 @@ keys = {'key1': 'ed5976ff-2a98-470a-b90e-bf945d25c5c9',
 CARNAVAL_API_URL = os.environ.get('CARNAVAL_API_URL', 'http://192.168.40.101')
 API_TIMEOUT = 5
 APP_START_TIME = datetime.now()
+
+WEBAUTHN_RP_ID = os.environ.get('WEBAUTHN_RP_ID', None)  # defaults to request host at runtime
+WEBAUTHN_RP_NAME = os.environ.get('WEBAUTHN_RP_NAME', 'Carnaval del Pais')
+WEBAUTHN_ORIGIN = os.environ.get('WEBAUTHN_ORIGIN', None)  # defaults to request origin at runtime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key')
@@ -135,6 +183,12 @@ def server_health_monitor():
     while True:
         for server in INFRASTRUCTURE_SERVERS:
             result = check_server_health(server)
+            prev = server_health.get(server['name'])
+            if prev is not None:
+                if prev['online'] and not result['online']:
+                    notify_dispatcher.queue_event('server_offline', server['name'])
+                elif not prev['online'] and result['online']:
+                    notify_dispatcher.queue_event('server_online', server['name'])
             server_health[server['name']] = result
         time.sleep(SERVER_CHECK_INTERVAL)
 
@@ -342,6 +396,132 @@ def login_submit():
 def logout():
     session.clear()
     return redirect(url_for('login_page'))
+
+# ============================================
+# WebAuthn / Passkey Routes
+# ============================================
+
+def _get_rp_id():
+    return WEBAUTHN_RP_ID or request.host.split(':')[0]
+
+def _get_origin():
+    return WEBAUTHN_ORIGIN or request.origin or f"{request.scheme}://{request.host}"
+
+@app.route('/webauthn/register/options', methods=['POST'])
+@login_required
+def webauthn_register_options():
+    username = session['user']['UserName']
+    existing = webauthn_store.get_credentials_for_user(username)
+
+    # Reuse user_id if user already has credentials, otherwise generate new
+    if existing:
+        user_id = base64.urlsafe_b64decode(existing[0]['user_id'] + '==')
+    else:
+        user_id = os.urandom(32)
+
+    exclude = [
+        PublicKeyCredentialDescriptor(id=base64.urlsafe_b64decode(c['credential_id'] + '=='))
+        for c in existing
+    ]
+
+    options = generate_registration_options(
+        rp_id=_get_rp_id(),
+        rp_name=WEBAUTHN_RP_NAME,
+        user_id=user_id,
+        user_name=username,
+        user_display_name=session['user'].get('Name', username),
+        exclude_credentials=exclude,
+    )
+
+    session['webauthn_challenge'] = base64.urlsafe_b64encode(options.challenge).decode().rstrip('=')
+    session['webauthn_user_id'] = base64.urlsafe_b64encode(user_id).decode().rstrip('=')
+
+    return app.response_class(
+        response=options_to_json(options),
+        content_type='application/json',
+    )
+
+@app.route('/webauthn/register/verify', methods=['POST'])
+@login_required
+def webauthn_register_verify():
+    try:
+        challenge = base64.urlsafe_b64decode(session.pop('webauthn_challenge') + '==')
+        user_id_b64 = session.pop('webauthn_user_id')
+
+        verification = verify_registration_response(
+            credential=request.get_json(),
+            expected_challenge=challenge,
+            expected_rp_id=_get_rp_id(),
+            expected_origin=_get_origin(),
+        )
+
+        cred_id_b64 = base64.urlsafe_b64encode(verification.credential_id).decode().rstrip('=')
+        pub_key_b64 = base64.urlsafe_b64encode(verification.credential_public_key).decode().rstrip('=')
+
+        webauthn_store.save_credential(
+            credential_id=cred_id_b64,
+            public_key=pub_key_b64,
+            sign_count=verification.sign_count,
+            user_id=user_id_b64,
+            username=session['user']['UserName'],
+            user_data=session['user'],
+        )
+
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/webauthn/login/options', methods=['POST'])
+def webauthn_login_options():
+    all_creds = webauthn_store.get_all_credentials()
+    allow = [
+        PublicKeyCredentialDescriptor(id=base64.urlsafe_b64decode(c['credential_id'] + '=='))
+        for c in all_creds
+    ]
+
+    options = generate_authentication_options(
+        rp_id=_get_rp_id(),
+        allow_credentials=allow,
+        user_verification=UserVerificationRequirement.PREFERRED,
+    )
+
+    session['webauthn_challenge'] = base64.urlsafe_b64encode(options.challenge).decode().rstrip('=')
+
+    return app.response_class(
+        response=options_to_json(options),
+        content_type='application/json',
+    )
+
+@app.route('/webauthn/login/verify', methods=['POST'])
+def webauthn_login_verify():
+    try:
+        challenge = base64.urlsafe_b64decode(session.pop('webauthn_challenge') + '==')
+        body = request.get_json()
+
+        # Find credential by raw ID
+        raw_id_b64 = body.get('rawId', body.get('id', ''))
+        stored = webauthn_store.get_credential_by_id(raw_id_b64)
+        if not stored:
+            return jsonify({'success': False, 'error': 'Unknown credential'}), 400
+
+        pub_key = base64.urlsafe_b64decode(stored['public_key'] + '==')
+
+        verification = verify_authentication_response(
+            credential=body,
+            expected_challenge=challenge,
+            expected_rp_id=_get_rp_id(),
+            expected_origin=_get_origin(),
+            credential_public_key=pub_key,
+            credential_current_sign_count=stored['sign_count'],
+        )
+
+        webauthn_store.update_sign_count(raw_id_b64, verification.new_sign_count)
+
+        session['user'] = stored['user_data']
+
+        return jsonify({'success': True, 'redirect': url_for('home')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 # ============================================
 # Server Health Endpoint (no login required)
@@ -732,6 +912,45 @@ def get_pending_commands():
     return jsonify(pending_commands)
 
 # ============================================
+# Web Push Subscription Endpoints
+# ============================================
+
+@app.route('/sw.js')
+def service_worker():
+    """Serve service worker from root so its scope covers the whole site"""
+    return app.send_static_file('sw.js'), 200, {'Content-Type': 'application/javascript'}
+
+@app.route('/api/push/vapid-public-key', methods=['GET'])
+def push_vapid_key():
+    """Return VAPID public key for client-side push subscription"""
+    return jsonify({'publicKey': _vapid_public})
+
+@app.route('/api/push/subscribe', methods=['POST'])
+@login_required
+def push_subscribe():
+    """Store a push subscription"""
+    if not webpush_channel:
+        return jsonify({'error': 'Web Push not configured'}), 501
+    sub = request.json
+    if not sub or not sub.get('endpoint'):
+        return jsonify({'error': 'Invalid subscription'}), 400
+    webpush_channel.add_subscription(sub)
+    return jsonify({'success': True})
+
+@app.route('/api/push/unsubscribe', methods=['POST'])
+@login_required
+def push_unsubscribe():
+    """Remove a push subscription"""
+    if not webpush_channel:
+        return jsonify({'error': 'Web Push not configured'}), 501
+    data = request.json
+    endpoint = data.get('endpoint') if data else None
+    if not endpoint:
+        return jsonify({'error': 'Endpoint required'}), 400
+    webpush_channel.remove_subscription(endpoint)
+    return jsonify({'success': True})
+
+# ============================================
 # Socket.IO Device Namespace (/devices)
 # ============================================
 
@@ -764,6 +983,7 @@ def device_register(data):
     print(f"Device registered: {device_name} (sid={request.sid}, ip={ip})")
     # Notify browser clients
     socketio.emit('device_online', {'device': device_name, 'ip': ip})
+    notify_dispatcher.queue_event('device_online', device_name)
 
 @socketio.on('disconnect', namespace='/devices')
 def device_disconnected():
@@ -780,6 +1000,7 @@ def device_disconnected():
         print(f"Device disconnected: {device_name}")
         # Notify browser clients
         socketio.emit('device_offline', {'device': device_name})
+        notify_dispatcher.queue_event('device_offline', device_name)
 
 @socketio.on('health', namespace='/devices')
 def device_health_event(data):
@@ -788,6 +1009,17 @@ def device_health_event(data):
     if not device_name:
         return
 
+    # Compare scanner state before overwriting
+    prev = device_health.get(device_name)
+    prev_scanner = prev.get('scanner', {}).get('connected', False) if prev else None
+    new_scanner = data.get('scanner', {}).get('connected', False)
+
+    if prev_scanner is not None and prev_scanner != new_scanner:
+        if not new_scanner:
+            notify_dispatcher.queue_event('scanner_disconnected', device_name)
+        else:
+            notify_dispatcher.queue_event('scanner_reconnected', device_name)
+
     # Store health data with server-side timestamp
     device_health[device_name] = {
         **data,
@@ -795,7 +1027,7 @@ def device_health_event(data):
     }
 
     # Update turnstile status from health data
-    scanner_connected = data.get('scanner', {}).get('connected', False)
+    scanner_connected = new_scanner
     for ts in turnstiles:
         if ts['name'].lower() == device_name.lower():
             ts['online'] = True
