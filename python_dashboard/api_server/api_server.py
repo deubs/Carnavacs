@@ -61,7 +61,7 @@ pending_commands = {}  # device_name -> {'command': 'reboot', 'issued_at': ...}
 connected_devices = {}  # device_name -> {'sid': sid, 'connected_at': iso_timestamp, 'ip': ip}
 
 # Timeout for considering a device offline (seconds) - used as HTTP fallback
-DEVICE_TIMEOUT_SECONDS = 15
+DEVICE_TIMEOUT_SECONDS = 30
 
 def is_device_online(device_name):
     """Check if device is connected via Socket.IO or has recent HTTP health"""
